@@ -1,8 +1,8 @@
-# 🚀 .NET Toàn Diện - Project: **EduHub** (Nền tảng học trực tuyến)
+# 🚀 .NET Toàn Diện - Project: **EduFlyUp** (Nền tảng học trực tuyến)
 
 ## Giới thiệu
 
-**EduHub** là một nền tảng học trực tuyến mini được thiết kế đặc biệt để cover **toàn bộ kiến thức .NET** quan trọng nhất mà bất kỳ .NET Developer chuyên nghiệp nào cũng cần biết.
+**EduFlyUp** là một nền tảng học trực tuyến mini được thiết kế đặc biệt để cover **toàn bộ kiến thức .NET** quan trọng nhất mà bất kỳ .NET Developer chuyên nghiệp nào cũng cần biết.
 
 > Lý do chọn project này: E-learning là domain có đủ độ phức tạp để áp dụng tất cả các pattern, nhưng không quá phức tạp về nghiệp vụ — rất phù hợp để học .NET một cách bài bản.
 
@@ -36,9 +36,9 @@
 ## 📁 Cấu trúc Project (Clean Architecture)
 
 ```
-EduHub/
+EduFlyUp/
 ├── src/
-│   ├── EduHub.Domain/              # 💡 Layer 1: Entities, Enums, Interfaces
+│   ├── EduFlyUp.Domain/              # 💡 Layer 1: Entities, Enums, Interfaces
 │   │   ├── Entities/
 │   │   │   ├── Course.cs
 │   │   │   ├── Lesson.cs
@@ -54,7 +54,7 @@ EduHub/
 │   │       ├── IUnitOfWork.cs
 │   │       └── ICourseRepository.cs
 │   │
-│   ├── EduHub.Application/         # 💡 Layer 2: Business Logic (CQRS, DTOs, Services)
+│   ├── EduFlyUp.Application/         # 💡 Layer 2: Business Logic (CQRS, DTOs, Services)
 │   │   ├── Features/
 │   │   │   ├── Courses/
 │   │   │   │   ├── Commands/       # CreateCourse, UpdateCourse, DeleteCourse
@@ -69,7 +69,7 @@ EduHub/
 │   │       ├── IEmailService.cs
 │   │       └── ICacheService.cs
 │   │
-│   ├── EduHub.Infrastructure/      # 💡 Layer 3: EF Core, External Services
+│   ├── EduFlyUp.Infrastructure/      # 💡 Layer 3: EF Core, External Services
 │   │   ├── Data/
 │   │   │   ├── AppDbContext.cs
 │   │   │   ├── Migrations/
@@ -83,7 +83,7 @@ EduHub/
 │   │   └── BackgroundJobs/
 │   │       └── ReminderHostedService.cs
 │   │
-│   └── EduHub.Web/                 # 💡 Layer 4: ASP.NET Core Web App
+│   └── EduFlyUp.Web/                 # 💡 Layer 4: ASP.NET Core Web App
 │       ├── Controllers/            # MVC Controllers
 │       ├── Areas/
 │       │   ├── Admin/              # Quản lý hệ thống (MVC)
@@ -105,8 +105,8 @@ EduHub/
 │       └── Program.cs
 │
 └── tests/
-    ├── EduHub.UnitTests/           # xUnit tests
-    └── EduHub.IntegrationTests/    # Integration tests
+    ├── EduFlyUp.UnitTests/           # xUnit tests
+    └── EduFlyUp.IntegrationTests/    # Integration tests
 ```
 
 ---
@@ -221,9 +221,9 @@ EduHub/
 
 | Thành phần | Công nghệ |
 |---|---|
-| Framework | ASP.NET Core 10.0 |
-| ORM | Entity Framework Core |
-| Database | SQLite (dev) → SQL Server (prod) |
+| Framework | ASP.NET Core 8.0 (.NET 8) |
+| ORM | Entity Framework Core 8 |
+| Database | Microsoft SQL Server |
 | Auth | ASP.NET Core Identity + JWT |
 | CQRS | MediatR |
 | Mapping | AutoMapper |
