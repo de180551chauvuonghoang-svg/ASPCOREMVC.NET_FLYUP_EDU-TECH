@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EduFlyUp.Application\EduFlyUp.Application.csproj" />
+    <ProjectReference Include="..\EduFlyUp.Infrastructure\EduFlyUp.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

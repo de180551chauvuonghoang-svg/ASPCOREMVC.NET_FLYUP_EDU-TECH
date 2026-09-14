@@ -1,0 +1,246 @@
+# 🚀 .NET Toàn Diện - Project: **EduHub** (Nền tảng học trực tuyến)
+
+## Giới thiệu
+
+**EduHub** là một nền tảng học trực tuyến mini được thiết kế đặc biệt để cover **toàn bộ kiến thức .NET** quan trọng nhất mà bất kỳ .NET Developer chuyên nghiệp nào cũng cần biết.
+
+> Lý do chọn project này: E-learning là domain có đủ độ phức tạp để áp dụng tất cả các pattern, nhưng không quá phức tạp về nghiệp vụ — rất phù hợp để học .NET một cách bài bản.
+
+---
+
+## 🎯 Kiến thức .NET được cover trong project
+
+| Kỹ năng | Được áp dụng ở đâu |
+|---|---|
+| **ASP.NET Core MVC** | Toàn bộ cấu trúc ứng dụng |
+| **Razor Pages** | Trang học viên (student-facing) |
+| **Blazor Components** | Dashboard thống kê real-time, quiz interactive |
+| **Entity Framework Core** | Truy cập database, migration |
+| **Clean Architecture** | Tổ chức code theo layers |
+| **Repository + Unit of Work** | Data access pattern |
+| **Dependency Injection** | Tất cả services |
+| **Identity & Auth (Cookie + JWT)** | Đăng nhập, phân quyền Admin/Teacher/Student |
+| **Web API** | API riêng phục vụ Blazor & frontend |
+| **SignalR** | Chat room, thông báo real-time |
+| **CQRS + MediatR** | Command/Query separation |
+| **AutoMapper** | DTO mapping |
+| **FluentValidation** | Validate dữ liệu đầu vào |
+| **Middleware** | Xử lý lỗi, logging tùy chỉnh |
+| **Background Jobs (Hosted Service)** | Gửi email nhắc nhở |
+| **File Upload** | Upload ảnh bìa khóa học |
+| **Unit Testing (xUnit)** | Test services & controllers |
+| **Caching (Memory Cache)** | Cache danh sách khóa học |
+
+---
+
+## 📁 Cấu trúc Project (Clean Architecture)
+
+```
+EduHub/
+├── src/
+│   ├── EduHub.Domain/              # 💡 Layer 1: Entities, Enums, Interfaces
+│   │   ├── Entities/
+│   │   │   ├── Course.cs
+│   │   │   ├── Lesson.cs
+│   │   │   ├── Enrollment.cs
+│   │   │   ├── Quiz.cs
+│   │   │   ├── ChatMessage.cs
+│   │   │   └── ApplicationUser.cs
+│   │   ├── Enums/
+│   │   │   ├── CourseLevel.cs
+│   │   │   └── UserRole.cs
+│   │   └── Interfaces/
+│   │       ├── IRepository.cs
+│   │       ├── IUnitOfWork.cs
+│   │       └── ICourseRepository.cs
+│   │
+│   ├── EduHub.Application/         # 💡 Layer 2: Business Logic (CQRS, DTOs, Services)
+│   │   ├── Features/
+│   │   │   ├── Courses/
+│   │   │   │   ├── Commands/       # CreateCourse, UpdateCourse, DeleteCourse
+│   │   │   │   ├── Queries/        # GetAllCourses, GetCourseById
+│   │   │   │   └── Validators/     # FluentValidation
+│   │   │   ├── Enrollments/
+│   │   │   ├── Quizzes/
+│   │   │   └── Auth/
+│   │   ├── DTOs/
+│   │   ├── Mappings/               # AutoMapper Profiles
+│   │   └── Services/
+│   │       ├── IEmailService.cs
+│   │       └── ICacheService.cs
+│   │
+│   ├── EduHub.Infrastructure/      # 💡 Layer 3: EF Core, External Services
+│   │   ├── Data/
+│   │   │   ├── AppDbContext.cs
+│   │   │   ├── Migrations/
+│   │   │   └── Seed/               # DataSeeder.cs
+│   │   ├── Repositories/
+│   │   │   ├── BaseRepository.cs
+│   │   │   └── CourseRepository.cs
+│   │   ├── Services/
+│   │   │   ├── EmailService.cs     # SmtpClient / MailKit
+│   │   │   └── FileUploadService.cs
+│   │   └── BackgroundJobs/
+│   │       └── ReminderHostedService.cs
+│   │
+│   └── EduHub.Web/                 # 💡 Layer 4: ASP.NET Core Web App
+│       ├── Controllers/            # MVC Controllers
+│       ├── Areas/
+│       │   ├── Admin/              # Quản lý hệ thống (MVC)
+│       │   └── Teacher/            # Quản lý khóa học (MVC + API)
+│       ├── Pages/                  # Razor Pages (Student area)
+│       │   ├── Courses/
+│       │   ├── Learn/
+│       │   └── Profile/
+│       ├── Components/             # Blazor Components
+│       │   ├── Dashboard/
+│       │   ├── QuizPlayer/
+│       │   └── LiveChat/
+│       ├── Hubs/
+│       │   └── ChatHub.cs          # SignalR Hub
+│       ├── Middleware/
+│       │   ├── ExceptionMiddleware.cs
+│       │   └── RequestLoggingMiddleware.cs
+│       ├── wwwroot/
+│       └── Program.cs
+│
+└── tests/
+    ├── EduHub.UnitTests/           # xUnit tests
+    └── EduHub.IntegrationTests/    # Integration tests
+```
+
+---
+
+## 🗺️ Lộ trình học theo từng Phase
+
+### Phase 1 — Nền tảng & Cấu trúc (Tuần 1-2)
+> **Học**: Project setup, Clean Architecture, Dependency Injection, EF Core
+
+- [ ] Tạo Solution với nhiều project (.csproj)
+- [ ] Thiết kế Domain Entities
+- [ ] Setup EF Core + SQLite/SQL Server + Migrations
+- [ ] Cấu hình Dependency Injection trong `Program.cs`
+- [ ] Repository Pattern + Unit of Work
+- [ ] Seed dữ liệu mẫu
+
+**👉 Kết quả**: Ứng dụng có database và có thể đọc/ghi dữ liệu
+
+---
+
+### Phase 2 — ASP.NET Core MVC & Razor Pages (Tuần 3-4)
+> **Học**: MVC Pattern, Routing, Middleware, Razor Syntax, Tag Helpers
+
+- [ ] Thiết lập Areas (Admin, Teacher)
+- [ ] CRUD Khóa học bằng MVC + Bootstrap
+- [ ] Razor Pages cho trang Student
+- [ ] Custom Middleware (Error Handling, Logging)
+- [ ] Model Binding, Validation, TempData
+- [ ] Layout, Partial Views, ViewComponents
+
+**👉 Kết quả**: Website hoàn chỉnh có thể duyệt và quản lý khóa học
+
+---
+
+### Phase 3 — Authentication & Authorization (Tuần 5)
+> **Học**: ASP.NET Identity, Cookie Auth, JWT, Role-based Authorization
+
+- [ ] Cài đặt ASP.NET Core Identity
+- [ ] Đăng ký / Đăng nhập / Quên mật khẩu
+- [ ] Roles: Admin, Teacher, Student
+- [ ] Policy-based Authorization
+- [ ] JWT cho Web API endpoints
+
+**👉 Kết quả**: Hệ thống phân quyền hoàn chỉnh
+
+---
+
+### Phase 4 — CQRS + MediatR + FluentValidation (Tuần 6)
+> **Học**: Clean CQRS architecture, MediatR pipeline, Validation
+
+- [ ] Cài đặt MediatR
+- [ ] Viết Commands (CreateCourseCommand, EnrollCommand)
+- [ ] Viết Queries (GetCoursesQuery, GetDashboardStatsQuery)
+- [ ] Pipeline Behaviors (Validation, Logging, Caching)
+- [ ] FluentValidation validators
+- [ ] AutoMapper profiles
+
+**👉 Kết quả**: Business logic sạch, có thể test độc lập
+
+---
+
+### Phase 5 — Web API + Blazor (Tuần 7-8)
+> **Học**: RESTful API, Swagger, Blazor Server/WASM, JS Interop
+
+- [ ] Tạo API endpoints cho Course, Enrollment, Quiz
+- [ ] Swagger/OpenAPI documentation
+- [ ] Blazor Dashboard (thống kê học viên, doanh thu)
+- [ ] Blazor Quiz Player (làm bài thi interactive)
+- [ ] Kết hợp Blazor trong MVC app (Razor Component)
+
+**👉 Kết quả**: App có cả UI truyền thống và interactive Blazor
+
+---
+
+### Phase 6 — SignalR & Background Services (Tuần 9)
+> **Học**: Real-time communication, Hosted Services, IBackgroundService
+
+- [ ] ChatHub với SignalR (chat phòng học)
+- [ ] Thông báo real-time khi có học viên đăng ký
+- [ ] `IHostedService` gửi email nhắc nhở hàng ngày
+- [ ] Progress tracking real-time
+
+**👉 Kết quả**: App có tính năng real-time thực sự
+
+---
+
+### Phase 7 — Caching, File Upload & Email (Tuần 10)
+> **Học**: IMemoryCache, IDistributedCache, Multipart Upload, SMTP
+
+- [ ] Memory Cache cho danh sách khóa học
+- [ ] Upload ảnh bìa khóa học (lưu local)
+- [ ] Email service với MailKit
+- [ ] Gửi email xác nhận đăng ký khóa học
+
+**👉 Kết quả**: App production-ready hơn
+
+---
+
+### Phase 8 — Unit Testing & Integration Testing (Tuần 11-12)
+> **Học**: xUnit, Moq, Test patterns, Integration testing với WebApplicationFactory
+
+- [ ] Unit test cho Application Services
+- [ ] Mock repositories với Moq
+- [ ] Integration test API endpoints
+- [ ] Test Authentication flows
+
+**👉 Kết quả**: Codebase có test coverage, hiểu cách viết code testable
+
+---
+
+## 🛠️ Tech Stack
+
+| Thành phần | Công nghệ |
+|---|---|
+| Framework | ASP.NET Core 10.0 |
+| ORM | Entity Framework Core |
+| Database | SQLite (dev) → SQL Server (prod) |
+| Auth | ASP.NET Core Identity + JWT |
+| CQRS | MediatR |
+| Mapping | AutoMapper |
+| Validation | FluentValidation |
+| Real-time | SignalR |
+| Interactive UI | Blazor Server |
+| Testing | xUnit + Moq + FluentAssertions |
+| API Docs | Swagger (Swashbuckle) |
+| Email | MailKit |
+| CSS Framework | Bootstrap 5 + Bootstrap Icons |
+
+---
+
+## ✅ Bước tiếp theo
+
+Bắt đầu với **Phase 1**:
+1. Tạo Solution structure đầy đủ
+2. Setup Domain layer với các Entities
+3. Cấu hình EF Core + Database
+4. Chạy được ứng dụng lần đầu tiên 🎉

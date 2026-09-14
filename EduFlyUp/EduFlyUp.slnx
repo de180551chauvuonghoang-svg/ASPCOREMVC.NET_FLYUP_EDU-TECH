@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="EduFlyUp.Application/EduFlyUp.Application.csproj" />
+    <Project Path="EduFlyUp.Domain/EduFlyUp.Domain.csproj" />
+    <Project Path="EduFlyUp.Infrastructure/EduFlyUp.Infrastructure.csproj" />
+    <Project Path="EduFlyUp.Web/EduFlyUp.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="EduFlyUp.UnitTests/EduFlyUp.UnitTests.csproj" />
+  </Folder>
+</Solution>
