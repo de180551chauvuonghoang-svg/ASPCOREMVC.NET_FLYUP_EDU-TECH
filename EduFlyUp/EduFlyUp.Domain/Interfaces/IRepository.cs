@@ -1,4 +1,5 @@
-﻿using System;
+using EduFlyUp.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -9,7 +10,7 @@ namespace EduFlyUp.Domain.Interfaces
 {
     // T phải là class và kế thừa BaseEntity
     // Generic interface: dùng cho Course, Lesson, Enrollment đều được
-    public interface IRepository<T> where T : class
+    public interface IRepository<T> where T : BaseEntity
     {
         // Trả về tất cả records (IQueryable cho phép thêm .Where(), .OrderBy() sau)
         IQueryable<T> GetAll();
