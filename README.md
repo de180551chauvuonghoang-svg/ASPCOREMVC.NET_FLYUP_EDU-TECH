@@ -10,26 +10,26 @@
 
 ## 🎯 Kiến thức .NET được cover trong project
 
-| Kỹ năng | Được áp dụng ở đâu |
-|---|---|
-| **ASP.NET Core MVC** | Toàn bộ cấu trúc ứng dụng |
-| **Razor Pages** | Trang học viên (student-facing) |
-| **Blazor Components** | Dashboard thống kê real-time, quiz interactive |
-| **Entity Framework Core** | Truy cập database, migration |
-| **Clean Architecture** | Tổ chức code theo layers |
-| **Repository + Unit of Work** | Data access pattern |
-| **Dependency Injection** | Tất cả services |
-| **Identity & Auth (Cookie + JWT)** | Đăng nhập, phân quyền Admin/Teacher/Student |
-| **Web API** | API riêng phục vụ Blazor & frontend |
-| **SignalR** | Chat room, thông báo real-time |
-| **CQRS + MediatR** | Command/Query separation |
-| **AutoMapper** | DTO mapping |
-| **FluentValidation** | Validate dữ liệu đầu vào |
-| **Middleware** | Xử lý lỗi, logging tùy chỉnh |
-| **Background Jobs (Hosted Service)** | Gửi email nhắc nhở |
-| **File Upload** | Upload ảnh bìa khóa học |
-| **Unit Testing (xUnit)** | Test services & controllers |
-| **Caching (Memory Cache)** | Cache danh sách khóa học |
+| Kỹ năng                                  | Được áp dụng ở đâu                       |
+| ------------------------------------------ | ------------------------------------------------ |
+| **ASP.NET Core MVC**                 | Toàn bộ cấu trúc ứng dụng                  |
+| **Razor Pages**                      | Trang học viên (student-facing)                |
+| **Blazor Components**                | Dashboard thống kê real-time, quiz interactive |
+| **Entity Framework Core**            | Truy cập database, migration                    |
+| **Clean Architecture**               | Tổ chức code theo layers                       |
+| **Repository + Unit of Work**        | Data access pattern                              |
+| **Dependency Injection**             | Tất cả services                                |
+| **Identity & Auth (Cookie + JWT)**   | Đăng nhập, phân quyền Admin/Teacher/Student |
+| **Web API**                          | API riêng phục vụ Blazor & frontend           |
+| **SignalR**                          | Chat room, thông báo real-time                 |
+| **CQRS + MediatR**                   | Command/Query separation                         |
+| **AutoMapper**                       | DTO mapping                                      |
+| **FluentValidation**                 | Validate dữ liệu đầu vào                    |
+| **Middleware**                       | Xử lý lỗi, logging tùy chỉnh                |
+| **Background Jobs (Hosted Service)** | Gửi email nhắc nhở                            |
+| **File Upload**                      | Upload ảnh bìa khóa học                      |
+| **Unit Testing (xUnit)**             | Test services & controllers                      |
+| **Caching (Memory Cache)**           | Cache danh sách khóa học                      |
 
 ---
 
@@ -114,10 +114,11 @@ EduFlyUp/
 ## 🗺️ Lộ trình học theo từng Phase
 
 ### Phase 1 — Nền tảng & Cấu trúc (Tuần 1-2)
+
 > **Học**: Project setup, Clean Architecture, Dependency Injection, EF Core
 
-- [ ] Tạo Solution với nhiều project (.csproj)
-- [ ] Thiết kế Domain Entities
+- [X] Tạo Solution với nhiều project (.csproj)
+- [X] Thiết kế Domain Entities
 - [ ] Setup EF Core + SQLite/SQL Server + Migrations
 - [ ] Cấu hình Dependency Injection trong `Program.cs`
 - [ ] Repository Pattern + Unit of Work
@@ -128,6 +129,7 @@ EduFlyUp/
 ---
 
 ### Phase 2 — ASP.NET Core MVC & Razor Pages (Tuần 3-4)
+
 > **Học**: MVC Pattern, Routing, Middleware, Razor Syntax, Tag Helpers
 
 - [ ] Thiết lập Areas (Admin, Teacher)
@@ -142,6 +144,7 @@ EduFlyUp/
 ---
 
 ### Phase 3 — Authentication & Authorization (Tuần 5)
+
 > **Học**: ASP.NET Identity, Cookie Auth, JWT, Role-based Authorization
 
 - [ ] Cài đặt ASP.NET Core Identity
@@ -155,6 +158,7 @@ EduFlyUp/
 ---
 
 ### Phase 4 — CQRS + MediatR + FluentValidation (Tuần 6)
+
 > **Học**: Clean CQRS architecture, MediatR pipeline, Validation
 
 - [ ] Cài đặt MediatR
@@ -169,6 +173,7 @@ EduFlyUp/
 ---
 
 ### Phase 5 — Web API + Blazor (Tuần 7-8)
+
 > **Học**: RESTful API, Swagger, Blazor Server/WASM, JS Interop
 
 - [ ] Tạo API endpoints cho Course, Enrollment, Quiz
@@ -182,6 +187,7 @@ EduFlyUp/
 ---
 
 ### Phase 6 — SignalR & Background Services (Tuần 9)
+
 > **Học**: Real-time communication, Hosted Services, IBackgroundService
 
 - [ ] ChatHub với SignalR (chat phòng học)
@@ -194,6 +200,7 @@ EduFlyUp/
 ---
 
 ### Phase 7 — Caching, File Upload & Email (Tuần 10)
+
 > **Học**: IMemoryCache, IDistributedCache, Multipart Upload, SMTP
 
 - [ ] Memory Cache cho danh sách khóa học
@@ -206,6 +213,7 @@ EduFlyUp/
 ---
 
 ### Phase 8 — Unit Testing & Integration Testing (Tuần 11-12)
+
 > **Học**: xUnit, Moq, Test patterns, Integration testing với WebApplicationFactory
 
 - [ ] Unit test cho Application Services
@@ -219,27 +227,28 @@ EduFlyUp/
 
 ## 🛠️ Tech Stack
 
-| Thành phần | Công nghệ |
-|---|---|
-| Framework | ASP.NET Core 8.0 (.NET 8) |
-| ORM | Entity Framework Core 8 |
-| Database | Microsoft SQL Server |
-| Auth | ASP.NET Core Identity + JWT |
-| CQRS | MediatR |
-| Mapping | AutoMapper |
-| Validation | FluentValidation |
-| Real-time | SignalR |
-| Interactive UI | Blazor Server |
-| Testing | xUnit + Moq + FluentAssertions |
-| API Docs | Swagger (Swashbuckle) |
-| Email | MailKit |
-| CSS Framework | Bootstrap 5 + Bootstrap Icons |
+| Thành phần   | Công nghệ                    |
+| -------------- | ------------------------------ |
+| Framework      | ASP.NET Core 8.0 (.NET 8)      |
+| ORM            | Entity Framework Core 8        |
+| Database       | Microsoft SQL Server           |
+| Auth           | ASP.NET Core Identity + JWT    |
+| CQRS           | MediatR                        |
+| Mapping        | AutoMapper                     |
+| Validation     | FluentValidation               |
+| Real-time      | SignalR                        |
+| Interactive UI | Blazor Server                  |
+| Testing        | xUnit + Moq + FluentAssertions |
+| API Docs       | Swagger (Swashbuckle)          |
+| Email          | MailKit                        |
+| CSS Framework  | Bootstrap 5 + Bootstrap Icons  |
 
 ---
 
 ## ✅ Bước tiếp theo
 
 Bắt đầu với **Phase 1**:
+
 1. Tạo Solution structure đầy đủ
 2. Setup Domain layer với các Entities
 3. Cấu hình EF Core + Database
