@@ -1,8 +1,28 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Trang Chủ - EduFlyUp";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Hero Banner Section Hiện Đại -->
+<div class="py-5 text-center my-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 mb-3">
+                🚀 Nền Tảng Học Trực Tuyến .NET 8
+            </span>
+            <h1 class="display-4 fw-bold mb-3 text-slate-800">
+                Nâng Tầm Kỹ Năng Lập Trình Cùng <span class="text-primary">EduFlyUp</span>
+            </h1>
+            <p class="lead text-muted mb-4">
+                Học ASP.NET Core, Clean Architecture, SQL Server và các kiến trúc hệ thống hiện đại từ cơ bản đến nâng cao.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-controller="Courses" asp-action="Index" class="btn btn-primary btn-lg shadow-sm rounded-pill px-4">
+                    <i class="bi bi-compass me-1"></i>Khám phá Khóa học
+                </a>
+                <a asp-controller="Courses" asp-action="Create" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
+                    <i class="bi bi-plus-lg me-1"></i>Tạo Khóa học mới
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
