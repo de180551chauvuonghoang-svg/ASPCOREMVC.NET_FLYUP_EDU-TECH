@@ -1,23 +1,33 @@
+using EduFlyUp.Infrastructure;
+using EduFlyUp.Infrastructure.Data;
+using EduFlyUp.Infrastructure.Data.Seed;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ──────────────── Đăng ký Services ────────────────
 builder.Services.AddControllersWithViews();
 
+// Gọi extension method — đăng ký DbContext + Repositories
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// ──────────────── Build App ────────────────
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ──────────────── Seed Data khi khởi động ────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DataSeeder.SeedAsync(context);
+}
+
+// ──────────────── Middleware Pipeline ────────────────
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseAuthorization();
 
 app.MapControllerRoute(

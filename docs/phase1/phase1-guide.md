@@ -38,13 +38,13 @@ Trong .NET, một **Solution** (`.sln`) chứa nhiều **Project** (`.csproj`).C
 **Bước 2**: Tạo 5 project theo thứ tự sau.
 Chuột phải vào Solution → `Add` → `New Project`:
 
-| # | Tên Project              | Template cần chọn                               | Thư mục đặt               |
+| # | Tên Project | Template cần chọn | Thư mục đặt |
 | - | ------------------------- | ------------------------------------------------- | ----------------------------- |
-| 1 | `EduHub.Domain`         | Class Library*(net8.0)*                         | `src/EduHub.Domain`         |
-| 2 | `EduHub.Application`    | Class Library*(net8.0)*                         | `src/EduHub.Application`    |
-| 3 | `EduHub.Infrastructure` | Class Library*(net8.0)*                         | `src/EduHub.Infrastructure` |
-| 4 | `EduHub.Web`            | **ASP.NET Core Web App (MVC)** *(net8.0)* | `src/EduHub.Web`            |
-| 5 | `EduHub.UnitTests`      | xUnit Test Project*(net8.0)*                    | `tests/EduHub.UnitTests`    |
+| 1 | `EduHub.Domain` | Class Library*(net8.0)* | `src/EduHub.Domain` |
+| 2 | `EduHub.Application` | Class Library*(net8.0)* | `src/EduHub.Application` |
+| 3 | `EduHub.Infrastructure` | Class Library*(net8.0)* | `src/EduHub.Infrastructure` |
+| 4 | `EduHub.Web` | **ASP.NET Core Web App (MVC)** *(net8.0)* | `src/EduHub.Web` |
+| 5 | `EduHub.UnitTests` | xUnit Test Project*(net8.0)* | `tests/EduHub.UnitTests` |
 
 > ⚠️ Khi tạo `EduHub.Web`: chọn đúng **Model-View-Controller**, bỏ tick **"Configure for HTTPS"** tạm thời để đơn giản hơn khi dev.
 
@@ -97,12 +97,12 @@ EduHub (Solution)
 
 Chuột phải vào project → `Add` → `Project Reference` → tick project cần reference → OK
 
-| Project                   | Cần reference tới                                     |
+| Project | Cần reference tới |
 | ------------------------- | ------------------------------------------------------- |
-| `EduHub.Application`    | ✅`EduHub.Domain`                                     |
-| `EduHub.Infrastructure` | ✅`EduHub.Application`                                |
-| `EduHub.Web`            | ✅`EduHub.Application` + ✅ `EduHub.Infrastructure` |
-| `EduHub.UnitTests`      | ✅`EduHub.Application`                                |
+| `EduHub.Application` | ✅`EduHub.Domain` |
+| `EduHub.Infrastructure` | ✅`EduHub.Application` |
+| `EduHub.Web` | ✅`EduHub.Application` + ✅ `EduHub.Infrastructure` |
+| `EduHub.UnitTests` | ✅`EduHub.Application` |
 
 > ❌ **TUYỆT ĐỐI KHÔNG** để `EduHub.Domain` reference project nào khác
 > ❌ **KHÔNG** để `EduHub.Application` reference `EduHub.Infrastructure`
@@ -349,9 +349,9 @@ Chuột phải vào `EduHub.Infrastructure` → `Manage NuGet Packages`:
 
 Cài thêm cho `EduHub.Web`:
 
-| Package                                  | Phiên bản | Mục đích                             |
+| Package | Phiên bản | Mục đích |
 | ---------------------------------------- | ----------- | --------------------------------------- |
-| `Microsoft.EntityFrameworkCore.Design` | 8.x         | Hỗ trợ tạo Migration từ Web project |
+| `Microsoft.EntityFrameworkCore.Design` | 8.x | Hỗ trợ tạo Migration từ Web project |
 
 ### 📋 Cấu trúc thư mục trong `EduHub.Infrastructure`
 
@@ -500,10 +500,10 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
 ```
 
 > 💡 **Giải thích các thiết lập quan trọng:**
+>
 > - `HasMaxLength(300)`: Giới hạn độ dài chuỗi tương ứng kiểu `NVARCHAR(300)` trong SQL Server, tránh lãng phí dung lượng.
 > - `HasDefaultValue(0)`: Thiết lập giá trị mặc định cho cột khi insert nếu không truyền giá trị.
 > - `OnDelete(DeleteBehavior.Cascade)`: Khi xóa một khóa học, toàn bộ bài học thuộc khóa học đó cũng sẽ bị xóa theo (ràng buộc toàn vẹn dữ liệu).
-
 
 ---
 
@@ -909,16 +909,16 @@ Update-Database -Project EduHub.Infrastructure -StartupProject EduHub.Web
 
 ## 🔑 Kiến thức quan trọng cần nhớ sau Phase 1
 
-| Khái niệm                  | Giải thích ngắn                                            |
+| Khái niệm | Giải thích ngắn |
 | ---------------------------- | ------------------------------------------------------------- |
-| **Clean Architecture** | Dependencies chỉ trỏ vào trong — Domain là trung tâm    |
-| **Entity**             | Object có ID riêng biệt, map 1-1 với bảng DB             |
-| **IRepository\<T\>**   | Hợp đồng truy cập data — Application không biết về DB |
-| **IUnitOfWork**        | Gom nhiều thao tác vào 1 transaction                       |
-| **DbContext**          | Trung tâm EF Core — quản lý kết nối và tracking        |
-| **Migration**          | Lịch sử thay đổi schema DB — có thể rollback           |
-| **DI Container**       | Quản lý vòng đời objects — Singleton/Scoped/Transient   |
-| **Extension Method**   | `AddInfrastructure()` — giữ `Program.cs` gọn gàng     |
+| **Clean Architecture** | Dependencies chỉ trỏ vào trong — Domain là trung tâm |
+| **Entity** | Object có ID riêng biệt, map 1-1 với bảng DB |
+| **IRepository\<T\>** | Hợp đồng truy cập data — Application không biết về DB |
+| **IUnitOfWork** | Gom nhiều thao tác vào 1 transaction |
+| **DbContext** | Trung tâm EF Core — quản lý kết nối và tracking |
+| **Migration** | Lịch sử thay đổi schema DB — có thể rollback |
+| **DI Container** | Quản lý vòng đời objects — Singleton/Scoped/Transient |
+| **Extension Method** | `AddInfrastructure()` — giữ `Program.cs` gọn gàng |
 
 ---
 
