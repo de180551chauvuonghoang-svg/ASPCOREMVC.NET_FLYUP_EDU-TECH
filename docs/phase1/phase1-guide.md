@@ -1,7 +1,7 @@
 # 📦 Phase 1 — Nền tảng & Cấu trúc Project
 
-> **Thời gian**: Tuần 1–2  
-> **Mục tiêu**: Hiểu Clean Architecture, tạo Solution đúng chuẩn, setup EF Core + SQL Server, Repository Pattern  
+> **Thời gian**: Tuần 1–2
+> **Mục tiêu**: Hiểu Clean Architecture, tạo Solution đúng chuẩn, setup EF Core + SQL Server, Repository Pattern
 > **Công cụ**: Visual Studio 2022, .NET 8, SQL Server
 
 ---
@@ -10,7 +10,7 @@
 
 1. [Task 1.1 — Tạo Solution Structure](#task-11--tạo-solution-structure)
 2. [Task 1.2 — Thiết lập Project References](#task-12--thiết-lập-project-references)
-3. [Task 1.3 — Domain Layer: Entities & Enums](#task-13--domain-layer-entities--enums)
+3. [Task 1.3 — Domain Layer: Entities &amp; Enums](#task-13--domain-layer-entities--enums)
 4. [Task 1.4 — Domain Layer: Interfaces](#task-14--domain-layer-interfaces)
 5. [Task 1.5 — Infrastructure: EF Core + DbContext](#task-15--infrastructure-ef-core--dbcontext)
 6. [Task 1.6 — Infrastructure: Repository Pattern](#task-16--infrastructure-repository-pattern)
@@ -24,36 +24,38 @@
 
 ### 🧠 Lý thuyết: Tại sao cần nhiều project?
 
-Trong .NET, một **Solution** (`.sln`) chứa nhiều **Project** (`.csproj`).  
-Chia nhiều project giúp:
+Trong .NET, một **Solution** (`.sln`) chứa nhiều **Project** (`.csproj`).Chia nhiều project giúp:
+
 - **Enforce kiến trúc**: Compiler báo lỗi nếu bạn vi phạm dependency rule
 - **Tách biệt trách nhiệm**: Mỗi project làm đúng 1 việc
 - **Dễ test**: Test project chỉ cần reference Application, không cần kéo theo Web
 
 ### 📋 Hướng dẫn thực hành
 
-**Bước 1**: Mở Visual Studio 2022 → `File` → `New` → `Project`  
+**Bước 1**: Mở Visual Studio 2022 → `File` → `New` → `Project`
 → Tìm **"Blank Solution"** → Đặt tên `EduHub` → Location: thư mục `baitapprn`
 
-**Bước 2**: Tạo 5 project theo thứ tự sau.  
+**Bước 2**: Tạo 5 project theo thứ tự sau.
 Chuột phải vào Solution → `Add` → `New Project`:
 
-| # | Tên Project | Template cần chọn | Thư mục đặt |
-|---|---|---|---|
-| 1 | `EduHub.Domain` | Class Library *(net8.0)* | `src/EduHub.Domain` |
-| 2 | `EduHub.Application` | Class Library *(net8.0)* | `src/EduHub.Application` |
-| 3 | `EduHub.Infrastructure` | Class Library *(net8.0)* | `src/EduHub.Infrastructure` |
-| 4 | `EduHub.Web` | **ASP.NET Core Web App (MVC)** *(net8.0)* | `src/EduHub.Web` |
-| 5 | `EduHub.UnitTests` | xUnit Test Project *(net8.0)* | `tests/EduHub.UnitTests` |
+| # | Tên Project              | Template cần chọn                               | Thư mục đặt               |
+| - | ------------------------- | ------------------------------------------------- | ----------------------------- |
+| 1 | `EduHub.Domain`         | Class Library*(net8.0)*                         | `src/EduHub.Domain`         |
+| 2 | `EduHub.Application`    | Class Library*(net8.0)*                         | `src/EduHub.Application`    |
+| 3 | `EduHub.Infrastructure` | Class Library*(net8.0)*                         | `src/EduHub.Infrastructure` |
+| 4 | `EduHub.Web`            | **ASP.NET Core Web App (MVC)** *(net8.0)* | `src/EduHub.Web`            |
+| 5 | `EduHub.UnitTests`      | xUnit Test Project*(net8.0)*                    | `tests/EduHub.UnitTests`    |
 
 > ⚠️ Khi tạo `EduHub.Web`: chọn đúng **Model-View-Controller**, bỏ tick **"Configure for HTTPS"** tạm thời để đơn giản hơn khi dev.
 
 **Bước 3**: Xóa file mặc định không cần thiết:
+
 - `EduHub.Domain` → xóa `Class1.cs`
 - `EduHub.Application` → xóa `Class1.cs`
 - `EduHub.Infrastructure` → xóa `Class1.cs`
 
 **✅ Kết quả mong đợi**: Solution Explorer trông như thế này:
+
 ```
 EduHub (Solution)
 ├── src
@@ -95,14 +97,14 @@ EduHub (Solution)
 
 Chuột phải vào project → `Add` → `Project Reference` → tick project cần reference → OK
 
-| Project | Cần reference tới |
-|---|---|
-| `EduHub.Application` | ✅ `EduHub.Domain` |
-| `EduHub.Infrastructure` | ✅ `EduHub.Application` |
-| `EduHub.Web` | ✅ `EduHub.Application` + ✅ `EduHub.Infrastructure` |
-| `EduHub.UnitTests` | ✅ `EduHub.Application` |
+| Project                   | Cần reference tới                                     |
+| ------------------------- | ------------------------------------------------------- |
+| `EduHub.Application`    | ✅`EduHub.Domain`                                     |
+| `EduHub.Infrastructure` | ✅`EduHub.Application`                                |
+| `EduHub.Web`            | ✅`EduHub.Application` + ✅ `EduHub.Infrastructure` |
+| `EduHub.UnitTests`      | ✅`EduHub.Application`                                |
 
-> ❌ **TUYỆT ĐỐI KHÔNG** để `EduHub.Domain` reference project nào khác  
+> ❌ **TUYỆT ĐỐI KHÔNG** để `EduHub.Domain` reference project nào khác
 > ❌ **KHÔNG** để `EduHub.Application` reference `EduHub.Infrastructure`
 
 **✅ Verify**: Build toàn bộ solution bằng `Ctrl + Shift + B` — phải thành công (0 errors)
@@ -119,7 +121,7 @@ DTO      = Đối tượng chuyển dữ liệu, không có hành vi — VD: Cou
 Value Object = Đối tượng so sánh bằng giá trị, không có ID — VD: Money, Address
 ```
 
-**Domain layer không được có bất kỳ NuGet package nào** (ngoại lệ: một số annotation thuần túy).  
+**Domain layer không được có bất kỳ NuGet package nào** (ngoại lệ: một số annotation thuần túy).
 Đây là C# thuần túy.
 
 ### 📋 Cấu trúc thư mục cần tạo trong `EduHub.Domain`
@@ -192,14 +194,17 @@ public class Course : BaseEntity
 ### 🎯 Bài tập — Tự viết các file sau
 
 **`EnrollmentStatus.cs`** (enum):
+
 - Các giá trị: `Active`, `Completed`, `Cancelled`
 
 **`Lesson.cs`** (entity kế thừa BaseEntity):
+
 - Properties cần có: `Title`, `Content`, `VideoUrl`, `DurationMinutes` (int), `Order` (int — thứ tự bài học), `IsPreview` (bool — bài học xem thử miễn phí không?)
 - Foreign key: `CourseId` (int)
 - Navigation property: `Course` (ngược lại về Course)
 
 **`Enrollment.cs`** (entity kế thừa BaseEntity):
+
 - Properties: `UserId` (string — dùng string vì ASP.NET Identity dùng GUID), `CourseId` (int), `EnrolledAt` (DateTime), `CompletedAt` (DateTime? — nullable), `Status` (EnrollmentStatus)
 - Navigation properties: `Course`
 
@@ -214,6 +219,7 @@ public class Course : BaseEntity
 **Vấn đề**: Application cần lấy dữ liệu từ database. Nhưng Application layer không được phép biết về EF Core hay SQL Server (vi phạm Dependency Rule).
 
 **Giải pháp**: **Interface** (hợp đồng).
+
 ```
 Application định nghĩa "HỢP ĐỒNG": IRepository
 Infrastructure "KÝ HỢP ĐỒNG": class Repository : IRepository
@@ -335,17 +341,17 @@ dbContext.Courses.Remove(c)  →  DELETE FROM Courses WHERE Id = ...
 
 Chuột phải vào `EduHub.Infrastructure` → `Manage NuGet Packages`:
 
-| Package | Phiên bản | Mục đích |
-|---|---|---|
-| `Microsoft.EntityFrameworkCore` | 8.x | EF Core core |
-| `Microsoft.EntityFrameworkCore.SqlServer` | 8.x | Provider cho SQL Server |
-| `Microsoft.EntityFrameworkCore.Tools` | 8.x | Tạo Migration qua CLI |
+| Package                                     | Phiên bản | Mục đích             |
+| ------------------------------------------- | ----------- | ----------------------- |
+| `Microsoft.EntityFrameworkCore`           | 8.x         | EF Core core            |
+| `Microsoft.EntityFrameworkCore.SqlServer` | 8.x         | Provider cho SQL Server |
+| `Microsoft.EntityFrameworkCore.Tools`     | 8.x         | Tạo Migration qua CLI  |
 
 Cài thêm cho `EduHub.Web`:
 
-| Package | Phiên bản | Mục đích |
-|---|---|---|
-| `Microsoft.EntityFrameworkCore.Design` | 8.x | Hỗ trợ tạo Migration từ Web project |
+| Package                                  | Phiên bản | Mục đích                             |
+| ---------------------------------------- | ----------- | --------------------------------------- |
+| `Microsoft.EntityFrameworkCore.Design` | 8.x         | Hỗ trợ tạo Migration từ Web project |
 
 ### 📋 Cấu trúc thư mục trong `EduHub.Infrastructure`
 
@@ -448,6 +454,7 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
 ### 🎯 Bài tập — Tự viết `LessonConfiguration.cs`
 
 Cấu hình cho bảng `Lessons`:
+
 - `Title`: required, max 300 ký tự
 - `VideoUrl`: max 500 ký tự
 - `DurationMinutes`: default value = 0
@@ -470,6 +477,7 @@ Controller → DbContext        Controller → IRepository
 ```
 
 **Lợi ích**:
+
 - Unit test: mock `IRepository` mà không cần database
 - Tập trung query phức tạp vào 1 nơi
 - Swap database dễ dàng
@@ -606,7 +614,7 @@ public class UnitOfWork : IUnitOfWork
 
 ### 🧠 Lý thuyết: Seed Data
 
-Seed Data = dữ liệu mẫu được tạo sẵn khi khởi động app lần đầu.  
+Seed Data = dữ liệu mẫu được tạo sẵn khi khởi động app lần đầu.
 Giúp bạn test mà không cần nhập tay từng record.
 
 ### 📝 Code mẫu — `DataSeeder.cs`
@@ -695,7 +703,7 @@ Transient   → Tạo mới mỗi lần được inject           (VD: lightweig
 }
 ```
 
-> 💡 Nếu bạn dùng SQL Server đầy đủ (không phải LocalDB), thay connection string thành:  
+> 💡 Nếu bạn dùng SQL Server đầy đủ (không phải LocalDB), thay connection string thành:
 > `"Server=.;Database=EduHubDb;Trusted_Connection=True;TrustServerCertificate=True"`
 
 ### 📝 Tạo Extension Method — `InfrastructureServiceExtensions.cs` trong `EduHub.Infrastructure`
@@ -796,11 +804,13 @@ Update-Database -Project EduHub.Infrastructure -StartupProject EduHub.Web
 ## ✅ Checklist tổng kết Phase 1
 
 ### Task 1.1 — Solution Structure
+
 - [ ] Tạo Blank Solution `EduHub`
 - [ ] Tạo đủ 5 projects đúng template và location
 - [ ] Xóa các `Class1.cs` mặc định
 
 ### Task 1.2 — Project References
+
 - [ ] `Application` → `Domain`
 - [ ] `Infrastructure` → `Application`
 - [ ] `Web` → `Application` + `Infrastructure`
@@ -808,6 +818,7 @@ Update-Database -Project EduHub.Infrastructure -StartupProject EduHub.Web
 - [ ] Build solution thành công (0 errors)
 
 ### Task 1.3 — Domain Entities
+
 - [ ] `BaseEntity.cs`
 - [ ] `Course.cs`
 - [ ] `Lesson.cs` *(tự viết)*
@@ -816,25 +827,30 @@ Update-Database -Project EduHub.Infrastructure -StartupProject EduHub.Web
 - [ ] `EnrollmentStatus.cs` (enum) *(tự viết)*
 
 ### Task 1.4 — Domain Interfaces
+
 - [ ] `IRepository.cs`
 - [ ] `ICourseRepository.cs`
 - [ ] `IUnitOfWork.cs`
 
 ### Task 1.5 — EF Core Setup
+
 - [ ] Cài NuGet packages cho `Infrastructure` và `Web`
 - [ ] `AppDbContext.cs`
 - [ ] `CourseConfiguration.cs`
 - [ ] `LessonConfiguration.cs` *(tự viết)*
 
 ### Task 1.6 — Repository Pattern
+
 - [ ] `BaseRepository.cs`
 - [ ] `CourseRepository.cs`
 - [ ] `UnitOfWork.cs`
 
 ### Task 1.7 — Data Seeder
+
 - [ ] `DataSeeder.cs` với ít nhất 2 courses, 3 lessons
 
 ### Task 1.8 — DI & Migration
+
 - [ ] Cấu hình connection string trong `appsettings.json`
 - [ ] `InfrastructureServiceExtensions.cs`
 - [ ] Cập nhật `Program.cs`
@@ -847,16 +863,16 @@ Update-Database -Project EduHub.Infrastructure -StartupProject EduHub.Web
 
 ## 🔑 Kiến thức quan trọng cần nhớ sau Phase 1
 
-| Khái niệm | Giải thích ngắn |
-|---|---|
-| **Clean Architecture** | Dependencies chỉ trỏ vào trong — Domain là trung tâm |
-| **Entity** | Object có ID riêng biệt, map 1-1 với bảng DB |
-| **IRepository\<T\>** | Hợp đồng truy cập data — Application không biết về DB |
-| **IUnitOfWork** | Gom nhiều thao tác vào 1 transaction |
-| **DbContext** | Trung tâm EF Core — quản lý kết nối và tracking |
-| **Migration** | Lịch sử thay đổi schema DB — có thể rollback |
-| **DI Container** | Quản lý vòng đời objects — Singleton/Scoped/Transient |
-| **Extension Method** | `AddInfrastructure()` — giữ `Program.cs` gọn gàng |
+| Khái niệm                  | Giải thích ngắn                                            |
+| ---------------------------- | ------------------------------------------------------------- |
+| **Clean Architecture** | Dependencies chỉ trỏ vào trong — Domain là trung tâm    |
+| **Entity**             | Object có ID riêng biệt, map 1-1 với bảng DB             |
+| **IRepository\<T\>**   | Hợp đồng truy cập data — Application không biết về DB |
+| **IUnitOfWork**        | Gom nhiều thao tác vào 1 transaction                       |
+| **DbContext**          | Trung tâm EF Core — quản lý kết nối và tracking        |
+| **Migration**          | Lịch sử thay đổi schema DB — có thể rollback           |
+| **DI Container**       | Quản lý vòng đời objects — Singleton/Scoped/Transient   |
+| **Extension Method**   | `AddInfrastructure()` — giữ `Program.cs` gọn gàng     |
 
 ---
 
