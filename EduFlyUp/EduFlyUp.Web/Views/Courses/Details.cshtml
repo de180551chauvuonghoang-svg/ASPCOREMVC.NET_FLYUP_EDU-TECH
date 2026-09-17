@@ -1,0 +1,91 @@
+@model EduFlyUp.Web.Models.Courses.CourseDetailViewModel
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Cột trái: Thông tin chính khóa học -->
+    <div class="col-lg-8">
+        <div class="card card-modern p-4 p-md-5 shadow-sm mb-4">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle badge-level">
+                    @Model.Level
+                </span>
+                <span class="text-muted small">
+                    <i class="bi bi-clock me-1"></i>Tạo ngày @Model.CreatedAt.ToString("dd/MM/yyyy")
+                </span>
+            </div>
+
+            <h2 class="fw-bold mb-3 text-slate-800">@Model.Title</h2>
+            <p class="text-muted lead fs-6">@Model.Description</p>
+
+            <hr class="my-4 text-muted opacity-25">
+
+            <!-- Danh sách bài học -->
+            <h4 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-collection-play-fill text-primary"></i>
+                Nội dung khóa học (@Model.Lessons.Count bài học)
+            </h4>
+
+            @if (!Model.Lessons.Any())
+            {
+                <div class="alert alert-light border text-muted">
+                    <i class="bi bi-info-circle me-1"></i>Khóa học này đang được cập nhật nội dung bài học.
+                </div>
+            }
+            else
+            {
+                <div class="list-group list-group-flush rounded-3 border">
+                    @foreach (var lesson in Model.Lessons)
+                    {
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge bg-secondary-subtle text-secondary rounded-circle p-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                                    @lesson.Order
+                                </span>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold text-dark">@lesson.Title</h6>
+                                    <small class="text-muted"><i class="bi bi-clock me-1"></i>@lesson.DurationMinutes phút</small>
+                                </div>
+                            </div>
+                            <div>
+                                @if (lesson.IsPreview)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                        <i class="bi bi-eye me-1"></i>Học thử miễn phí
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Cột phải: Thẻ đăng ký khóa học -->
+    <div class="col-lg-4">
+        <div class="card card-modern p-4 shadow-sm sticky-top" style="top: 90px;">
+            <img src="@Model.ThumbnailUrl" class="rounded-3 mb-3 w-100" alt="@Model.Title" style="height: 200px; object-fit: cover;">
+            <div class="mb-3">
+                <span class="text-muted small">Học phí trọn gói</span>
+                <div class="fs-3 fw-bold text-primary">
+                    @(Model.IsFree ? "Miễn phí" : Model.Price.ToString("N0") + " đ")
+                </div>
+            </div>
+            <button class="btn btn-primary w-100 py-2 mb-2 rounded-pill shadow-sm">
+                <i class="bi bi-lightning-charge-fill me-1"></i>Đăng ký học ngay
+            </button>
+            <div class="text-center text-muted small mt-2">
+                <i class="bi bi-shield-check me-1 text-success"></i>Truy cập trọn đời • Hỗ trợ 24/7
+            </div>
+        </div>
+    </div>
+</div>

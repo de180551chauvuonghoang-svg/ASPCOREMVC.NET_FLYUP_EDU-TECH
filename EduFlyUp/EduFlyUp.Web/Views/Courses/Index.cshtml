@@ -1,0 +1,35 @@
+﻿@model IEnumerable<EduFlyUp.Web.Models.Courses.CourseItemModel>
+
+@{
+    ViewData["Title"] = "Danh sách Khóa học";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Khám phá Khóa học</h2>
+        <p class="text-muted">Chương trình đào tạo .NET chuyên sâu từ chuyên gia</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary shadow-sm">
+        <i class="bi bi-plus-lg me-1"></i>Tạo khóa học mới
+    </a>
+</div>
+
+<div class="row g-4">
+    @if (!Model.Any())
+    {
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-inbox fs-1 text-muted"></i>
+            <p class="mt-2 text-muted">Chưa có khóa học nào được đăng tải.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <!-- Tái sử dụng Partial View hiển thị Card khóa học -->
+                <partial name="_CourseCard" model="item" />
+            </div>
+        }
+    }
+</div>

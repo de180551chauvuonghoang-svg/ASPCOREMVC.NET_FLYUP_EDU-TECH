@@ -1,16 +1,11 @@
 using EduFlyUp.Infrastructure;
 using EduFlyUp.Infrastructure.Data;
 using EduFlyUp.Infrastructure.Data.Seed;
-using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ──────────────── Đăng ký Services ────────────────
 builder.Services.AddControllersWithViews();
-
-// Đăng ký Blazor Server & MudBlazor cho giao diện C# hiện đại
-builder.Services.AddServerSideBlazor();
-builder.Services.AddMudServices();
 
 // Gọi extension method — đăng ký DbContext + Repositories
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -29,14 +24,23 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
 
+// Custom Middleware đo thời gian xử lý request
+app.UseMiddleware<EduFlyUp.Web.Middleware.RequestTimingMiddleware>();
+
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 
-app.MapBlazorHub();
+// Route cho phân hệ Areas (Admin)
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
+// Route mặc định cho Web
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

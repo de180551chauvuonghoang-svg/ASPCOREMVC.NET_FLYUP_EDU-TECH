@@ -1,0 +1,77 @@
+﻿@model EduFlyUp.Web.Models.Courses.CourseCreateModel
+
+@{
+    ViewData["Title"] = "Tạo khóa học mới";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-modern p-4 p-md-5 shadow-sm">
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-circle">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <h3 class="fw-bold mb-0">Tạo Khóa Học Mới</h3>
+            </div>
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <!-- Validation Summary (Hiện nếu có lỗi chung) -->
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label fw-semibold"></label>
+                    <input asp-for="Title" class="form-control form-control-lg rounded-3" placeholder="Nhập tên khóa học..." />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label fw-semibold"></label>
+                    <textarea asp-for="Description" class="form-control rounded-3" rows="4" placeholder="Mô tả nội dung khóa học..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Price" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <input asp-for="Price" type="number" class="form-control rounded-start-3" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Level" class="form-label fw-semibold"></label>
+                        <select asp-for="Level" asp-items="Html.GetEnumSelectList<EduFlyUp.Domain.Enums.CourseLevel>()" class="form-select rounded-3"></select>
+                        <span asp-validation-for="Level" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ThumbnailUrl" class="form-label fw-semibold"></label>
+                    <input asp-for="ThumbnailUrl" class="form-control rounded-3" placeholder="https://example.com/image.jpg" />
+                    <span asp-validation-for="ThumbnailUrl" class="text-danger small"></span>
+                </div>
+
+                <div class="form-check form-switch mb-4">
+                    <input asp-for="IsPublished" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsPublished" class="form-check-label fw-semibold"></label>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i>Lưu khóa học
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Bật kiểm tra lỗi ngay trên trình duyệt (Client-side validation) -->
+    <partial name="_ValidationScriptsPartial" />
+}
