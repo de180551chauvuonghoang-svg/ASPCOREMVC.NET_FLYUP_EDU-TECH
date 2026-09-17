@@ -451,14 +451,59 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
 }
 ```
 
-### 🎯 Bài tập — Tự viết `LessonConfiguration.cs`
+### 📝 Code mẫu — `LessonConfiguration.cs`
 
-Cấu hình cho bảng `Lessons`:
+```csharp
+using EduFlyUp.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-- `Title`: required, max 300 ký tự
-- `VideoUrl`: max 500 ký tự
-- `DurationMinutes`: default value = 0
-- Quan hệ ngược lại với Course đã được định nghĩa ở `CourseConfiguration`
+namespace EduFlyUp.Infrastructure.Data.Configurations;
+
+public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
+{
+    public void Configure(EntityTypeBuilder<Lesson> builder)
+    {
+        // Tên bảng trong database
+        builder.ToTable("Lessons");
+
+        // Primary Key
+        builder.HasKey(l => l.Id);
+
+        // Cấu hình các columns
+        builder.Property(l => l.Title)
+            .IsRequired()
+            .HasMaxLength(300);
+
+        builder.Property(l => l.Content)
+            .HasColumnType("nvarchar(max)"); // Hỗ trợ nội dung bài học dài
+
+        builder.Property(l => l.VideoUrl)
+            .HasMaxLength(500);
+
+        builder.Property(l => l.DurationMinutes)
+            .HasDefaultValue(0);
+
+        builder.Property(l => l.Order)
+            .HasDefaultValue(1);
+
+        builder.Property(l => l.IsPreview)
+            .HasDefaultValue(false);
+
+        // Cấu hình quan hệ (N - 1 với Course): Nhiều Lesson thuộc 1 Course
+        builder.HasOne(l => l.Course)
+            .WithMany(c => c.Lessons)
+            .HasForeignKey(l => l.CourseId)
+            .OnDelete(DeleteBehavior.Cascade); // Xóa Course → tự động xóa toàn bộ Lessons liên quan
+    }
+}
+```
+
+> 💡 **Giải thích các thiết lập quan trọng:**
+> - `HasMaxLength(300)`: Giới hạn độ dài chuỗi tương ứng kiểu `NVARCHAR(300)` trong SQL Server, tránh lãng phí dung lượng.
+> - `HasDefaultValue(0)`: Thiết lập giá trị mặc định cho cột khi insert nếu không truyền giá trị.
+> - `OnDelete(DeleteBehavior.Cascade)`: Khi xóa một khóa học, toàn bộ bài học thuộc khóa học đó cũng sẽ bị xóa theo (ràng buộc toàn vẹn dữ liệu).
+
 
 ---
 
@@ -496,13 +541,14 @@ EduHub.Infrastructure/
 
 ```csharp
 using System.Linq.Expressions;
-using EduHub.Domain.Interfaces;
-using EduHub.Infrastructure.Data;
+using EduFlyUp.Domain.Entities;
+using EduFlyUp.Domain.Interfaces;
+using EduFlyUp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace EduHub.Infrastructure.Repositories;
+namespace EduFlyUp.Infrastructure.Repositories;
 
-public class BaseRepository<T> : IRepository<T> where T : class
+public class BaseRepository<T> : IRepository<T> where T : BaseEntity
 {
     protected readonly AppDbContext _context;
     protected readonly DbSet<T> _dbSet;
