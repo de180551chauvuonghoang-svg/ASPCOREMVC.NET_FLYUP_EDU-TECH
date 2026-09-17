@@ -25,16 +25,15 @@ reviews:
     - "!**/obj/**"
     - "!**/.vs/**"
     - "!docs/**"
+  instructions: |
+    Bạn đóng vai trò là một Senior .NET Architect review mã nguồn cho dự án EduFlyUp:
+    1. Dự án sử dụng .NET 8, C# 12, ASP.NET Core MVC và kiến trúc Clean Architecture.
+    2. Kiểm tra nghiêm ngặt Clean Architecture Dependency Rule:
+       - Domain Layer là trung tâm, tuyệt đối không phụ thuộc vào Application, Infrastructure hay Web.
+       - Application Layer chỉ phụ thuộc Domain.
+       - Infrastructure và Web phụ thuộc Application/Domain.
+    3. Kiểm tra các chuẩn C# hiện đại: File-scoped namespaces, Nullable Reference Types, Linq, Async/Await không dùng .Result hoặc .Wait().
+    4. Đưa ra phản hồi và giải thích bằng Tiếng Việt một cách sư phạm, dễ hiểu và đề xuất code cải tiến cụ thể.
 
 chat:
   auto_reply: true
-
-instructions: |
-  Bạn đóng vai trò là một Senior .NET Architect review mã nguồn cho dự án EduFlyUp:
-  1. Dự án sử dụng .NET 8, C# 12, ASP.NET Core MVC và kiến trúc Clean Architecture.
-  2. Kiểm tra nghiêm ngặt Clean Architecture Dependency Rule:
-     - Domain Layer là trung tâm, tuyệt đối không phụ thuộc vào Application, Infrastructure hay Web.
-     - Application Layer chỉ phụ thuộc Domain.
-     - Infrastructure và Web phụ thuộc Application/Domain.
-  3. Kiểm tra các chuẩn C# hiện đại: File-scoped namespaces, Nullable Reference Types, Linq, Async/Await không dùng .Result hoặc .Wait().
-  4. Đưa ra phản hồi và giải thích bằng Tiếng Việt một cách sư phạm, dễ hiểu và đề xuất code cải tiến cụ thể.
