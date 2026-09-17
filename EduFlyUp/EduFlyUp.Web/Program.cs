@@ -1,11 +1,16 @@
 using EduFlyUp.Infrastructure;
 using EduFlyUp.Infrastructure.Data;
 using EduFlyUp.Infrastructure.Data.Seed;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ──────────────── Đăng ký Services ────────────────
 builder.Services.AddControllersWithViews();
+
+// Đăng ký Blazor Server & MudBlazor cho giao diện C# hiện đại
+builder.Services.AddServerSideBlazor();
+builder.Services.AddMudServices();
 
 // Gọi extension method — đăng ký DbContext + Repositories
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -29,6 +34,8 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
+
+app.MapBlazorHub();
 
 app.MapControllerRoute(
     name: "default",

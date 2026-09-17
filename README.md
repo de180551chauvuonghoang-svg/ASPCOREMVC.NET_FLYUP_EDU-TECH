@@ -128,18 +128,18 @@ EduFlyUp/
 
 ---
 
-### Phase 2 — ASP.NET Core MVC & Razor Pages (Tuần 3-4)
+### Phase 2 — ASP.NET Core MVC & Modern C# UI (MudBlazor) (Tuần 3-4)
 
-> **Học**: MVC Pattern, Routing, Middleware, Razor Syntax, Tag Helpers
+> **Học**: MVC Pattern, Routing, ViewModels, Blazor Server Components, MudBlazor Design System
 
-- [ ] Thiết lập Areas (Admin, Teacher)
-- [ ] CRUD Khóa học bằng MVC + Bootstrap
-- [ ] Razor Pages cho trang Student
-- [ ] Custom Middleware (Error Handling, Logging)
-- [ ] Model Binding, Validation, TempData
-- [ ] Layout, Partial Views, ViewComponents
+- [ ] Cấu hình tích hợp MudBlazor vào ASP.NET Core MVC
+- [ ] ViewModels chống Over-posting Attack
+- [ ] Xây dựng Component C# hiển thị danh sách khóa học (`<MudCard>`, `<MudGrid>`)
+- [ ] Form thêm mới khóa học bằng C# (`<MudForm>`, `<MudTextField>`)
+- [ ] Quản lý khóa học trong Admin Area bằng `<MudDataGrid>` (Filter, Sort, Pagination tự động)
+- [ ] Custom Middleware đo lường hiệu năng HTTP Request
 
-**👉 Kết quả**: Website hoàn chỉnh có thể duyệt và quản lý khóa học
+**👉 Kết quả**: Website MVC hiện đại với 100% giao diện được viết bằng C# component đẹp mắt, không dùng HTML/CSS thủ công
 
 ---
 
@@ -241,7 +241,7 @@ EduFlyUp/
 | Testing        | xUnit + Moq + FluentAssertions |
 | API Docs       | Swagger (Swashbuckle)          |
 | Email          | MailKit                        |
-| CSS Framework  | Bootstrap 5 + Bootstrap Icons  |
+| UI & Components | MudBlazor (Material Design 3 in C#) |
 
 ---
 
