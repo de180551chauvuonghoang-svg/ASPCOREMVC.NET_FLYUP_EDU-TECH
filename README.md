@@ -30,6 +30,10 @@
 | **File Upload**                      | Upload ảnh bìa khóa học                      |
 | **Unit Testing (xUnit)**             | Test services & controllers                      |
 | **Caching (Memory Cache)**           | Cache danh sách khóa học                      |
+| **Structured Logging (Serilog)**     | Ghi log có cấu trúc ra file/console/Seq       |
+| **Options Pattern**                  | Bind cấu hình `appsettings.json` vào class C# |
+| **HttpClientFactory**                | Gọi external API an toàn, quản lý lifetime   |
+| **Global Exception Handling**        | Middleware xử lý lỗi tập trung, trả ProblemDetails |
 
 ---
 
@@ -44,15 +48,17 @@ EduFlyUp/
 │   │   │   ├── Lesson.cs
 │   │   │   ├── Enrollment.cs
 │   │   │   ├── Quiz.cs
-│   │   │   ├── ChatMessage.cs
-│   │   │   └── ApplicationUser.cs
+│   │   │   └── ChatMessage.cs
+│   │   │   # ❌ ApplicationUser.cs KHÔNG đặt ở đây
+│   │   │   # vì nó kế thừa IdentityUser (Infrastructure concern)
 │   │   ├── Enums/
 │   │   │   ├── CourseLevel.cs
 │   │   │   └── UserRole.cs
 │   │   └── Interfaces/
 │   │       ├── IRepository.cs
 │   │       ├── IUnitOfWork.cs
-│   │       └── ICourseRepository.cs
+│   │       ├── ICourseRepository.cs
+│   │       └── ICurrentUser.cs       # ✅ Interface trừu tượng, không phụ thuộc Identity
 │   │
 │   ├── EduFlyUp.Application/         # 💡 Layer 2: Business Logic (CQRS, DTOs, Services)
 │   │   ├── Features/
@@ -70,6 +76,8 @@ EduFlyUp/
 │   │       └── ICacheService.cs
 │   │
 │   ├── EduFlyUp.Infrastructure/      # 💡 Layer 3: EF Core, External Services
+│   │   ├── Identity/
+│   │   │   └── ApplicationUser.cs    # ✅ Đúng vị trí: kế thừa IdentityUser
 │   │   ├── Data/
 │   │   │   ├── AppDbContext.cs
 │   │   │   ├── Migrations/
@@ -79,7 +87,8 @@ EduFlyUp/
 │   │   │   └── CourseRepository.cs
 │   │   ├── Services/
 │   │   │   ├── EmailService.cs     # SmtpClient / MailKit
-│   │   │   └── FileUploadService.cs
+│   │   │   ├── FileUploadService.cs
+│   │   │   └── CurrentUserService.cs # ✅ Implement ICurrentUser
 │   │   └── BackgroundJobs/
 │   │       └── ReminderHostedService.cs
 │   │
@@ -108,6 +117,11 @@ EduFlyUp/
     ├── EduFlyUp.UnitTests/           # xUnit tests
     └── EduFlyUp.IntegrationTests/    # Integration tests
 ```
+
+> **📌 Lý do `ApplicationUser` nằm ở `Infrastructure/Identity/`:**
+> `ApplicationUser` kế thừa `IdentityUser` — một class của thư viện `Microsoft.AspNetCore.Identity`.
+> Domain layer **không được** phụ thuộc vào bất kỳ framework bên ngoài nào (Clean Architecture rule).
+> Thay vào đó, Domain chỉ định nghĩa interface `ICurrentUser` để các layer khác có thể reference mà không phá vỡ dependency rule.
 
 ---
 
@@ -160,6 +174,8 @@ EduFlyUp/
 ### Phase 4 — CQRS + MediatR + FluentValidation (Tuần 6)
 
 > **Học**: Clean CQRS architecture, MediatR pipeline, Validation
+
+> ⚠️ **Lưu ý quan trọng**: Project này dùng **song song** Repository/UnitOfWork và CQRS/MediatR **chỉ với mục đích học tập** — để bạn thực hành cả hai pattern trong cùng một codebase. Trong **dự án thực tế**, cân nhắc chỉ chọn **một pattern** để tránh trùng lặp trách nhiệm với `DbContext`. Nếu đã dùng CQRS + MediatR, các Handler có thể gọi thẳng `DbContext` mà không cần thêm Repository layer.
 
 - [ ] Cài đặt MediatR
 - [ ] Viết Commands (CreateCourseCommand, EnrollCommand)
@@ -242,6 +258,8 @@ EduFlyUp/
 | API Docs       | Swagger (Swashbuckle)          |
 | Email          | MailKit                        |
 | UI & Components | MudBlazor (Material Design 3 in C#) |
+| Logging        | Serilog + Seq                  |
+| Code Review    | CodeRabbit AI (tự động review PR) |
 
 ---
 
