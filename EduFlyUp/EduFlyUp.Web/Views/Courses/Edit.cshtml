@@ -1,0 +1,92 @@
+@model EduFlyUp.Web.Models.Courses.CourseEditModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa khóa học";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-modern p-4 p-md-5 shadow-sm">
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm rounded-circle">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h3 class="fw-bold mb-0">Chỉnh Sửa Khóa Học</h3>
+                    <p class="text-muted small mb-0">ID: @Model.Id</p>
+                </div>
+            </div>
+
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <%-- Id ẩn — cần thiết để controller biết đang sửa Course nào --%>
+                <input type="hidden" asp-for="Id" />
+
+                <%-- Validation Summary --%>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label fw-semibold"></label>
+                    <input asp-for="Title" class="form-control form-control-lg rounded-3" placeholder="Nhập tên khóa học..." />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label fw-semibold"></label>
+                    <textarea asp-for="Description" class="form-control rounded-3" rows="4" placeholder="Mô tả nội dung khóa học..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Price" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <input asp-for="Price" type="number" class="form-control rounded-start-3" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Level" class="form-label fw-semibold"></label>
+                        <select asp-for="Level" asp-items="Html.GetEnumSelectList<EduFlyUp.Domain.Enums.CourseLevel>()" class="form-select rounded-3"></select>
+                        <span asp-validation-for="Level" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ThumbnailUrl" class="form-label fw-semibold"></label>
+                    <input asp-for="ThumbnailUrl" class="form-control rounded-3" placeholder="https://example.com/image.jpg" />
+                    <span asp-validation-for="ThumbnailUrl" class="text-danger small"></span>
+                </div>
+
+                <div class="form-check form-switch mb-4">
+                    <input asp-for="IsPublished" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsPublished" class="form-check-label fw-semibold"></label>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <%-- Delete: dùng form riêng với POST để chống CSRF + tránh GET delete --%>
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                          onsubmit="return confirm('Bạn có chắc muốn xóa khóa học này không?')">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i>Xóa khóa học
+                        </button>
+                    </form>
+
+                    <div class="d-flex gap-2">
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary px-4">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save me-1"></i>Lưu thay đổi
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

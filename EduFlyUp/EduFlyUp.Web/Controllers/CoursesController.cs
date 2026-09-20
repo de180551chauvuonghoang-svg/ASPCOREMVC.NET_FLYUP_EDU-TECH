@@ -1,4 +1,4 @@
-﻿using EduFlyUp.Domain.Entities;
+using EduFlyUp.Domain.Entities;
 using EduFlyUp.Domain.Interfaces;
 using EduFlyUp.Web.Models.Courses;
 using Microsoft.AspNetCore.Mvc;
@@ -101,4 +101,94 @@ public class CoursesController : Controller
         TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã được tạo thành công!";
         return RedirectToAction(nameof(Index));
     }
+
+    // ──────────────────────────────────────────────────────────────
+    // EDIT — Kiến thức: GET/POST separation, ViewModel cho Edit form
+    // ──────────────────────────────────────────────────────────────
+
+    // GET: /Courses/Edit/5
+    // Load form chỉnh sửa, điền sẵn dữ liệu hiện tại của Course
+    public async Task<IActionResult> Edit(int id)
+    {
+        var course = await _unitOfWork.Courses.GetByIdAsync(id);
+        if (course == null)
+        {
+            return NotFound();
+        }
+
+        // Map Entity → EditModel (chỉ expose field được phép sửa)
+        var model = new CourseEditModel
+        {
+            Id = course.Id,
+            Title = course.Title,
+            Description = course.Description,
+            ThumbnailUrl = course.ThumbnailUrl,
+            Price = course.Price,
+            Level = course.Level,
+            IsPublished = course.IsPublished
+        };
+
+        return View(model);
+    }
+
+    // POST: /Courses/Edit/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, CourseEditModel model)
+    {
+        // Kiểm tra Id khớp (tránh tampering)
+        if (id != model.Id)
+        {
+            return BadRequest();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var course = await _unitOfWork.Courses.GetByIdAsync(id);
+        if (course == null)
+        {
+            return NotFound();
+        }
+
+        // Chỉ cập nhật các field cho phép — InstructorId, CreatedAt KHÔNG bị thay đổi
+        course.Title = model.Title;
+        course.Description = model.Description;
+        course.ThumbnailUrl = model.ThumbnailUrl ?? string.Empty;
+        course.Price = model.Price;
+        course.Level = model.Level;
+        course.IsPublished = model.IsPublished;
+
+        _unitOfWork.Courses.Update(course);
+        await _unitOfWork.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã được cập nhật thành công!";
+        return RedirectToAction(nameof(Details), new { id = course.Id });
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // DELETE — Kiến thức: POST-only delete, chống CSRF
+    // ──────────────────────────────────────────────────────────────
+
+    // POST: /Courses/Delete/5
+    // Chỉ cho phép DELETE qua HTTP POST (không cho phép GET vì link có thể bị click nhầm)
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var course = await _unitOfWork.Courses.GetByIdAsync(id);
+        if (course == null)
+        {
+            return NotFound();
+        }
+
+        _unitOfWork.Courses.Delete(course);
+        await _unitOfWork.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã bị xóa.";
+        return RedirectToAction(nameof(Index));
+    }
 }
+

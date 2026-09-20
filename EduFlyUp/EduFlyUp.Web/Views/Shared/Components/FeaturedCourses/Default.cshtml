@@ -1,0 +1,50 @@
+@model IEnumerable<EduFlyUp.Web.Models.Courses.CourseItemModel>
+
+@* View mặc định cho FeaturedCoursesViewComponent
+   Đặt ở: Views/Shared/Components/FeaturedCourses/Default.cshtml
+   Quy tắc đặt tên: Default.cshtml = ViewComponent không truyền tên View cụ thể *@
+
+<div class="card card-modern shadow-sm p-3">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-star-fill text-warning"></i>
+        <h6 class="fw-bold mb-0">Khóa học nổi bật</h6>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted small text-center py-2">Chưa có khóa học nào.</p>
+    }
+    else
+    {
+        <ul class="list-unstyled mb-0">
+            @foreach (var course in Model)
+            {
+                <li class="d-flex align-items-start gap-2 mb-3 pb-3 border-bottom last-item-no-border">
+                    <img src="@course.ThumbnailUrl" alt="@course.Title"
+                         class="rounded-2 flex-shrink-0"
+                         style="width: 60px; height: 45px; object-fit: cover;">
+                    <div class="flex-grow-1 overflow-hidden">
+                        <a asp-controller="Courses" asp-action="Details" asp-route-id="@course.Id"
+                           class="text-decoration-none text-dark fw-semibold small d-block text-truncate">
+                            @course.Title
+                        </a>
+                        <span class="text-muted" style="font-size: 0.75rem;">
+                            @course.LessonCount bài •
+                            @if (course.IsFree)
+                            {
+                                <span class="text-success fw-semibold">Miễn phí</span>
+                            }
+                            else
+                            {
+                                <span class="text-primary fw-semibold">@course.Price.ToString("N0") đ</span>
+                            }
+                        </span>
+                    </div>
+                </li>
+            }
+        </ul>
+        <a asp-controller="Courses" asp-action="Index" class="btn btn-outline-primary btn-sm w-100 mt-1 rounded-3">
+            Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+    }
+</div>
