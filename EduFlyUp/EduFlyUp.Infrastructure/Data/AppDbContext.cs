@@ -1,35 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EduFlyUp.Domain.Entities;
+using EduFlyUp.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace EduFlyUp.Infrastructure.Data
 {
-    public class AppDbContext : DbContext
+    // Thay DbContext → IdentityDbContext<ApplicationUser>
+    // IdentityDbContext tự động tạo các bảng: AspNetUsers, AspNetRoles,
+    // AspNetUserRoles, AspNetUserClaims, AspNetRoleClaims, AspNetUserLogins, AspNetUserTokens
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
-        // Constructor nhận DbContextOptions — được inject qua DI
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        // DbSet = "bảng" trong database
         public DbSet<Course> Courses => Set<Course>();
         public DbSet<Lesson> Lessons => Set<Lesson>();
         public DbSet<Enrollment> Enrollments => Set<Enrollment>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Bắt buộc gọi base.OnModelCreating trước khi config thêm
+            // IdentityDbContext cần tạo các bảng Identity trong bước này
             base.OnModelCreating(modelBuilder);
 
-            // Tự động load tất cả IEntityTypeConfiguration trong assembly này
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         }
 
-        // Override SaveChangesAsync để tự động set UpdatedAt
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+            foreach (var entry in ChangeTracker.Entries<EduFlyUp.Domain.Entities.BaseEntity>())
             {
                 if (entry.State == EntityState.Modified)
                 {

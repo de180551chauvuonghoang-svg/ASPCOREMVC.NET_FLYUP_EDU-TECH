@@ -6,13 +6,15 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <!-- FrameworkReference cho phép dùng ASP.NET Core APIs (IHttpContextAccessor, ClaimsPrincipal...)
-       mà không cần reference từng package riêng lẻ -->
+  <!-- FrameworkReference cho phép dùng TOÀN BỘ ASP.NET Core APIs:
+       IHttpContextAccessor, ClaimsPrincipal, Identity, Authentication...
+       → Không cần cài thêm Identity.EntityFrameworkCore riêng lẻ nữa -->
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
