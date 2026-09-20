@@ -33,38 +33,38 @@ Trong .NET, một **Solution** (`.sln`) chứa nhiều **Project** (`.csproj`).C
 ### 📋 Hướng dẫn thực hành
 
 **Bước 1**: Mở Visual Studio 2022 → `File` → `New` → `Project`
-→ Tìm **"Blank Solution"** → Đặt tên `EduHub` → Location: thư mục `baitapprn`
+→ Tìm **"Blank Solution"** → Đặt tên `EduFlyUp` → Location: thư mục `baitapprn`
 
 **Bước 2**: Tạo 5 project theo thứ tự sau.
 Chuột phải vào Solution → `Add` → `New Project`:
 
 | # | Tên Project | Template cần chọn | Thư mục đặt |
-| - | ------------------------- | ------------------------------------------------- | ----------------------------- |
-| 1 | `EduHub.Domain` | Class Library*(net8.0)* | `src/EduHub.Domain` |
-| 2 | `EduHub.Application` | Class Library*(net8.0)* | `src/EduHub.Application` |
-| 3 | `EduHub.Infrastructure` | Class Library*(net8.0)* | `src/EduHub.Infrastructure` |
-| 4 | `EduHub.Web` | **ASP.NET Core Web App (MVC)** *(net8.0)* | `src/EduHub.Web` |
-| 5 | `EduHub.UnitTests` | xUnit Test Project*(net8.0)* | `tests/EduHub.UnitTests` |
+| - | ----------------------------- | ------------------------------------------------- | --------------------------------- |
+| 1 | `EduFlyUp.Domain` | Class Library*(net8.0)* | `src/EduFlyUp.Domain` |
+| 2 | `EduFlyUp.Application` | Class Library*(net8.0)* | `src/EduFlyUp.Application` |
+| 3 | `EduFlyUp.Infrastructure` | Class Library*(net8.0)* | `src/EduFlyUp.Infrastructure` |
+| 4 | `EduFlyUp.Web` | **ASP.NET Core Web App (MVC)** *(net8.0)* | `src/EduFlyUp.Web` |
+| 5 | `EduFlyUp.UnitTests` | xUnit Test Project*(net8.0)* | `tests/EduFlyUp.UnitTests` |
 
-> ⚠️ Khi tạo `EduHub.Web`: chọn đúng **Model-View-Controller**, bỏ tick **"Configure for HTTPS"** tạm thời để đơn giản hơn khi dev.
+> ⚠️ Khi tạo `EduFlyUp.Web`: chọn đúng **Model-View-Controller**, bỏ tick **"Configure for HTTPS"** tạm thời để đơn giản hơn khi dev.
 
 **Bước 3**: Xóa file mặc định không cần thiết:
 
-- `EduHub.Domain` → xóa `Class1.cs`
-- `EduHub.Application` → xóa `Class1.cs`
-- `EduHub.Infrastructure` → xóa `Class1.cs`
+- `EduFlyUp.Domain` → xóa `Class1.cs`
+- `EduFlyUp.Application` → xóa `Class1.cs`
+- `EduFlyUp.Infrastructure` → xóa `Class1.cs`
 
 **✅ Kết quả mong đợi**: Solution Explorer trông như thế này:
 
 ```
-EduHub (Solution)
+EduFlyUp (Solution)
 ├── src
-│   ├── EduHub.Domain
-│   ├── EduHub.Application
-│   ├── EduHub.Infrastructure
-│   └── EduHub.Web
+│   ├── EduFlyUp.Domain
+│   ├── EduFlyUp.Application
+│   ├── EduFlyUp.Infrastructure
+│   └── EduFlyUp.Web
 └── tests
-    └── EduHub.UnitTests
+    └── EduFlyUp.UnitTests
 ```
 
 ---
@@ -98,14 +98,14 @@ EduHub (Solution)
 Chuột phải vào project → `Add` → `Project Reference` → tick project cần reference → OK
 
 | Project | Cần reference tới |
-| ------------------------- | ------------------------------------------------------- |
-| `EduHub.Application` | ✅`EduHub.Domain` |
-| `EduHub.Infrastructure` | ✅`EduHub.Application` |
-| `EduHub.Web` | ✅`EduHub.Application` + ✅ `EduHub.Infrastructure` |
-| `EduHub.UnitTests` | ✅`EduHub.Application` |
+| ----------------------------- | --------------------------------------------------------------- |
+| `EduFlyUp.Application` | ✅ `EduFlyUp.Domain` |
+| `EduFlyUp.Infrastructure` | ✅ `EduFlyUp.Application` |
+| `EduFlyUp.Web` | ✅ `EduFlyUp.Application` + ✅ `EduFlyUp.Infrastructure` |
+| `EduFlyUp.UnitTests` | ✅ `EduFlyUp.Application` |
 
-> ❌ **TUYỆT ĐỐI KHÔNG** để `EduHub.Domain` reference project nào khác
-> ❌ **KHÔNG** để `EduHub.Application` reference `EduHub.Infrastructure`
+> ❌ **TUYỆT ĐỐI KHÔNG** để `EduFlyUp.Domain` reference project nào khác
+> ❌ **KHÔNG** để `EduFlyUp.Application` reference `EduFlyUp.Infrastructure`
 
 **✅ Verify**: Build toàn bộ solution bằng `Ctrl + Shift + B` — phải thành công (0 errors)
 
@@ -124,24 +124,28 @@ Value Object = Đối tượng so sánh bằng giá trị, không có ID — VD:
 **Domain layer không được có bất kỳ NuGet package nào** (ngoại lệ: một số annotation thuần túy).
 Đây là C# thuần túy.
 
-### 📋 Cấu trúc thư mục cần tạo trong `EduHub.Domain`
+### 📋 Cấu trúc thư mục cần tạo trong `EduFlyUp.Domain`
 
 ```
-EduHub.Domain/
+EduFlyUp.Domain/
 ├── Entities/
 │   ├── BaseEntity.cs
 │   ├── Course.cs
 │   ├── Lesson.cs
 │   └── Enrollment.cs
+│   # ❌ KHÔNG đặt ApplicationUser.cs ở đây!
+│   # ApplicationUser kế thừa IdentityUser (thuộc Infrastructure)
 └── Enums/
     ├── CourseLevel.cs
     └── EnrollmentStatus.cs
 ```
 
+> ❗ **Lưu ý quan trọng về `ApplicationUser`**: Nhiều developer hay đặt nhầm `ApplicationUser.cs` vào `Domain/Entities/` vì nó là entity của người dùng. Tuy nhiên `ApplicationUser` kế thừa `IdentityUser` — một class của `Microsoft.AspNetCore.Identity`, là framework concern. Domain layer **không được phép** phụ thuộc vào bất kỳ framework bên ngoài nào. File này sẽ được tạo ở `Infrastructure/Identity/` trong Task 1.5.
+
 ### 📝 Code mẫu — `BaseEntity.cs`
 
 ```csharp
-namespace EduHub.Domain.Entities;
+namespace EduFlyUp.Domain.Entities;
 
 // Abstract: không thể tạo instance trực tiếp, chỉ để kế thừa
 // Mọi Entity đều có Id, CreatedAt, UpdatedAt — viết 1 lần ở đây
@@ -156,7 +160,7 @@ public abstract class BaseEntity
 ### 📝 Code mẫu — `CourseLevel.cs`
 
 ```csharp
-namespace EduHub.Domain.Enums;
+namespace EduFlyUp.Domain.Enums;
 
 public enum CourseLevel
 {
@@ -169,9 +173,9 @@ public enum CourseLevel
 ### 📝 Code mẫu — `Course.cs`
 
 ```csharp
-using EduHub.Domain.Enums;
+using EduFlyUp.Domain.Enums;
 
-namespace EduHub.Domain.Entities;
+namespace EduFlyUp.Domain.Entities;
 
 public class Course : BaseEntity
 {
@@ -179,7 +183,11 @@ public class Course : BaseEntity
     public string Description { get; set; } = string.Empty;
     public string ThumbnailUrl { get; set; } = string.Empty;
     public decimal Price { get; set; }
-    public bool IsFree => Price == 0;           // Computed property, không lưu DB
+
+    // Computed property — tính toán từ Price, KHÔNG lưu vào DB
+    // Phải khai báo builder.Ignore(c => c.IsFree) trong CourseConfiguration.cs
+    public bool IsFree => Price == 0;
+
     public CourseLevel Level { get; set; }
     public string InstructorId { get; set; } = string.Empty;
     public bool IsPublished { get; set; } = false;
@@ -230,14 +238,15 @@ Infrastructure "KÝ HỢP ĐỒNG": class Repository : IRepository
 
 **Dependency Inversion Principle (DIP)**: High-level modules (Application) không phụ thuộc vào low-level modules (Infrastructure). Cả hai phụ thuộc vào abstractions (Interface).
 
-### 📋 Cấu trúc thư mục cần tạo trong `EduHub.Domain`
+### 📋 Cấu trúc thư mục cần tạo trong `EduFlyUp.Domain`
 
 ```
-EduHub.Domain/
+EduFlyUp.Domain/
 └── Interfaces/
     ├── IRepository.cs       ← Generic repository (dùng được cho mọi entity)
     ├── ICourseRepository.cs ← Specific repository (chỉ cho Course)
-    └── IUnitOfWork.cs       ← Quản lý transaction
+    ├── IUnitOfWork.cs       ← Quản lý transaction
+    └── ICurrentUser.cs      ← Trừu tượng hóa user hiện tại (không phụ thuộc Identity)
 ```
 
 ### 📝 Code mẫu — `IRepository.cs`
@@ -245,7 +254,7 @@ EduHub.Domain/
 ```csharp
 using System.Linq.Expressions;
 
-namespace EduHub.Domain.Interfaces;
+namespace EduFlyUp.Domain.Interfaces;
 
 // T phải là class và kế thừa BaseEntity
 // Generic interface: dùng cho Course, Lesson, Enrollment đều được
@@ -278,9 +287,9 @@ public interface IRepository<T> where T : class
 ### 📝 Code mẫu — `ICourseRepository.cs`
 
 ```csharp
-using EduHub.Domain.Entities;
+using EduFlyUp.Domain.Entities;
 
-namespace EduHub.Domain.Interfaces;
+namespace EduFlyUp.Domain.Interfaces;
 
 // Kế thừa IRepository<Course> → có sẵn tất cả methods của IRepository
 // Thêm các methods đặc thù chỉ Course mới cần
@@ -300,7 +309,9 @@ public interface ICourseRepository : IRepository<Course>
 ### 📝 Code mẫu — `IUnitOfWork.cs`
 
 ```csharp
-namespace EduHub.Domain.Interfaces;
+using EduFlyUp.Domain.Entities;
+
+namespace EduFlyUp.Domain.Interfaces;
 
 // Unit of Work: gom nhiều thao tác DB vào 1 transaction
 // VD: Tạo Enrollment + trừ số slot còn lại → phải commit cùng lúc
@@ -316,7 +327,34 @@ public interface IUnitOfWork : IDisposable
 }
 ```
 
+### 📝 Code mẫu — `ICurrentUser.cs`
+
+```csharp
+namespace EduFlyUp.Domain.Interfaces;
+
+// Interface trừu tượng hóa "người dùng hiện tại"
+// Mục đích: Application layer có thể biết UserId mà không cần biết về Identity/HttpContext
+// → Tuân thủ Dependency Inversion: Domain định nghĩa hợp đồng,
+//   Infrastructure (CurrentUserService) thực thi qua IHttpContextAccessor
+public interface ICurrentUser
+{
+    // Id của user đang đăng nhập (null nếu chưa đăng nhập)
+    string? UserId { get; }
+
+    // Tên đăng nhập
+    string? UserName { get; }
+
+    // Kiểm tra user đã đăng nhập chưa
+    bool IsAuthenticated { get; }
+
+    // Kiểm tra role
+    bool IsInRole(string role);
+}
+```
+
 > 💡 `IDisposable` giúp `IUnitOfWork` dọn dẹp tài nguyên (database connection) khi dùng xong — gọi qua `using` statement.
+
+> 💡 **Tại sao `ICurrentUser` nằm ở Domain?** Vì Application layer cần biết UserId để thực thi business logic (VD: "chỉ Instructor mới được sửa Course của mình"). Nếu để `ICurrentUser` ở Infrastructure thì Application sẽ phải reference Infrastructure — vi phạm Dependency Rule.
 
 ---
 
@@ -337,9 +375,9 @@ dbContext.Courses.Remove(c)  →  DELETE FROM Courses WHERE Id = ...
 
 **DbContext** là trung tâm của EF Core: quản lý kết nối, tracking thay đổi, tạo migration.
 
-### 📋 Cài NuGet packages cho `EduHub.Infrastructure`
+### 📋 Cài NuGet packages cho `EduFlyUp.Infrastructure`
 
-Chuột phải vào `EduHub.Infrastructure` → `Manage NuGet Packages`:
+Chuột phải vào `EduFlyUp.Infrastructure` → `Manage NuGet Packages`:
 
 | Package                                     | Phiên bản | Mục đích             |
 | ------------------------------------------- | ----------- | ----------------------- |
@@ -347,21 +385,24 @@ Chuột phải vào `EduHub.Infrastructure` → `Manage NuGet Packages`:
 | `Microsoft.EntityFrameworkCore.SqlServer` | 8.x         | Provider cho SQL Server |
 | `Microsoft.EntityFrameworkCore.Tools`     | 8.x         | Tạo Migration qua CLI  |
 
-Cài thêm cho `EduHub.Web`:
+Cài thêm cho `EduFlyUp.Web`:
 
 | Package | Phiên bản | Mục đích |
 | ---------------------------------------- | ----------- | --------------------------------------- |
 | `Microsoft.EntityFrameworkCore.Design` | 8.x | Hỗ trợ tạo Migration từ Web project |
 
-### 📋 Cấu trúc thư mục trong `EduHub.Infrastructure`
+### 📋 Cấu trúc thư mục trong `EduFlyUp.Infrastructure`
 
 ```
-EduHub.Infrastructure/
+EduFlyUp.Infrastructure/
+├── Identity/
+│   └── ApplicationUser.cs       ← ✅ Đúng vị trí: kế thừa IdentityUser
 └── Data/
     ├── AppDbContext.cs
     ├── Configurations/
     │   ├── CourseConfiguration.cs
-    │   └── LessonConfiguration.cs
+    │   ├── LessonConfiguration.cs
+    │   └── EnrollmentConfiguration.cs   ← ✅ Config FK, cascade cho Enrollment
     └── Seed/
         └── DataSeeder.cs
 ```
@@ -369,10 +410,10 @@ EduHub.Infrastructure/
 ### 📝 Code mẫu — `AppDbContext.cs`
 
 ```csharp
-using EduHub.Domain.Entities;
+using EduFlyUp.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace EduHub.Infrastructure.Data;
+namespace EduFlyUp.Infrastructure.Data;
 
 public class AppDbContext : DbContext
 {
@@ -410,11 +451,11 @@ public class AppDbContext : DbContext
 ### 📝 Code mẫu — `CourseConfiguration.cs`
 
 ```csharp
-using EduHub.Domain.Entities;
+using EduFlyUp.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EduHub.Infrastructure.Data.Configurations;
+namespace EduFlyUp.Infrastructure.Data.Configurations;
 
 // IEntityTypeConfiguration: cấu hình mapping giữa Entity và Table
 // Tốt hơn dùng [Attribute] vì: tách biệt, không làm bẩn Domain layer
@@ -445,7 +486,8 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
             .HasForeignKey(l => l.CourseId)
             .OnDelete(DeleteBehavior.Cascade); // Xóa Course → xóa luôn Lessons
 
-        // Ignore computed property — không lưu vào DB
+        // ⚠️ QUAN TRỌNG: IsFree là computed property (tính từ Price)
+        // Phải khai báo Ignore để EF Core không tạo cột "IsFree" trong DB
         builder.Ignore(c => c.IsFree);
     }
 }
@@ -499,11 +541,54 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
 }
 ```
 
+### 📝 Code mẫu — `EnrollmentConfiguration.cs`
+
+```csharp
+using EduFlyUp.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace EduFlyUp.Infrastructure.Data.Configurations;
+
+public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
+{
+    public void Configure(EntityTypeBuilder<Enrollment> builder)
+    {
+        builder.ToTable("Enrollments");
+
+        builder.HasKey(e => e.Id);
+
+        // UserId dùng string (GUID của ASP.NET Identity)
+        builder.Property(e => e.UserId)
+            .IsRequired()
+            .HasMaxLength(450); // Đúng với độ dài GUID của Identity
+
+        builder.Property(e => e.EnrolledAt)
+            .IsRequired();
+
+        // CompletedAt nullable — null nghĩa là chưa hoàn thành
+        builder.Property(e => e.CompletedAt)
+            .IsRequired(false);
+
+        // Status lưu dạng int vào DB
+        builder.Property(e => e.Status)
+            .IsRequired();
+
+        // Quan hệ N-1 với Course
+        builder.HasOne(e => e.Course)
+            .WithMany(c => c.Enrollments)
+            .HasForeignKey(e => e.CourseId)
+            .OnDelete(DeleteBehavior.Restrict); // Không cascade: tránh xóa enrollment khi xóa course
+    }
+}
+```
+
 > 💡 **Giải thích các thiết lập quan trọng:**
 >
 > - `HasMaxLength(300)`: Giới hạn độ dài chuỗi tương ứng kiểu `NVARCHAR(300)` trong SQL Server, tránh lãng phí dung lượng.
 > - `HasDefaultValue(0)`: Thiết lập giá trị mặc định cho cột khi insert nếu không truyền giá trị.
 > - `OnDelete(DeleteBehavior.Cascade)`: Khi xóa một khóa học, toàn bộ bài học thuộc khóa học đó cũng sẽ bị xóa theo (ràng buộc toàn vẹn dữ liệu).
+> - `OnDelete(DeleteBehavior.Restrict)` trên Enrollment: Không xóa dây chuyền — tránh xóa lịch sử ghi danh.
 
 ---
 
@@ -527,10 +612,10 @@ Controller → DbContext        Controller → IRepository
 - Tập trung query phức tạp vào 1 nơi
 - Swap database dễ dàng
 
-### 📋 Cấu trúc thư mục trong `EduHub.Infrastructure`
+### 📋 Cấu trúc thư mục trong `EduFlyUp.Infrastructure`
 
 ```
-EduHub.Infrastructure/
+EduFlyUp.Infrastructure/
 └── Repositories/
     ├── BaseRepository.cs      ← Implement IRepository<T> generic
     ├── CourseRepository.cs    ← Implement ICourseRepository
@@ -584,12 +669,12 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
 ### 📝 Code mẫu — `CourseRepository.cs`
 
 ```csharp
-using EduHub.Domain.Entities;
-using EduHub.Domain.Interfaces;
-using EduHub.Infrastructure.Data;
+using EduFlyUp.Domain.Entities;
+using EduFlyUp.Domain.Interfaces;
+using EduFlyUp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace EduHub.Infrastructure.Repositories;
+namespace EduFlyUp.Infrastructure.Repositories;
 
 public class CourseRepository : BaseRepository<Course>, ICourseRepository
 {
@@ -618,11 +703,11 @@ public class CourseRepository : BaseRepository<Course>, ICourseRepository
 ### 📝 Code mẫu — `UnitOfWork.cs`
 
 ```csharp
-using EduHub.Domain.Entities;
-using EduHub.Domain.Interfaces;
-using EduHub.Infrastructure.Data;
+using EduFlyUp.Domain.Entities;
+using EduFlyUp.Domain.Interfaces;
+using EduFlyUp.Infrastructure.Data;
 
-namespace EduHub.Infrastructure.Repositories;
+namespace EduFlyUp.Infrastructure.Repositories;
 
 public class UnitOfWork : IUnitOfWork
 {
@@ -666,12 +751,12 @@ Giúp bạn test mà không cần nhập tay từng record.
 ### 📝 Code mẫu — `DataSeeder.cs`
 
 ```csharp
-using EduHub.Domain.Entities;
-using EduHub.Domain.Enums;
-using EduHub.Infrastructure.Data;
+using EduFlyUp.Domain.Entities;
+using EduFlyUp.Domain.Enums;
+using EduFlyUp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace EduHub.Infrastructure.Data.Seed;
+namespace EduFlyUp.Infrastructure.Data.Seed;
 
 public static class DataSeeder
 {
@@ -752,17 +837,18 @@ Transient   → Tạo mới mỗi lần được inject           (VD: lightweig
 > 💡 Nếu bạn dùng SQL Server đầy đủ (không phải LocalDB), thay connection string thành:
 > `"Server=.;Database=EduHubDb;Trusted_Connection=True;TrustServerCertificate=True"`
 
-### 📝 Tạo Extension Method — `InfrastructureServiceExtensions.cs` trong `EduHub.Infrastructure`
+### 📝 Tạo Extension Method — `InfrastructureServiceExtensions.cs` trong `EduFlyUp.Infrastructure`
 
 ```csharp
-using EduHub.Domain.Interfaces;
-using EduHub.Infrastructure.Data;
-using EduHub.Infrastructure.Repositories;
+using EduFlyUp.Domain.Interfaces;
+using EduFlyUp.Infrastructure.Data;
+using EduFlyUp.Infrastructure.Repositories;
+using EduFlyUp.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace EduHub.Infrastructure;
+namespace EduFlyUp.Infrastructure;
 
 // Extension method giúp Program.cs gọn hơn: services.AddInfrastructure(config)
 public static class InfrastructureServiceExtensions
@@ -775,7 +861,7 @@ public static class InfrastructureServiceExtensions
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly("EduHub.Infrastructure") // Migration nằm ở Infra
+                b => b.MigrationsAssembly("EduFlyUp.Infrastructure") // Migration nằm ở Infra
             ));
 
         // Đăng ký Repository và UnitOfWork
@@ -783,24 +869,28 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICourseRepository, CourseRepository>();
 
+        // Đăng ký ICurrentUser — inject IHttpContextAccessor để lấy user từ HttpContext
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, CurrentUserService>();
+
         return services;
     }
 }
 ```
 
-### 📝 Cập nhật `Program.cs` trong `EduHub.Web`
+### 📝 Cập nhật `Program.cs` trong `EduFlyUp.Web`
 
 ```csharp
-using EduHub.Infrastructure;
-using EduHub.Infrastructure.Data;
-using EduHub.Infrastructure.Data.Seed;
+using EduFlyUp.Infrastructure;
+using EduFlyUp.Infrastructure.Data;
+using EduFlyUp.Infrastructure.Data.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ──────────────── Đăng ký Services ────────────────
 builder.Services.AddControllersWithViews();
 
-// Gọi extension method — đăng ký DbContext + Repositories
+// Gọi extension method — đăng ký DbContext + Repositories + ICurrentUser
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // ──────────────── Build App ────────────────
@@ -835,15 +925,15 @@ app.Run();
 Mở **Package Manager Console** (Tools → NuGet Package Manager → Package Manager Console):
 
 ```powershell
-# Bước 1: Chọn Default project là EduHub.Infrastructure
+# Bước 1: Chọn Default project là EduFlyUp.Infrastructure
 # Bước 2: Chạy lệnh tạo migration đầu tiên
-Add-Migration InitialCreate -Project EduHub.Infrastructure -StartupProject EduHub.Web
+Add-Migration InitialCreate -Project EduFlyUp.Infrastructure -StartupProject EduFlyUp.Web
 
 # Bước 3: Áp dụng migration lên SQL Server
-Update-Database -Project EduHub.Infrastructure -StartupProject EduHub.Web
+Update-Database -Project EduFlyUp.Infrastructure -StartupProject EduFlyUp.Web
 ```
 
-> 💡 Sau khi chạy xong, kiểm tra SQL Server Management Studio — database `EduHubDb` đã được tạo với các bảng `Courses`, `Lessons`, `Enrollments`.
+> 💡 Sau khi chạy xong, kiểm tra SQL Server Management Studio — database `EduFlyUpDb` đã được tạo với các bảng `Courses`, `Lessons`, `Enrollments`.
 
 ---
 
@@ -851,16 +941,16 @@ Update-Database -Project EduHub.Infrastructure -StartupProject EduHub.Web
 
 ### Task 1.1 — Solution Structure
 
-- [ ] Tạo Blank Solution `EduHub`
+- [ ] Tạo Blank Solution `EduFlyUp`
 - [ ] Tạo đủ 5 projects đúng template và location
 - [ ] Xóa các `Class1.cs` mặc định
 
 ### Task 1.2 — Project References
 
-- [ ] `Application` → `Domain`
-- [ ] `Infrastructure` → `Application`
-- [ ] `Web` → `Application` + `Infrastructure`
-- [ ] `UnitTests` → `Application`
+- [ ] `EduFlyUp.Application` → `EduFlyUp.Domain`
+- [ ] `EduFlyUp.Infrastructure` → `EduFlyUp.Application`
+- [ ] `EduFlyUp.Web` → `EduFlyUp.Application` + `EduFlyUp.Infrastructure`
+- [ ] `EduFlyUp.UnitTests` → `EduFlyUp.Application`
 - [ ] Build solution thành công (0 errors)
 
 ### Task 1.3 — Domain Entities
@@ -871,19 +961,22 @@ Update-Database -Project EduHub.Infrastructure -StartupProject EduHub.Web
 - [ ] `Enrollment.cs` *(tự viết)*
 - [ ] `CourseLevel.cs` (enum)
 - [ ] `EnrollmentStatus.cs` (enum) *(tự viết)*
+- [ ] ❌ **KHÔNG tạo** `ApplicationUser.cs` ở `Domain/Entities/` (sẽ tạo ở Phase 3)
 
 ### Task 1.4 — Domain Interfaces
 
 - [ ] `IRepository.cs`
 - [ ] `ICourseRepository.cs`
 - [ ] `IUnitOfWork.cs`
+- [ ] `ICurrentUser.cs` *(interface trừu tượng cho user hiện tại)*
 
 ### Task 1.5 — EF Core Setup
 
-- [ ] Cài NuGet packages cho `Infrastructure` và `Web`
+- [ ] Cài NuGet packages cho `EduFlyUp.Infrastructure` và `EduFlyUp.Web`
 - [ ] `AppDbContext.cs`
 - [ ] `CourseConfiguration.cs`
 - [ ] `LessonConfiguration.cs` *(tự viết)*
+- [ ] `EnrollmentConfiguration.cs` *(tự viết)*
 
 ### Task 1.6 — Repository Pattern
 
@@ -898,11 +991,11 @@ Update-Database -Project EduHub.Infrastructure -StartupProject EduHub.Web
 ### Task 1.8 — DI & Migration
 
 - [ ] Cấu hình connection string trong `appsettings.json`
-- [ ] `InfrastructureServiceExtensions.cs`
+- [ ] `InfrastructureServiceExtensions.cs` (bao gồm đăng ký `ICurrentUser`)
 - [ ] Cập nhật `Program.cs`
 - [ ] Chạy `Add-Migration InitialCreate` thành công
 - [ ] Chạy `Update-Database` thành công
-- [ ] Kiểm tra database đã được tạo trong SQL Server
+- [ ] Kiểm tra database `EduFlyUpDb` đã được tạo trong SQL Server
 - [ ] Chạy app (`F5`) — không có lỗi, dữ liệu seed thành công
 
 ---
@@ -910,15 +1003,19 @@ Update-Database -Project EduHub.Infrastructure -StartupProject EduHub.Web
 ## 🔑 Kiến thức quan trọng cần nhớ sau Phase 1
 
 | Khái niệm | Giải thích ngắn |
-| ---------------------------- | ------------------------------------------------------------- |
+| ------------------------------ | ------------------------------------------------------------------- |
 | **Clean Architecture** | Dependencies chỉ trỏ vào trong — Domain là trung tâm |
 | **Entity** | Object có ID riêng biệt, map 1-1 với bảng DB |
 | **IRepository\<T\>** | Hợp đồng truy cập data — Application không biết về DB |
 | **IUnitOfWork** | Gom nhiều thao tác vào 1 transaction |
+| **ICurrentUser** | Interface trừu tượng ở Domain — Infrastructure implement qua HttpContext |
+| **ApplicationUser** | Kế thừa IdentityUser → đặt ở `Infrastructure/Identity/`, không phải Domain |
 | **DbContext** | Trung tâm EF Core — quản lý kết nối và tracking |
+| **IEntityTypeConfiguration** | Cấu hình mapping Entity ↔ Table, tách biệt khỏi Domain |
 | **Migration** | Lịch sử thay đổi schema DB — có thể rollback |
 | **DI Container** | Quản lý vòng đời objects — Singleton/Scoped/Transient |
 | **Extension Method** | `AddInfrastructure()` — giữ `Program.cs` gọn gàng |
+| **Computed Property** | `IsFree => Price == 0` — không lưu DB, phải `Ignore()` trong Configuration |
 
 ---
 
