@@ -1,9 +1,11 @@
-﻿using EduFlyUp.Domain.Interfaces;
+using EduFlyUp.Domain.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EduFlyUp.Web.Areas.Admin.Controllers;
 
-[Area("Admin")] // Bắt buộc để nhận diện Area
+[Area("Admin")]
+[Authorize(Roles = "Admin")] // ← Chỉ Admin mới vào được — [Authorize] ở class áp dụng cho tất cả action
 public class DashboardController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;

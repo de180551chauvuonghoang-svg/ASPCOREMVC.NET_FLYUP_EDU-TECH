@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Không có quyền truy cập";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6 text-center py-5">
+        <i class="bi bi-shield-x text-danger" style="font-size: 4rem;"></i>
+        <h2 class="fw-bold mt-3">Không có quyền truy cập</h2>
+        <p class="text-muted">Bạn không có quyền truy cập vào trang này.<br />Vui lòng đăng nhập với tài khoản có quyền phù hợp.</p>
+        <div class="d-flex gap-2 justify-content-center mt-4">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary px-4">
+                <i class="bi bi-house me-1"></i>Về trang chủ
+            </a>
+            <a asp-controller="Account" asp-action="Login" class="btn btn-primary px-4">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập lại
+            </a>
+        </div>
+    </div>
+</div>
