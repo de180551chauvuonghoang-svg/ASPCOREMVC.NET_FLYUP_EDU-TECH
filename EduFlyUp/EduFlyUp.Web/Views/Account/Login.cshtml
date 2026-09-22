@@ -1,50 +1,82 @@
-﻿@model EduFlyUp.Web.Models.Account.LoginViewModel
+@model EduFlyUp.Web.Models.Account.LoginViewModel
 
 @{
-    ViewData["Title"] = "Đăng nhập";
+    ViewData["Title"] = "Đăng Nhập - EduFlyUp";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card card-modern p-4 p-md-5 shadow-sm">
-            <div class="text-center mb-4">
-                <i class="bi bi-shield-lock-fill fs-1 text-primary"></i>
-                <h3 class="fw-bold mt-2">Đăng nhập</h3>
-                <p class="text-muted small">Chào mừng trở lại!</p>
+<div class="row justify-content-center py-4">
+    <div class="col-md-6 col-lg-5 col-xl-4">
+        <div class="card card-modern p-4 p-md-5 border-0 shadow-lg position-relative overflow-hidden">
+            <!-- Ambient Top Border Glow -->
+            <div class="position-absolute top-0 start-0 end-0" style="height: 5px; background: var(--brand-gradient);"></div>
+
+            <div class="text-center mb-4 pt-2">
+                <div class="brand-icon-wrapper mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.6rem; border-radius: 16px;">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-1">Chào mừng trở lại!</h3>
+                <p class="text-muted small">Đăng nhập tài khoản EduFlyUp để tiếp tục học tập</p>
             </div>
 
             <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
                 @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                
+                @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+                {
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 py-2 small border-0 shadow-xs mb-3" role="alert"></div>
+                }
 
                 <div class="mb-3">
-                    <label asp-for="Email" class="form-label fw-semibold"></label>
-                    <input asp-for="Email" type="email" class="form-control rounded-3" placeholder="example@gmail.com" />
-                    <span asp-validation-for="Email" class="text-danger small"></span>
+                    <label asp-for="Email" class="form-label small fw-semibold text-dark">Địa chỉ Email</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3">
+                            <i class="bi bi-envelope"></i>
+                        </span>
+                        <input asp-for="Email" type="email" class="form-control rounded-end-3 border-start-0 ps-0" placeholder="name@example.com" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small mt-1 d-block"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Password" class="form-label fw-semibold"></label>
-                    <input asp-for="Password" type="password" class="form-control rounded-3" placeholder="Mật khẩu" />
-                    <span asp-validation-for="Password" class="text-danger small"></span>
+                    <label asp-for="Password" class="form-label small fw-semibold text-dark">Mật khẩu</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted rounded-start-3">
+                            <i class="bi bi-key"></i>
+                        </span>
+                        <input asp-for="Password" type="password" class="form-control rounded-end-3 border-start-0 ps-0" placeholder="••••••••" />
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="form-check">
-                        <input asp-for="RememberMe" class="form-check-input" type="checkbox" />
-                        <label asp-for="RememberMe" class="form-check-label small"></label>
+                        <input asp-for="RememberMe" class="form-check-input" type="checkbox" id="rememberMeCheck" />
+                        <label asp-for="RememberMe" class="form-check-label small text-muted" for="rememberMeCheck">Ghi nhớ tôi</label>
                     </div>
-                    <a href="#" class="small text-primary">Quên mật khẩu?</a>
+                    <a href="#" class="small text-primary text-decoration-none fw-semibold">Quên mật khẩu?</a>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 py-2 rounded-3">
+                <button type="submit" class="btn btn-brand w-100 py-3 rounded-pill shadow-glow fw-bold">
                     <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
                 </button>
             </form>
 
-            <div class="text-center mt-3">
+            <!-- Quick Demo Credentials Info Box -->
+            <div class="mt-4 p-3 rounded-3 bg-light border small text-secondary">
+                <div class="fw-bold text-dark mb-1"><i class="bi bi-info-circle-fill text-primary me-1"></i>Tài khoản dùng thử (Seed Data):</div>
+                <div class="d-flex justify-content-between py-1 border-bottom-subtle">
+                    <span>Admin:</span>
+                    <code class="text-primary">admin@eduflyup.vn</code>
+                </div>
+                <div class="d-flex justify-content-between pt-1">
+                    <span>Mật khẩu:</span>
+                    <code class="text-dark fw-bold">Admin@123</code>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 pt-2 border-top">
                 <span class="text-muted small">Chưa có tài khoản?</span>
-                <a asp-action="Register" class="small fw-semibold ms-1">Đăng ký ngay</a>
+                <a asp-action="Register" class="small fw-bold text-primary text-decoration-none ms-1">Đăng ký ngay</a>
             </div>
         </div>
     </div>

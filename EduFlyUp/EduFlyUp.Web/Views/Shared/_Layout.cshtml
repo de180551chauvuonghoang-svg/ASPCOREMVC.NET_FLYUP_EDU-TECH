@@ -7,153 +7,228 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - EduFlyUp</title>
 
-    <!-- Google Font: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="~/images/FLYUPLOGO2.png" />
+    <link rel="shortcut icon" type="image/png" href="~/images/FLYUPLOGO2.png" />
 
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
-    <!-- Modern Design System Styles -->
-    <style>
-        :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #f8fafc;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-        }
-        .navbar-brand { font-weight: 700; color: var(--primary-color) !important; }
-        .nav-link { font-weight: 500; color: #475569 !important; }
-        .nav-link:hover { color: var(--primary-color) !important; }
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            border-radius: 10px;
-            font-weight: 500;
-            padding: 8px 20px;
-            transition: all 0.2s;
-        }
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-        .card-modern {
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            background: #ffffff;
-            transition: all 0.25s ease-in-out;
-        }
-        .card-modern:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
-            border-color: #cbd5e1;
-        }
-        .badge-level {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.75rem;
-        }
-    </style>
+    <!-- Custom Modern Design System -->
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="d-flex flex-column min-vh-100">
-    <!-- Navbar Header -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top py-3">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
-                <i class="bi bi-mortarboard-fill fs-3"></i>
-                <span class="fs-4">EduFlyUp</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Courses" asp-action="Index">Khóa học</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-warning fw-semibold" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                            <i class="bi bi-shield-lock me-1"></i>Quản trị
-                        </a>
-                    </li>
-                </ul>
-                <div class="d-flex align-items-center gap-2">
-                    @if (SignInManager.IsSignedIn(User))
-                    {
-                        <span class="text-muted small d-none d-md-inline">
-                            <i class="bi bi-person-circle me-1"></i>@User.Identity?.Name
-                        </span>
-                        @if (User.IsInRole("Admin"))
+<body class="d-flex flex-column min-vh-100 bg-mesh">
+    <!-- Navbar Header Glassmorphic -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-glass navbar-dark py-3">
+            <div class="container">
+                <a class="navbar-brand p-0" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/FLYUPTECHANDEDU.png" alt="EduFlyUp Tech & Edu" style="height: 42px; width: auto; object-fit: contain;" />
+                </a>
+                
+                <button class="navbar-toggler border-0 shadow-none text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-house-door me-1 opacity-75"></i>Trang chủ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Courses" asp-action="Index">
+                                <i class="bi bi-collection-play me-1 opacity-75"></i>Khóa học
+                            </a>
+                        </li>
+                        @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
                         {
-                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">Admin</span>
+                            <li class="nav-item">
+                                <a class="nav-link text-warning-emphasis fw-semibold bg-warning-subtle rounded-3 px-3 ms-lg-1" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                                    <i class="bi bi-shield-lock-fill me-1 text-warning"></i>Quản trị
+                                </a>
+                            </li>
                         }
-                        else if (User.IsInRole("Teacher"))
+                    </ul>
+
+                    <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                        @if (SignInManager.IsSignedIn(User))
                         {
-                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle small">Teacher</span>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-brand rounded-pill px-3 py-2 d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                                        @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                                    </div>
+                                    <span class="small fw-semibold text-white">@User.Identity?.Name</span>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1" style="font-size: 0.7rem;">Admin</span>
+                                    }
+                                    else if (User.IsInRole("Teacher"))
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1" style="font-size: 0.7rem;">Teacher</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size: 0.7rem;">Student</span>
+                                    }
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2 mt-2">
+                                    <li class="px-3 py-2 border-bottom mb-2">
+                                        <div class="small fw-bold text-dark">@User.Identity?.Name</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Đã đăng nhập</div>
+                                    </li>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item rounded-3 py-2" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                                                <i class="bi bi-speedometer2 me-2 text-warning"></i>Admin Dashboard
+                                            </a>
+                                        </li>
+                                    }
+                                    <li>
+                                        <a class="dropdown-item rounded-3 py-2" asp-area="" asp-controller="Courses" asp-action="Index">
+                                            <i class="bi bi-mortarboard me-2 text-primary"></i>Danh sách Khóa học
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item rounded-3 py-2 text-danger">
+                                                <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
                         }
                         else
                         {
-                            <span class="badge bg-success-subtle text-success border border-success-subtle small">Student</span>
+                            <a asp-area="" asp-controller="Account" asp-action="Login" class="btn btn-outline-brand rounded-pill px-3 py-2 btn-sm">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
+                            </a>
+                            <a asp-area="" asp-controller="Account" asp-action="Register" class="btn btn-brand rounded-pill px-4 py-2 btn-sm">
+                                <i class="bi bi-stars me-1"></i>Bắt đầu học ngay
+                            </a>
                         }
-                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                                <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
-                            </button>
-                        </form>
-                    }
-                    else
-                    {
-                        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-secondary btn-sm rounded-pill px-3">Đăng nhập</a>
-                        <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-sm rounded-pill px-3">Bắt đầu học</a>
-                    }
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow-1 py-4">
+        <div class="container">
+            <!-- Toast / Alert Flash Messages -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
+                    <i class="bi bi-check-circle-fill text-success fs-5 me-3"></i>
+                    <div>@TempData["SuccessMessage"]</div>
+                    <button type="button" class="btn-close ms-auto shadow-none" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill text-danger fs-5 me-3"></i>
+                    <div>@TempData["ErrorMessage"]</div>
+                    <button type="button" class="btn-close ms-auto shadow-none" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Modern Luxury Multi-Column Footer -->
+    <footer class="footer-modern mt-auto pt-5 pb-4">
+        <div class="container">
+            <div class="row g-4 pb-5 border-bottom border-white border-opacity-10">
+                <!-- Column 1: Brand & Bio -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3">
+                        <div class="footer-brand-badge">
+                            <img src="~/images/FlyUpTeam.png" alt="FlyUp Team" style="height: 42px; width: auto; object-fit: contain;" />
+                        </div>
+                    </div>
+                    <p class="small text-secondary mb-4 pe-lg-4" style="line-height: 1.7;">
+                        Nền tảng học lập trình công nghệ cao chuẩn Clean Architecture & .NET 8. Đào tạo tư duy lập trình chuyên sâu, bài bản và vững chắc cho kỹ sư phần mềm.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="footer-social-btn" title="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="footer-social-btn" title="YouTube"><i class="bi bi-youtube"></i></a>
+                        <a href="#" class="footer-social-btn" title="GitHub"><i class="bi bi-github"></i></a>
+                        <a href="#" class="footer-social-btn" title="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                    </div>
+                </div>
+
+                <!-- Column 2: Key Courses -->
+                <div class="col-lg-2 col-md-3 col-6">
+                    <div class="footer-title mb-4">Khóa Học</div>
+                    <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
+                        <li><a href="/Courses" class="footer-link"><i class="bi bi-chevron-right small text-primary"></i>Lập trình .NET 8</a></li>
+                        <li><a href="/Courses" class="footer-link"><i class="bi bi-chevron-right small text-primary"></i>Clean Architecture</a></li>
+                        <li><a href="/Courses" class="footer-link"><i class="bi bi-chevron-right small text-primary"></i>EF Core 8 & SQL</a></li>
+                        <li><a href="/Courses" class="footer-link"><i class="bi bi-chevron-right small text-primary"></i>Web API & JWT</a></li>
+                        <li><a href="/Courses" class="footer-link"><i class="bi bi-chevron-right small text-primary"></i>Identity & Auth</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Ecosystem & About -->
+                <div class="col-lg-2 col-md-3 col-6">
+                    <div class="footer-title mb-4">Về EduFlyUp</div>
+                    <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
+                        <li><a href="#" class="footer-link"><i class="bi bi-chevron-right small text-primary"></i>Giới thiệu nền tảng</a></li>
+                        <li><a href="#" class="footer-link"><i class="bi bi-chevron-right small text-primary"></i>Đội ngũ giảng viên</a></li>
+                        <li><a href="#" class="footer-link"><i class="bi bi-chevron-right small text-primary"></i>Lộ trình phát triển</a></li>
+                        <li><a href="#" class="footer-link"><i class="bi bi-chevron-right small text-primary"></i>Tài liệu GitHub</a></li>
+                        <li><a href="#" class="footer-link"><i class="bi bi-chevron-right small text-primary"></i>Hỏi đáp cộng đồng</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 4: Newsletter Box -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-title mb-4">Đăng Ký Nhận Bản Tin</div>
+                    <p class="small text-secondary mb-3">
+                        Nhận cẩm nang kiến trúc .NET mới nhất, mẹo tối ưu code và các khóa học miễn phí hàng tuần.
+                    </p>
+                    <div class="input-group mb-3">
+                        <input type="email" class="form-control footer-input-box" placeholder="Nhập email của bạn...">
+                        <button class="btn btn-brand rounded-end-pill px-4" type="button">
+                            <span>Đăng ký</span>
+                        </button>
+                    </div>
+                    <div class="small text-secondary opacity-75 d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-check text-success"></i>
+                        <span>Bảo mật thông tin • Cam kết không spam</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Copyright Bar -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pt-4 small text-secondary">
+                <div class="mb-3 mb-md-0">
+                    © @DateTime.UtcNow.Year <strong class="text-white">EduFlyUp & FlyUp Team</strong>. All rights reserved. Clean Architecture with ASP.NET Core 8 MVC.
+                </div>
+                <div class="d-flex gap-3">
+                    <a href="#" class="footer-link">Điều khoản</a>
+                    <span>•</span>
+                    <a href="#" class="footer-link">Bảo mật</a>
+                    <span>•</span>
+                    <a href="#" class="footer-link">Hỗ trợ 24/7</a>
                 </div>
             </div>
         </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="container py-4 flex-grow-1">
-        <!-- Thông báo Flash Messages từ TempData -->
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
-
-        @RenderBody()
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-white border-top py-4 mt-auto">
-        <div class="container text-center text-muted small">
-            <p class="mb-1">© @DateTime.UtcNow.Year <strong>EduFlyUp</strong> - Nền tảng học trực tuyến chuẩn Clean Architecture (.NET 8 MVC)</p>
-        </div>
     </footer>
 
-    <!-- Bootstrap 5 JS -->
+    <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

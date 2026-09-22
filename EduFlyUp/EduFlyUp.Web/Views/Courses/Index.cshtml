@@ -1,25 +1,49 @@
-﻿@model IEnumerable<EduFlyUp.Web.Models.Courses.CourseItemModel>
+@model IEnumerable<EduFlyUp.Web.Models.Courses.CourseItemModel>
 
 @{
-    ViewData["Title"] = "Danh sách Khóa học";
+    ViewData["Title"] = "Danh Sách Khóa Học - EduFlyUp";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1">Khám phá Khóa học</h2>
-        <p class="text-muted">Chương trình đào tạo .NET chuyên sâu từ chuyên gia</p>
+<!-- Page Header Banner -->
+<div class="card card-modern p-4 p-md-5 mb-5 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.06) 0%, rgba(124, 58, 237, 0.06) 100%);">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill mb-3">
+                🎓 Lộ Trình Đào Tạo Chuyên Nghiệp
+            </span>
+            <h1 class="display-6 fw-bold mb-2">Khám Phá Các Khóa Học .NET & Kiến Trúc</h1>
+            <p class="text-muted mb-0 fs-6">
+                Chương trình cập nhật liên tục với .NET 8, Clean Architecture, SQL Server và bảo mật đa tầng.
+            </p>
+        </div>
+        <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+            <a asp-action="Create" class="btn btn-brand rounded-pill px-4 py-3 shadow-md d-inline-flex align-items-center gap-2">
+                <i class="bi bi-plus-circle-fill fs-5"></i>
+                <span>Thêm khóa học mới</span>
+            </a>
+        </div>
     </div>
-    <a asp-action="Create" class="btn btn-primary shadow-sm">
-        <i class="bi bi-plus-lg me-1"></i>Tạo khóa học mới
-    </a>
 </div>
 
+<!-- Courses Grid -->
 <div class="row g-4">
     @if (!Model.Any())
     {
-        <div class="col-12 text-center py-5">
-            <i class="bi bi-inbox fs-1 text-muted"></i>
-            <p class="mt-2 text-muted">Chưa có khóa học nào được đăng tải.</p>
+        <div class="col-12">
+            <div class="card card-modern p-5 text-center my-4 border-0">
+                <div class="mx-auto mb-3" style="width: 80px; height: 80px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-mortarboard text-muted fs-1"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-2">Chưa có khóa học nào được đăng tải</h4>
+                <p class="text-muted small mb-4 mx-auto" style="max-width: 450px;">
+                    Hệ thống hiện chưa có khóa học nào trong cơ sở dữ liệu. Hãy là người đầu tiên tạo khóa học ngay!
+                </p>
+                <div>
+                    <a asp-action="Create" class="btn btn-brand rounded-pill px-4 py-2">
+                        <i class="bi bi-plus-lg me-1"></i>Tạo khóa học ngay
+                    </a>
+                </div>
+            </div>
         </div>
     }
     else
@@ -27,7 +51,6 @@
         @foreach (var item in Model)
         {
             <div class="col-md-6 col-lg-4">
-                <!-- Tái sử dụng Partial View hiển thị Card khóa học -->
                 <partial name="_CourseCard" model="item" />
             </div>
         }

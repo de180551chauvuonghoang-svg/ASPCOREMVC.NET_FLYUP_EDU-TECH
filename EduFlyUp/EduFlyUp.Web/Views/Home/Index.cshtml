@@ -1,28 +1,172 @@
 @{
-    ViewData["Title"] = "Trang Chủ - EduFlyUp";
+    ViewData["Title"] = "Trang Chủ - Nền Tảng Học Lập Trình EduFlyUp";
 }
 
-<!-- Hero Banner Section Hiện Đại -->
-<div class="py-5 text-center my-4">
+<!-- Hero Banner Section -->
+<section class="py-5 text-center position-relative">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 mb-3">
-                🚀 Nền Tảng Học Trực Tuyến .NET 8
-            </span>
-            <h1 class="display-4 fw-bold mb-3 text-slate-800">
-                Nâng Tầm Kỹ Năng Lập Trình Cùng <span class="text-primary">EduFlyUp</span>
+        <div class="col-lg-10 col-xl-8">
+            <div class="hero-badge mx-auto">
+                <span class="hero-badge-pulse"></span>
+                <span>✨ Nền Tảng Đào Tạo Chuẩn Doanh Nghiệp .NET 8</span>
+            </div>
+            
+            <h1 class="display-4 fw-extrabold mb-4 lh-sm">
+                Nâng Tầm Kỹ Năng Kỹ Sư Phần Mềm Với <span class="text-gradient">EduFlyUp</span>
             </h1>
-            <p class="lead text-muted mb-4">
-                Học ASP.NET Core, Clean Architecture, SQL Server và các kiến trúc hệ thống hiện đại từ cơ bản đến nâng cao.
+            
+            <p class="lead text-muted mb-5 fs-5 pe-lg-4 ps-lg-4">
+                Chinh phục <strong>Clean Architecture</strong>, ASP.NET Core 8, Entity Framework Core và các kiến trúc hệ thống hiện đại từ lý thuyết sâu sắc đến dự án thực chiến chuẩn quốc tế.
             </p>
-            <div class="d-flex justify-content-center gap-3">
-                <a asp-controller="Courses" asp-action="Index" class="btn btn-primary btn-lg shadow-sm rounded-pill px-4">
-                    <i class="bi bi-compass me-1"></i>Khám phá Khóa học
+            
+            <div class="d-flex flex-wrap justify-content-center gap-3 mb-5">
+                <a asp-controller="Courses" asp-action="Index" class="btn btn-brand btn-lg rounded-pill px-4 py-3 shadow-lg d-flex align-items-center gap-2">
+                    <span>Khám phá khóa học</span>
+                    <i class="bi bi-arrow-right fs-5"></i>
                 </a>
-                <a asp-controller="Courses" asp-action="Create" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
-                    <i class="bi bi-plus-lg me-1"></i>Tạo Khóa học mới
+                <a asp-controller="Courses" asp-action="Create" class="btn btn-outline-brand btn-lg rounded-pill px-4 py-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-plus-circle-fill text-primary"></i>
+                    <span>Tạo khóa học mới</span>
                 </a>
+            </div>
+
+            <!-- Tech Stack Badges -->
+            <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 pt-2">
+                <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-code-slash me-1 text-primary"></i> C# 12 & .NET 8
+                </span>
+                <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-diagram-3-fill me-1 text-success"></i> Clean Architecture
+                </span>
+                <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-database-fill-check me-1 text-info"></i> SQL Server & EF Core
+                </span>
+                <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-shield-lock-fill me-1 text-warning"></i> Identity & JWT
+                </span>
+                <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-box-seam me-1 text-danger"></i> Docker & CI/CD
+                </span>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Stats Metrics Bar -->
+<section class="pb-5">
+    <div class="row g-3 g-md-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-box">
+                <div class="stat-number text-primary">20+</div>
+                <div class="text-muted small fw-semibold">Khóa học chuyên sâu</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-box">
+                <div class="stat-number text-success">5,000+</div>
+                <div class="text-muted small fw-semibold">Học viên tin tưởng</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-box">
+                <div class="stat-number text-warning">99.4%</div>
+                <div class="text-muted small fw-semibold">Đánh giá hài lòng</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-box">
+                <div class="stat-number text-info">100%</div>
+                <div class="text-muted small fw-semibold">Dự án mã nguồn mở</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Us / Features Grid -->
+<section class="py-5">
+    <div class="text-center mb-5">
+        <span class="text-primary fw-bold text-uppercase small tracking-wide">Tại sao chọn EduFlyUp</span>
+        <h2 class="fw-bold mt-1">Học Đúng Lộ Trình - Vững Vàng Nghề Nghiệp</h2>
+        <p class="text-muted mx-auto" style="max-width: 600px;">Các khóa học tại EduFlyUp được đúc kết từ kinh nghiệm thực chiến tại các tập đoàn công nghệ lớn.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature">
+                <div class="feature-icon-box bg-primary-subtle text-primary">
+                    <i class="bi bi-layers-fill"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Clean Architecture</h5>
+                <p class="text-muted small mb-0">
+                    Phân tách triệt để Domain, Application, Infrastructure và Web Presentation theo chuẩn thiết kế quốc tế.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature">
+                <div class="feature-icon-box bg-success-subtle text-success">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Tối Ưu Hiệu Năng</h5>
+                <p class="text-muted small mb-0">
+                    Thành thạo tối ưu câu truy vấn EF Core, caching với Redis, AsNoTracking và phân trang thông minh.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature">
+                <div class="feature-icon-box bg-warning-subtle text-warning-emphasis">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Bảo Mật Đa Tầng</h5>
+                <p class="text-muted small mb-0">
+                    Tích hợp ASP.NET Core Identity, Cookie Authentication cho MVC, JWT Token cho Web API & phân quyền Role-based.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card-feature">
+                <div class="feature-icon-box bg-info-subtle text-info">
+                    <i class="bi bi-award-fill"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Sẵn Sàng Làm Việc</h5>
+                <p class="text-muted small mb-0">
+                    Tạo lập portfolio ấn tượng với dự án thật, hỗ trợ mentor giải đáp thắc mắc và định hướng phỏng vấn tuyển dụng.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section class="my-5">
+    <div class="p-5 rounded-4 text-white position-relative overflow-hidden shadow-lg" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #31104b 100%);">
+        <div class="row align-items-center position-relative" style="z-index: 2;">
+            <div class="col-lg-8">
+                <span class="badge bg-primary px-3 py-2 rounded-pill mb-3">🚀 Sẵn sàng thăng tiến</span>
+                <h2 class="display-6 fw-bold text-white mb-3">Bắt đầu khóa học .NET đầu tiên của bạn ngay hôm nay!</h2>
+                <p class="text-light opacity-75 mb-4 pe-lg-4">
+                    Đăng ký tài khoản miễn phí để truy cập toàn bộ tài liệu giáo trình và tham gia cộng đồng lập trình viên nhiệt huyết.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-brand rounded-pill px-4 py-2">
+                        <i class="bi bi-person-plus-fill me-1"></i>Đăng ký miễn phí
+                    </a>
+                    <a asp-controller="Courses" asp-action="Index" class="btn btn-outline-light rounded-pill px-4 py-2">
+                        <i class="bi bi-compass me-1"></i>Xem tất cả khóa học
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center mt-4 mt-lg-0">
+                <div class="p-4 rounded-4" style="background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <i class="bi bi-mortarboard-fill text-warning display-4 mb-2 d-inline-block"></i>
+                    <h5 class="fw-bold text-white mb-1">Cam kết chất lượng</h5>
+                    <p class="small text-light opacity-75 mb-0">Giáo trình cập nhật liên tục theo phiên bản .NET mới nhất từ Microsoft.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

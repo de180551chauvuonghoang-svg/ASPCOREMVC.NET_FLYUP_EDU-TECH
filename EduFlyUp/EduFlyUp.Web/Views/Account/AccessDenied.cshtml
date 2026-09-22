@@ -1,19 +1,29 @@
 @{
-    ViewData["Title"] = "Không có quyền truy cập";
+    ViewData["Title"] = "Không có quyền truy cập - EduFlyUp";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6 text-center py-5">
-        <i class="bi bi-shield-x text-danger" style="font-size: 4rem;"></i>
-        <h2 class="fw-bold mt-3">Không có quyền truy cập</h2>
-        <p class="text-muted">Bạn không có quyền truy cập vào trang này.<br />Vui lòng đăng nhập với tài khoản có quyền phù hợp.</p>
-        <div class="d-flex gap-2 justify-content-center mt-4">
-            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary px-4">
-                <i class="bi bi-house me-1"></i>Về trang chủ
-            </a>
-            <a asp-controller="Account" asp-action="Login" class="btn btn-primary px-4">
-                <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập lại
-            </a>
+<div class="row justify-content-center py-5">
+    <div class="col-md-7 col-lg-6 text-center">
+        <div class="card card-modern p-5 border-0 shadow-lg position-relative overflow-hidden">
+            <div class="position-absolute top-0 start-0 end-0" style="height: 5px; background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);"></div>
+            
+            <div class="mx-auto mb-4" style="width: 80px; height: 80px; border-radius: 50%; background: rgba(239, 68, 68, 0.1); display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-shield-x text-danger display-4"></i>
+            </div>
+            
+            <h2 class="fw-bold mb-2">403 - Giới hạn quyền truy cập</h2>
+            <p class="text-muted mb-4 pe-md-4 ps-md-4">
+                Tài khoản của bạn không đủ quyền hạn (Role) để truy cập khu vực này. Trang này chỉ dành cho quản trị viên (Admin) của hệ thống EduFlyUp.
+            </p>
+            
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-brand rounded-pill px-4 py-2">
+                    <i class="bi bi-house-door-fill me-1"></i>Về Trang chủ
+                </a>
+                <a asp-controller="Courses" asp-action="Index" class="btn btn-outline-brand rounded-pill px-4 py-2">
+                    <i class="bi bi-collection-play me-1"></i>Xem khóa học
+                </a>
+            </div>
         </div>
     </div>
 </div>
