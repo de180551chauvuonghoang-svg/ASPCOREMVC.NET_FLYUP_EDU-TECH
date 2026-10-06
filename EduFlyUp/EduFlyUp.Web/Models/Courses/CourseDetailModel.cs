@@ -1,4 +1,4 @@
-﻿using EduFlyUp.Domain.Enums;
+using EduFlyUp.BusinessObjects;
 
 namespace EduFlyUp.Web.Models.Courses;
 

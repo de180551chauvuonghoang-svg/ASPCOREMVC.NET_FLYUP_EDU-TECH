@@ -1,25 +1,30 @@
-﻿using EduFlyUp.Domain.Interfaces;
+using EduFlyUp.BusinessObjects;
+using EduFlyUp.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EduFlyUp.Web.Areas.Admin.Controllers;
 
-[Area("Admin")] // Bắt buộc để nhận diện Area
+[Area("Admin")]
+[Authorize(Roles = "Admin")]
 public class DashboardController : Controller
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICourseService _courseService;
+    private readonly ILessonService _lessonService;
 
-    public DashboardController(IUnitOfWork unitOfWork)
+    public DashboardController(ICourseService courseService, ILessonService lessonService)
     {
-        _unitOfWork = unitOfWork;
+        _courseService = courseService;
+        _lessonService = lessonService;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        var courses = _unitOfWork.Courses.GetAll().ToList();
+        var courses = (await _courseService.GetAllCoursesAsync()).ToList();
 
         ViewBag.TotalCourses = courses.Count;
         ViewBag.PublishedCourses = courses.Count(c => c.IsPublished);
-        ViewBag.TotalLessons = _unitOfWork.Lessons.GetAll().Count();
+        ViewBag.TotalLessons = await _lessonService.GetTotalLessonsCountAsync();
 
         return View(courses);
     }
