@@ -1,4 +1,4 @@
-@model IEnumerable<EduFlyUp.Web.Models.Courses.CourseItemModel>
+﻿@model IEnumerable<EduFlyUp.Web.Models.Courses.CourseItemModel>
 
 @{
     ViewData["Title"] = "Danh Sách Khóa Học - EduFlyUp";
@@ -16,12 +16,15 @@
                 Chương trình cập nhật liên tục với .NET 8, Clean Architecture, SQL Server và bảo mật đa tầng.
             </p>
         </div>
-        <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
-            <a asp-action="Create" class="btn btn-brand rounded-pill px-4 py-3 shadow-md d-inline-flex align-items-center gap-2">
-                <i class="bi bi-plus-circle-fill fs-5"></i>
-                <span>Thêm khóa học mới</span>
-            </a>
-        </div>
+        @if (User.IsInRole("Admin") || User.IsInRole("Instructor") || User.IsInRole("Teacher"))
+        {
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                <a asp-action="Create" class="btn btn-brand rounded-pill px-4 py-3 shadow-md d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-plus-circle-fill fs-5"></i>
+                    <span>Thêm khóa học mới</span>
+                </a>
+            </div>
+        }
     </div>
 </div>
 
@@ -36,13 +39,16 @@
                 </div>
                 <h4 class="fw-bold text-dark mb-2">Chưa có khóa học nào được đăng tải</h4>
                 <p class="text-muted small mb-4 mx-auto" style="max-width: 450px;">
-                    Hệ thống hiện chưa có khóa học nào trong cơ sở dữ liệu. Hãy là người đầu tiên tạo khóa học ngay!
+                    Hệ thống hiện chưa có khóa học nào trong cơ sở dữ liệu.
                 </p>
-                <div>
-                    <a asp-action="Create" class="btn btn-brand rounded-pill px-4 py-2">
-                        <i class="bi bi-plus-lg me-1"></i>Tạo khóa học ngay
-                    </a>
-                </div>
+                @if (User.IsInRole("Admin") || User.IsInRole("Instructor") || User.IsInRole("Teacher"))
+                {
+                    <div>
+                        <a asp-action="Create" class="btn btn-brand rounded-pill px-4 py-2">
+                            <i class="bi bi-plus-lg me-1"></i>Tạo khóa học ngay
+                        </a>
+                    </div>
+                }
             </div>
         </div>
     }

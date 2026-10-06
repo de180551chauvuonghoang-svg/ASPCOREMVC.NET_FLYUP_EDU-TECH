@@ -1,26 +1,51 @@
-using EduFlyUp.Infrastructure;
-using EduFlyUp.Infrastructure.Data;
-using EduFlyUp.Infrastructure.Data.Seed;
-using EduFlyUp.Infrastructure.Identity;
+using EduFlyUp.BusinessObjects;
+using EduFlyUp.DataAccess;
+using EduFlyUp.Repositories;
+using EduFlyUp.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ──────────────── Đăng ký Services ────────────────
 builder.Services.AddControllersWithViews();
 
-// Gọi extension method — đăng ký DbContext + Identity + Repositories
-builder.Services.AddInfrastructure(builder.Configuration);
+// 1. Cấu hình DbContext kết nối SQL Server
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Server=DESKTOP-IJV2BTH\\SQLEXPRESS;Database=EduFlyUpDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True";
 
-// ── Cấu hình Cookie Authentication ──────────────────────────────
-// AddIdentity() đã set Cookie làm scheme mặc định, chỉ cần cấu hình thêm
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// 2. Cấu hình ASP.NET Core Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+// 3. Đăng ký Repositories & Services theo mô hình N-Tier Repository Pattern
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<ILessonRepository, LessonRepository>();
+builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
+
+// 4. Cấu hình Cookie Authentication
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login";              // Redirect về đây khi chưa đăng nhập
+    options.LoginPath = "/Account/Login";              // Redirect khi chưa đăng nhập
     options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied"; // Redirect khi không có quyền
-    options.ExpireTimeSpan = TimeSpan.FromDays(7);      // Cookie hết hạn sau 7 ngày
-    options.SlidingExpiration = true;                   // Gia hạn cookie khi còn hoạt động
+    options.AccessDeniedPath = "/Account/AccessDenied"; // Redirect khi 403
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;
 });
 
 // ──────────────── Build App ────────────────
@@ -32,7 +57,6 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DataSeeder.SeedAsync(context);
 
-    // Task 3.9: Seed Roles và Admin account
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     await DataSeeder.SeedRolesAndAdminAsync(roleManager, userManager);
@@ -45,16 +69,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Custom Middleware đo thời gian xử lý request
 app.UseMiddleware<EduFlyUp.Web.Middleware.RequestTimingMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-// ⚠️ Thứ tự bắt buộc: Authentication TRƯỚC Authorization
-// UseAuthentication: đọc cookie/token → set HttpContext.User
-// UseAuthorization: kiểm tra [Authorize] dựa trên HttpContext.User
 app.UseAuthentication();
 app.UseAuthorization();
 

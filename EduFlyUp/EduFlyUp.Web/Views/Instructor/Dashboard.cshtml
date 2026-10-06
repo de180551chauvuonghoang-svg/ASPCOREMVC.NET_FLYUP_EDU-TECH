@@ -1,0 +1,264 @@
+@model IEnumerable<EduFlyUp.BusinessObjects.Course>
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Studio Giảng Viên - Creator Hub";
+    var isAdmin = (bool)(ViewBag.IsAdmin ?? false);
+}
+
+<!-- Instructor Studio Hero Banner -->
+<div class="card card-modern p-4 p-md-5 mb-5 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <div class="d-inline-flex align-items-center gap-2 mb-3">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-bold">
+                    <i class="bi bi-mortarboard-fill me-1"></i>Kênh Giảng Viên (Creator Studio)
+                </span>
+                <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-person-circle text-primary me-1"></i>@User.Identity?.Name
+                </span>
+            </div>
+            <h1 class="display-6 fw-bold mb-2 text-dark">Studio Sáng Tạo Giảng Viên</h1>
+            <p class="text-secondary mb-0 fs-6" style="max-width: 650px;">
+                Quản lý lộ trình đào tạo, xuất bản bài giảng mới và theo dõi chi tiết các khóa học do bạn phụ trách.
+            </p>
+        </div>
+        <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 d-flex flex-wrap gap-2 justify-content-lg-end">
+            <a asp-controller="Courses" asp-action="Create" class="btn btn-brand rounded-pill px-4 py-3 shadow-glow d-inline-flex align-items-center gap-2 fw-bold">
+                <i class="bi bi-plus-circle-fill fs-5"></i>
+                <span>Tạo khóa học mới</span>
+            </a>
+            <a asp-controller="Courses" asp-action="Index" class="btn btn-outline-brand rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2">
+                <i class="bi bi-eye fs-5"></i>
+                <span>Xem trang học viên</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 4 Key Instructor Metric Cards -->
+<div class="row g-3 g-md-4 mb-5">
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-4 border-start border-primary border-4 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase tracking-wider">Khóa học của tôi</span>
+                    <h2 class="fw-bold text-primary mt-1 mb-0">@ViewBag.TotalCourses</h2>
+                </div>
+                <div class="bg-primary-subtle p-3 rounded-circle text-primary fs-3">
+                    <i class="bi bi-journal-bookmark-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-4 border-start border-success border-4 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase tracking-wider">Đang mở học viên</span>
+                    <h2 class="fw-bold text-success mt-1 mb-0">@ViewBag.PublishedCourses</h2>
+                </div>
+                <div class="bg-success-subtle p-3 rounded-circle text-success fs-3">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-4 border-start border-warning border-4 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase tracking-wider">Đang soạn thảo</span>
+                    <h2 class="fw-bold text-warning-emphasis mt-1 mb-0">@ViewBag.DraftCourses</h2>
+                </div>
+                <div class="bg-warning-subtle p-3 rounded-circle text-warning fs-3">
+                    <i class="bi bi-file-earmark-lock-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-4 border-start border-info border-4 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase tracking-wider">Tổng bài giảng</span>
+                    <h2 class="fw-bold text-info mt-1 mb-0">@ViewBag.TotalLessons</h2>
+                </div>
+                <div class="bg-info-subtle p-3 rounded-circle text-info fs-3">
+                    <i class="bi bi-collection-play-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter Controls -->
+<div class="card card-modern p-3 mb-4 shadow-sm border-0 rounded-4">
+    <form method="get" asp-action="Dashboard" class="row g-2 align-items-center">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted rounded-start-pill">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" name="search" value="@ViewBag.CurrentSearch" class="form-control border-start-0 rounded-end-pill" placeholder="Tìm kiếm theo tiêu đề khóa học..." />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="level" class="form-select rounded-pill">
+                <option value="">Tất cả cấp độ</option>
+                <option value="Beginner" selected="@(ViewBag.CurrentLevel == "Beginner")">Beginner (Cơ bản)</option>
+                <option value="Intermediate" selected="@(ViewBag.CurrentLevel == "Intermediate")">Intermediate (Trung bình)</option>
+                <option value="Advanced" selected="@(ViewBag.CurrentLevel == "Advanced")">Advanced (Nâng cao)</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="status" class="form-select rounded-pill">
+                <option value="">Tất cả trạng thái</option>
+                <option value="published" selected="@(ViewBag.CurrentStatus == "published")">Đã công khai</option>
+                <option value="draft" selected="@(ViewBag.CurrentStatus == "draft")">Bản nháp</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-brand rounded-pill w-100 py-2">
+                <i class="bi bi-funnel-fill me-1"></i>Lọc
+            </button>
+            <a asp-action="Dashboard" class="btn btn-outline-secondary rounded-pill px-3 py-2" title="Đặt lại bộ lọc">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Courses Management Table -->
+<div class="card card-modern shadow-sm overflow-hidden border-0 rounded-4 mb-5">
+    <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+        <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+            <i class="bi bi-mortarboard-fill text-primary"></i>
+            <span>Danh Sách Khóa Học Của Giảng Viên</span>
+        </h5>
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold">
+            @Model.Count() khóa học
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-secondary small text-uppercase">
+                <tr>
+                    <th scope="col" class="ps-4 py-3">Khóa học</th>
+                    <th scope="col" class="py-3">Cấp độ</th>
+                    <th scope="col" class="py-3">Học phí</th>
+                    <th scope="col" class="py-3">Bài học</th>
+                    <th scope="col" class="py-3">Trạng thái</th>
+                    <th scope="col" class="py-3">Ngày tạo</th>
+                    <th scope="col" class="text-end pe-4 py-3">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="py-4">
+                                <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                                <h6 class="fw-bold text-dark mb-1">Chưa có khóa học nào</h6>
+                                <p class="text-muted small mb-3">Bắt đầu chia sẻ kiến thức bằng cách tạo khóa học mới của bạn ngay hôm nay!</p>
+                                <a asp-controller="Courses" asp-action="Create" class="btn btn-brand btn-sm rounded-pill px-4 py-2">
+                                    <i class="bi bi-plus-lg me-1"></i>Tạo khóa học mới
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var c in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="@(string.IsNullOrEmpty(c.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=100&auto=format&fit=crop&q=80" : c.ThumbnailUrl)" 
+                                         alt="@c.Title" 
+                                         class="rounded-3 object-fit-cover shadow-xs" 
+                                         style="width: 56px; height: 42px;"
+                                         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=100&auto=format&fit=crop&q=80';" />
+                                    <div>
+                                        <a asp-controller="Courses" asp-action="Details" asp-route-id="@c.Id" class="fw-bold text-dark text-decoration-none hover-primary d-block">
+                                            @c.Title
+                                        </a>
+                                        <span class="text-muted small">ID: #@c.Id • Người tạo: @c.InstructorId</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @switch (c.Level)
+                                {
+                                    case EduFlyUp.BusinessObjects.CourseLevel.Beginner:
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">Cơ bản</span>
+                                        break;
+                                    case EduFlyUp.BusinessObjects.CourseLevel.Intermediate:
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1">Trung bình</span>
+                                        break;
+                                    case EduFlyUp.BusinessObjects.CourseLevel.Advanced:
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1">Nâng cao</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                @if (c.Price == 0)
+                                {
+                                    <span class="fw-bold text-success">Miễn phí</span>
+                                }
+                                else
+                                {
+                                    <span class="fw-bold text-dark">@c.Price.ToString("N0") VNĐ</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-secondary border rounded-pill px-2 py-1">
+                                    <i class="bi bi-play-circle me-1"></i>@(c.Lessons?.Count ?? 0) bài
+                                </span>
+                            </td>
+                            <td>
+                                @if (c.IsPublished)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">
+                                        <i class="bi bi-check-circle me-1"></i>Công khai
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-1">
+                                        <i class="bi bi-eye-slash me-1"></i>Bản nháp
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-muted small">
+                                @c.CreatedAt.ToString("dd/MM/yyyy")
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-inline-flex gap-1">
+                                    <a asp-controller="Courses" asp-action="Details" asp-route-id="@c.Id" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-controller="Courses" asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1" title="Chỉnh sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-controller="Courses" asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa khóa học '@c.Title' không?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

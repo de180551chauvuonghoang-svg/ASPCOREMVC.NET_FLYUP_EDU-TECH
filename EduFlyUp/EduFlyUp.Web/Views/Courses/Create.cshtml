@@ -44,7 +44,7 @@
 
                     <div class="col-md-6">
                         <label asp-for="Level" class="form-label fw-semibold"></label>
-                        <select asp-for="Level" asp-items="Html.GetEnumSelectList<EduFlyUp.Domain.Enums.CourseLevel>()" class="form-select rounded-3"></select>
+                        <select asp-for="Level" asp-items="Html.GetEnumSelectList<EduFlyUp.BusinessObjects.CourseLevel>()" class="form-select rounded-3"></select>
                         <span asp-validation-for="Level" class="text-danger small"></span>
                     </div>
                 </div>

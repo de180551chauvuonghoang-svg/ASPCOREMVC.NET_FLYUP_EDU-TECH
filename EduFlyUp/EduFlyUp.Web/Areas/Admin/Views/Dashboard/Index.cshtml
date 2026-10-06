@@ -1,26 +1,47 @@
-@model IEnumerable<EduFlyUp.Domain.Entities.Course>
+﻿@model IEnumerable<EduFlyUp.BusinessObjects.Course>
 
 @{
-    ViewData["Title"] = "Trang Quản Trị Hệ Thống";
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Trung Tâm Quản Trị Hệ Thống - Master Admin";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1"><i class="bi bi-shield-lock-fill text-warning me-2"></i>Bảng Điều Khiển Quản Trị (Admin)</h2>
-        <p class="text-muted">Tổng quan số liệu hệ thống khóa học EduFlyUp lấy trực tiếp từ SQL Server</p>
+<!-- Admin Hero Banner -->
+<div class="card card-modern p-4 p-md-5 mb-5 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 27, 75, 0.95) 100%); color: #ffffff;">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <div class="d-inline-flex align-items-center gap-2 mb-3">
+                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill fw-bold">
+                    <i class="bi bi-shield-lock-fill me-1"></i>Hệ Thống Quản Trị Cấp Cao (Root Admin)
+                </span>
+                <span class="badge bg-white bg-opacity-10 text-light border border-white border-opacity-10 px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-database-fill-check me-1 text-info"></i>SQL Server Live Connected
+                </span>
+            </div>
+            <h1 class="display-6 fw-bold mb-2 text-white">Trung Tâm Quản Trị Hệ Thống</h1>
+            <p class="text-light opacity-75 mb-0 fs-6" style="max-width: 650px;">
+                Quản lý toàn bộ danh mục khóa học của tất cả giảng viên, kiểm soát phân quyền và giám sát dữ liệu toàn sàn.
+            </p>
+        </div>
+        <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 d-flex flex-wrap gap-2 justify-content-lg-end">
+            <a asp-area="" asp-controller="Instructor" asp-action="Dashboard" class="btn btn-outline-light rounded-pill px-4 py-3 d-inline-flex align-items-center gap-2">
+                <i class="bi bi-mortarboard-fill fs-5 text-warning"></i>
+                <span>Xem Kênh Giảng Viên</span>
+            </a>
+            <a asp-area="" asp-controller="Courses" asp-action="Create" class="btn btn-brand rounded-pill px-4 py-3 shadow-glow d-inline-flex align-items-center gap-2 fw-bold">
+                <i class="bi bi-plus-circle-fill fs-5"></i>
+                <span>Thêm khóa học mới</span>
+            </a>
+        </div>
     </div>
-    <a asp-area="" asp-controller="Courses" asp-action="Create" class="btn btn-primary shadow-sm">
-        <i class="bi bi-plus-lg me-1"></i>Thêm khóa học mới
-    </a>
 </div>
 
-<!-- 3 Thẻ Thống Kê Số Liệu từ SQL Server -->
-<div class="row g-4 mb-4">
+<!-- 3 Master Admin Stat Cards -->
+<div class="row g-3 g-md-4 mb-5">
     <div class="col-md-4">
-        <div class="card card-modern p-4 border-start border-primary border-4 shadow-sm">
+        <div class="card card-modern p-4 border-start border-primary border-4 shadow-sm h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <span class="text-muted small fw-semibold">TỔNG SỐ KHÓA HỌC</span>
+                    <span class="text-muted small fw-semibold text-uppercase tracking-wider">TỔNG KHÓA HỌC TOÀN SÀN</span>
                     <h2 class="fw-bold text-primary mt-1 mb-0">@ViewBag.TotalCourses</h2>
                 </div>
                 <div class="bg-primary-subtle p-3 rounded-circle text-primary fs-3">
@@ -31,10 +52,10 @@
     </div>
 
     <div class="col-md-4">
-        <div class="card card-modern p-4 border-start border-success border-4 shadow-sm">
+        <div class="card card-modern p-4 border-start border-success border-4 shadow-sm h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <span class="text-muted small fw-semibold">ĐÃ CÔNG KHAI</span>
+                    <span class="text-muted small fw-semibold text-uppercase tracking-wider">ĐÃ XUẤT BẢN CÔNG KHAI</span>
                     <h2 class="fw-bold text-success mt-1 mb-0">@ViewBag.PublishedCourses</h2>
                 </div>
                 <div class="bg-success-subtle p-3 rounded-circle text-success fs-3">
@@ -45,10 +66,10 @@
     </div>
 
     <div class="col-md-4">
-        <div class="card card-modern p-4 border-start border-info border-4 shadow-sm">
+        <div class="card card-modern p-4 border-start border-info border-4 shadow-sm h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <span class="text-muted small fw-semibold">TỔNG SỐ BÀI HỌC</span>
+                    <span class="text-muted small fw-semibold text-uppercase tracking-wider">TỔNG SỐ BÀI HỌC HỆ THỐNG</span>
                     <h2 class="fw-bold text-info mt-1 mb-0">@ViewBag.TotalLessons</h2>
                 </div>
                 <div class="bg-info-subtle p-3 rounded-circle text-info fs-3">
@@ -59,28 +80,37 @@
     </div>
 </div>
 
-<!-- Bảng Danh Sách Khóa Học Trong Database -->
-<div class="card card-modern shadow-sm overflow-hidden">
-    <div class="card-header bg-white py-3">
-        <h5 class="fw-bold mb-0">Danh sách Khóa học trong Database</h5>
+<!-- Master Courses Management Table -->
+<div class="card card-modern shadow-sm overflow-hidden border-0 rounded-4 mb-5">
+    <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+        <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+            <i class="bi bi-shield-check text-warning"></i>
+            <span>Toàn Bộ Khóa Học Trên Cơ Sở Dữ Liệu SQL Server</span>
+        </h5>
+        <span class="badge bg-warning bg-opacity-10 text-warning-emphasis border border-warning border-opacity-25 rounded-pill px-3 py-2 fw-semibold">
+            @Model.Count() khóa học
+        </span>
     </div>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+            <thead class="table-light text-secondary small text-uppercase">
                 <tr>
-                    <th scope="col" class="ps-4">ID</th>
-                    <th scope="col">Tên khóa học</th>
-                    <th scope="col">Cấp độ</th>
-                    <th scope="col">Học phí</th>
-                    <th scope="col">Trạng thái</th>
-                    <th scope="col">Ngày tạo</th>
+                    <th scope="col" class="ps-4 py-3">ID</th>
+                    <th scope="col" class="py-3">Khóa học</th>
+                    <th scope="col" class="py-3">Giảng viên sở hữu</th>
+                    <th scope="col" class="py-3">Cấp độ</th>
+                    <th scope="col" class="py-3">Học phí</th>
+                    <th scope="col" class="py-3">Trạng thái</th>
+                    <th scope="col" class="py-3">Ngày tạo</th>
+                    <th scope="col" class="text-end pe-4 py-3">Thao tác Admin</th>
                 </tr>
             </thead>
             <tbody>
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">Chưa có khóa học nào trong cơ sở dữ liệu.</td>
+                        <td colspan="8" class="text-center py-5 text-muted">Chưa có khóa học nào trong cơ sở dữ liệu.</td>
                     </tr>
                 }
                 else
@@ -90,25 +120,51 @@
                         <tr>
                             <td class="ps-4 fw-bold text-muted">#@c.Id</td>
                             <td>
-                                <span class="fw-semibold text-dark">@c.Title</span>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="@(string.IsNullOrEmpty(c.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=100&auto=format&fit=crop&q=80" : c.ThumbnailUrl)" 
+                                         alt="@c.Title" 
+                                         class="rounded-3 object-fit-cover shadow-xs" 
+                                         style="width: 50px; height: 38px;"
+                                         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=100&auto=format&fit=crop&q=80';" />
+                                    <span class="fw-bold text-dark">@c.Title</span>
+                                </div>
                             </td>
                             <td>
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">@c.Level</span>
+                                <span class="badge bg-light text-dark border px-2 py-1 font-monospace">@c.InstructorId</span>
                             </td>
                             <td>
-                                @(c.Price == 0 ? "Miễn phí" : c.Price.ToString("N0") + " đ")
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1">@c.Level</span>
+                            </td>
+                            <td>
+                                @(c.Price == 0 ? "Miễn phí" : c.Price.ToString("N0") + " VNĐ")
                             </td>
                             <td>
                                 @if (c.IsPublished)
                                 {
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Công khai</span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">Công khai</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Bản nháp</span>
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-1">Bản nháp</span>
                                 }
                             </td>
                             <td class="text-muted small">@c.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-end pe-4">
+                                <div class="d-inline-flex gap-1">
+                                    <a asp-area="" asp-controller="Courses" asp-action="Details" asp-route-id="@c.Id" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" title="Xem">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-area="" asp-controller="Courses" asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1" title="Sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-area="" asp-controller="Courses" asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline" onsubmit="return confirm('Admin: Bạn có chắc muốn xóa khóa học này không?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     }
                 }

@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
-using EduFlyUp.Domain.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using EduFlyUp.BusinessObjects;
 
 namespace EduFlyUp.Web.Models.Courses;
 

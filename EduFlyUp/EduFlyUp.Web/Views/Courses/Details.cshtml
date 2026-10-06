@@ -1,61 +1,61 @@
-@model EduFlyUp.Web.Models.Courses.CourseDetailViewModel
+﻿@model EduFlyUp.Web.Models.Courses.CourseDetailViewModel
 
 @{
-    ViewData["Title"] = Model.Title + " - EduFlyUp";
+    ViewData["Title"] = $"{Model.Title} - EduFlyUp";
 }
 
-<!-- Breadcrumb Navigation -->
+<!-- Breadcrumb -->
 <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted text-decoration-none"><i class="bi bi-house me-1"></i>Trang chủ</a></li>
         <li class="breadcrumb-item"><a asp-controller="Courses" asp-action="Index" class="text-muted text-decoration-none">Khóa học</a></li>
-        <li class="breadcrumb-item active text-truncate fw-semibold" aria-current="page" style="max-width: 300px;">@Model.Title</li>
+        <li class="breadcrumb-item active text-truncate" style="max-width: 300px;" aria-current="page">@Model.Title</li>
     </ol>
 </nav>
 
-<div class="row g-4">
-    <!-- Main Left Column -->
+<div class="row g-4 mb-5">
+    <!-- Main Course Content -->
     <div class="col-lg-8">
-        <div class="card card-modern p-4 p-md-5 mb-4 border-0">
-            <!-- Badges & Metadata -->
+        <div class="card card-modern p-4 p-md-5 border-0 shadow-sm mb-4">
+            <!-- Badge & Meta -->
             <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                @if (Model.Level.ToString() == "Beginner" || Model.Level.ToString() == "Cơ bản")
+                @switch (Model.Level)
                 {
-                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
-                        <i class="bi bi-star-fill me-1"></i>Cơ bản
-                    </span>
-                }
-                else if (Model.Level.ToString() == "Intermediate" || Model.Level.ToString() == "Trung bình")
-                {
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-bold">
-                        <i class="bi bi-lightning-charge-fill me-1"></i>Trung bình
-                    </span>
-                }
-                else
-                {
-                    <span class="badge bg-purple-subtle text-purple border border-purple-subtle px-3 py-2 rounded-pill fw-bold" style="background: rgba(139, 92, 246, 0.1); color: #7c3aed; border-color: rgba(139, 92, 246, 0.2) !important;">
-                        <i class="bi bi-fire me-1"></i>Nâng cao
-                    </span>
+                    case EduFlyUp.BusinessObjects.CourseLevel.Beginner:
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+                            <i class="bi bi-star-fill me-1"></i>Cơ bản
+                        </span>
+                        break;
+                    case EduFlyUp.BusinessObjects.CourseLevel.Intermediate:
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill">
+                            <i class="bi bi-lightning-charge-fill me-1"></i>Trung bình
+                        </span>
+                        break;
+                    case EduFlyUp.BusinessObjects.CourseLevel.Advanced:
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill">
+                            <i class="bi bi-fire me-1"></i>Nâng cao
+                        </span>
+                        break;
                 }
                 <span class="text-muted small">
                     <i class="bi bi-calendar3 me-1"></i>Cập nhật: @Model.CreatedAt.ToString("dd/MM/yyyy")
                 </span>
-                <span class="text-muted small ms-md-2">
+                <span class="text-muted small">
                     <i class="bi bi-person-video3 me-1 text-primary"></i>Giảng viên hệ thống
                 </span>
             </div>
 
-            <!-- Course Title -->
+            <!-- Title & Description -->
             <h1 class="display-6 fw-bold mb-3 text-dark">@Model.Title</h1>
-
-            <!-- Course Description -->
-            <p class="lead text-muted fs-6 mb-4 lh-lg">
+            <p class="text-secondary lead fs-6 mb-4" style="line-height: 1.8;">
                 @Model.Description
             </p>
 
-            <!-- What you will learn Section -->
-            <div class="p-4 rounded-4 mb-4" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
-                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+            <hr class="my-4 text-muted opacity-25">
+
+            <!-- What You Will Learn Card -->
+            <div class="p-4 rounded-4 bg-light border mb-4">
+                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2 text-dark">
                     <i class="bi bi-check2-circle text-success fs-4"></i>
                     <span>Bạn sẽ học được gì từ khóa học này?</span>
                 </h5>
@@ -66,7 +66,7 @@
                     </div>
                     <div class="col-md-6 d-flex align-items-start gap-2">
                         <i class="bi bi-check-lg text-success fw-bold mt-1"></i>
-                        <span>Thực hành phân tầng Domain, Application, Infrastructure rõ ràng.</span>
+                        <span>Thực hành phân tầng BusinessObjects, DataAccess, Repositories, Services.</span>
                     </div>
                     <div class="col-md-6 d-flex align-items-start gap-2">
                         <i class="bi bi-check-lg text-success fw-bold mt-1"></i>
@@ -74,7 +74,7 @@
                     </div>
                     <div class="col-md-6 d-flex align-items-start gap-2">
                         <i class="bi bi-check-lg text-success fw-bold mt-1"></i>
-                        <span>Tích hợp cơ chế xác thực Cookie Auth & bảo mật đa tầng.</span>
+                        <span>Tích hợp cơ chế xác thực Cookie Auth & phân quyền Role-based.</span>
                     </div>
                 </div>
             </div>
@@ -163,7 +163,7 @@
                     }
                     else
                     {
-                        <span class="display-6 fw-extrabold text-primary">@Model.Price.ToString("N0") <span class="fs-4 text-muted fw-normal">đ</span></span>
+                        <span class="display-6 fw-extrabold text-primary">@Model.Price.ToString("N0") <span class="fs-4 text-muted fw-normal">VNĐ</span></span>
                     }
                 </div>
             </div>
@@ -172,6 +172,14 @@
                 <i class="bi bi-lightning-charge-fill"></i>
                 <span>Đăng ký học ngay</span>
             </button>
+
+            @if (User.IsInRole("Admin") || User.IsInRole("Instructor") || User.IsInRole("Teacher"))
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning w-100 py-2 rounded-pill small mb-2 d-flex align-items-center justify-content-center gap-2 text-dark fw-semibold">
+                    <i class="bi bi-pencil-square"></i>
+                    <span>Chỉnh sửa khóa học</span>
+                </a>
+            }
 
             <a asp-action="Index" class="btn btn-outline-brand w-100 py-2 rounded-pill small mb-4">
                 <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách

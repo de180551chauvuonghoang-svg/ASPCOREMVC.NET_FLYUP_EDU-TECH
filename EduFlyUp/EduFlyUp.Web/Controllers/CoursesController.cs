@@ -1,30 +1,31 @@
-using EduFlyUp.Domain.Entities;
-using EduFlyUp.Domain.Interfaces;
+﻿using EduFlyUp.BusinessObjects;
+using EduFlyUp.Services;
 using EduFlyUp.Web.Models.Courses;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EduFlyUp.Web.Controllers;
 
 public class CoursesController : Controller
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICourseService _courseService;
 
-    public CoursesController(IUnitOfWork unitOfWork)
+    public CoursesController(ICourseService courseService)
     {
-        _unitOfWork = unitOfWork;
+        _courseService = courseService;
     }
 
     // GET: /Courses
     public async Task<IActionResult> Index()
     {
-        var courses = await _unitOfWork.Courses.GetPublishedCoursesAsync();
+        var courses = await _courseService.GetPublishedCoursesAsync();
 
         var viewModel = courses.Select(c => new CourseItemModel
         {
             Id = c.Id,
             Title = c.Title,
             Description = c.Description,
-            ThumbnailUrl = string.IsNullOrEmpty(c.ThumbnailUrl) ? "https://placehold.co/600x400/4f46e5/ffffff?text=Course" : c.ThumbnailUrl,
+            ThumbnailUrl = string.IsNullOrEmpty(c.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80" : c.ThumbnailUrl,
             Price = c.Price,
             Level = c.Level,
             LessonCount = c.Lessons.Count
@@ -36,7 +37,7 @@ public class CoursesController : Controller
     // GET: /Courses/Details/5
     public async Task<IActionResult> Details(int id)
     {
-        var course = await _unitOfWork.Courses.GetCourseWithLessonsAsync(id);
+        var course = await _courseService.GetCourseByIdAsync(id);
         if (course == null)
         {
             return NotFound();
@@ -47,7 +48,7 @@ public class CoursesController : Controller
             Id = course.Id,
             Title = course.Title,
             Description = course.Description,
-            ThumbnailUrl = string.IsNullOrEmpty(course.ThumbnailUrl) ? "https://placehold.co/600x400/4f46e5/ffffff?text=Course" : course.ThumbnailUrl,
+            ThumbnailUrl = string.IsNullOrEmpty(course.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80" : course.ThumbnailUrl,
             Price = course.Price,
             Level = course.Level,
             CreatedAt = course.CreatedAt,
@@ -65,6 +66,8 @@ public class CoursesController : Controller
     }
 
     // GET: /Courses/Create
+    // Chỉ Admin và Instructor mới có quyền tạo khóa học mới
+    [Authorize(Roles = "Admin,Instructor")]
     public IActionResult Create()
     {
         return View(new CourseCreateModel());
@@ -72,16 +75,15 @@ public class CoursesController : Controller
 
     // POST: /Courses/Create
     [HttpPost]
-    [ValidateAntiForgeryToken] // Chống tấn công CSRF
+    [Authorize(Roles = "Admin,Instructor")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CourseCreateModel model)
     {
-        // 1. Kiểm tra Server-side validation
         if (!ModelState.IsValid)
         {
-            return View(model); // Trả lại form kèm thông báo lỗi
+            return View(model);
         }
 
-        // 2. Map ViewModel ──► Domain Entity
         var course = new Course
         {
             Title = model.Title,
@@ -90,33 +92,25 @@ public class CoursesController : Controller
             Price = model.Price,
             Level = model.Level,
             IsPublished = model.IsPublished,
-            InstructorId = "instructor-system-default"
+            InstructorId = User.Identity?.Name ?? "instructor@eduflyup.vn"
         };
 
-        // 3. Lưu vào Database qua Unit of Work
-        await _unitOfWork.Courses.AddAsync(course);
-        await _unitOfWork.SaveChangesAsync();
+        await _courseService.CreateCourseAsync(course);
 
-        // 4. Flash message và chuyển hướng
         TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã được tạo thành công!";
         return RedirectToAction(nameof(Index));
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // EDIT — Kiến thức: GET/POST separation, ViewModel cho Edit form
-    // ──────────────────────────────────────────────────────────────
-
     // GET: /Courses/Edit/5
-    // Load form chỉnh sửa, điền sẵn dữ liệu hiện tại của Course
+    [Authorize(Roles = "Admin,Instructor")]
     public async Task<IActionResult> Edit(int id)
     {
-        var course = await _unitOfWork.Courses.GetByIdAsync(id);
+        var course = await _courseService.GetCourseByIdAsync(id);
         if (course == null)
         {
             return NotFound();
         }
 
-        // Map Entity → EditModel (chỉ expose field được phép sửa)
         var model = new CourseEditModel
         {
             Id = course.Id,
@@ -133,10 +127,10 @@ public class CoursesController : Controller
 
     // POST: /Courses/Edit/5
     [HttpPost]
+    [Authorize(Roles = "Admin,Instructor")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, CourseEditModel model)
     {
-        // Kiểm tra Id khớp (tránh tampering)
         if (id != model.Id)
         {
             return BadRequest();
@@ -147,13 +141,12 @@ public class CoursesController : Controller
             return View(model);
         }
 
-        var course = await _unitOfWork.Courses.GetByIdAsync(id);
+        var course = await _courseService.GetCourseByIdAsync(id);
         if (course == null)
         {
             return NotFound();
         }
 
-        // Chỉ cập nhật các field cho phép — InstructorId, CreatedAt KHÔNG bị thay đổi
         course.Title = model.Title;
         course.Description = model.Description;
         course.ThumbnailUrl = model.ThumbnailUrl ?? string.Empty;
@@ -161,34 +154,27 @@ public class CoursesController : Controller
         course.Level = model.Level;
         course.IsPublished = model.IsPublished;
 
-        _unitOfWork.Courses.Update(course);
-        await _unitOfWork.SaveChangesAsync();
+        await _courseService.UpdateCourseAsync(course);
 
         TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã được cập nhật thành công!";
         return RedirectToAction(nameof(Details), new { id = course.Id });
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // DELETE — Kiến thức: POST-only delete, chống CSRF
-    // ──────────────────────────────────────────────────────────────
-
     // POST: /Courses/Delete/5
-    // Chỉ cho phép DELETE qua HTTP POST (không cho phép GET vì link có thể bị click nhầm)
     [HttpPost, ActionName("Delete")]
+    [Authorize(Roles = "Admin,Instructor")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var course = await _unitOfWork.Courses.GetByIdAsync(id);
+        var course = await _courseService.GetCourseByIdAsync(id);
         if (course == null)
         {
             return NotFound();
         }
 
-        _unitOfWork.Courses.Delete(course);
-        await _unitOfWork.SaveChangesAsync();
+        await _courseService.DeleteCourseAsync(id);
 
         TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã bị xóa.";
         return RedirectToAction(nameof(Index));
     }
 }
-
