@@ -54,12 +54,20 @@ var app = builder.Build();
 // ──────────────── Seed Data khi khởi động ────────────────
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DataSeeder.SeedAsync(context);
+    try
+    {
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await DataSeeder.SeedAsync(context);
 
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    await DataSeeder.SeedRolesAndAdminAsync(roleManager, userManager);
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await DataSeeder.SeedRolesAndAdminAsync(roleManager, userManager);
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Lỗi kết nối cơ sở dữ liệu khi khởi động ứng dụng: {Message}", ex.Message);
+    }
 }
 
 // ──────────────── Middleware Pipeline ────────────────

@@ -51,3 +51,6 @@ $RECYCLE.BIN/
 
 # Tài liệu nội bộ — không đẩy lên repo
 docs/
+
+# Cloudflare Tunnel binary
+cloudflared.exe
