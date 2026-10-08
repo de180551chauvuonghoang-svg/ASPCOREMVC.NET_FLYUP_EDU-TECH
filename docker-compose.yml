@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # Dịch vụ Cơ sở dữ liệu: Microsoft SQL Server 2022 Container
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: eduflyup-sqlserver
+    user: root
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=EduFlyUp@2026!Password
+    ports:
+      - "14333:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql/data
+    networks:
+      - eduflyup-network
+
+  # Dịch vụ Web: ASP.NET Core 8 MVC Web Container
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eduflyup-web
+    restart: always
+    depends_on:
+      - sqlserver
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=EduFlyUpDb;User Id=sa;Password=EduFlyUp@2026!Password;TrustServerCertificate=True;MultipleActiveResultSets=True;
+    ports:
+      - "8088:8080"
+    networks:
+      - eduflyup-network
+
+volumes:
+  mssql_data:
+
+networks:
+  eduflyup-network:
+    driver: bridge

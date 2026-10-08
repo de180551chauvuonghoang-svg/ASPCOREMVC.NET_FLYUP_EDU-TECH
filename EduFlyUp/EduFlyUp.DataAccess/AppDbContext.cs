@@ -18,13 +18,16 @@ namespace EduFlyUp.DataAccess
         {
             if (!optionsBuilder.IsConfigured)
             {
+                var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
                 var config = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("appsettings.json", optional: true)
-                    .AddJsonFile("appsettings.Development.json", optional: true)
+                    .AddJsonFile($"appsettings.{env}.json", optional: true)
+                    .AddEnvironmentVariables()
                     .Build();
 
                 var connectionString = config.GetConnectionString("DefaultConnection")
+                    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
                     ?? "Server=DESKTOP-IJV2BTH\\SQLEXPRESS;Database=EduFlyUpDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True";
 
                 optionsBuilder.UseSqlServer(connectionString);
