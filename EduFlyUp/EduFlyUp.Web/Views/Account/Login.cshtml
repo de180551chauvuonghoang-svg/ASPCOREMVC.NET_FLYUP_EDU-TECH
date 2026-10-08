@@ -1,12 +1,19 @@
-﻿@model EduFlyUp.Web.Models.Account.LoginViewModel
+@model EduFlyUp.Web.Models.Account.LoginViewModel
 
 @{
     ViewData["Title"] = "Đăng Nhập / Đăng Ký - EduFlyUp";
     ViewData["FullWidth"] = true;
     ViewData["HideFooter"] = true;
+    ViewData["HideHeader"] = true;
 }
 
 <div class="auth-slider-wrapper">
+    <!-- Floating Back to Home Arrow Button -->
+    <a href="/" class="auth-back-home-btn" title="Quay lại trang chủ" aria-label="Quay lại trang chủ">
+        <i class="bi bi-arrow-left"></i>
+        <span class="back-text">Trang chủ</span>
+    </a>
+
     <!-- Live Photo Dynamic Animated Background -->
     <div class="live-photo-container">
         <div class="live-photo-media"></div>
