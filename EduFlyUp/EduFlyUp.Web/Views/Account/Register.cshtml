@@ -25,11 +25,12 @@
         <!-- 1. SIGN IN FORM PANEL -->
         <div class="auth-form-panel panel-sign-in">
             <div class="text-start mb-3">
-                <div class="d-inline-flex align-items-center justify-content-center p-1 px-3 rounded-pill bg-primary bg-opacity-10 text-primary mb-2 small fw-bold" style="font-size: 0.75rem;">
-                    <i class="bi bi-shield-lock-fill me-1"></i> EduFlyUp Security
+                <div class="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill mb-2 fw-bold" style="background: rgba(79, 70, 229, 0.08); border: 1px solid rgba(79, 70, 229, 0.2); color: #4f46e5; font-size: 0.75rem;">
+                    <i class="bi bi-shield-lock-fill text-primary"></i>
+                    <span>EduFlyUp Security</span>
                 </div>
-                <h2 class="fw-bold text-heading mb-1" style="font-size: 1.75rem;">Đăng Nhập</h2>
-                <p class="text-muted small mb-0">Chào mừng trở lại! Vui lòng nhập thông tin để đăng nhập.</p>
+                <h2 class="fw-bold text-dark mb-1" style="font-size: 1.85rem; letter-spacing: -0.02em;">Đăng Nhập</h2>
+                <p class="text-secondary small mb-0" style="font-size: 0.88rem; line-height: 1.45;">Chào mừng trở lại! Vui lòng nhập thông tin để đăng nhập vào hệ thống.</p>
             </div>
 
             <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" id="signInForm">
@@ -83,18 +84,22 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="btn btn-brand w-100 py-3 rounded-pill shadow-glow fw-bold mb-3 d-flex align-items-center justify-content-center gap-2">
-                    <span>Đăng Nhập Ngay</span>
-                    <i class="bi bi-arrow-right-short fs-5"></i>
+                <button type="submit" class="btn btn-brand w-100 py-3 rounded-pill shadow-glow fw-bold mb-3 d-flex align-items-center justify-content-center gap-2" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important; color: #ffffff !important; border: none !important; font-size: 1rem;">
+                    <span class="text-white">Đăng Nhập Ngay</span>
+                    <i class="bi bi-arrow-right-short fs-4 text-white"></i>
                 </button>
             </form>
 
             <!-- Quick Demo Credentials Hint Bar -->
-            <div class="p-2 px-3 rounded-3 bg-light border text-secondary text-center" style="font-size: 0.75rem;">
-                <span class="text-muted"><i class="bi bi-info-circle text-primary me-1"></i>Tài khoản mẫu:</span>
-                <span class="ms-1">Admin: <code class="text-primary fw-bold">Admin@123</code></span>
-                <span class="mx-1">•</span>
-                <span>Instructor: <code class="text-success fw-bold">Instructor@123</code></span>
+            <div class="p-2 px-3 rounded-3 border d-flex align-items-center justify-content-between text-secondary" style="background: #f8fafc; font-size: 0.76rem;">
+                <span class="text-muted d-flex align-items-center gap-1">
+                    <i class="bi bi-info-circle-fill text-primary"></i>
+                    <span>Tài khoản mẫu:</span>
+                </span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-white text-dark border px-2 py-1 shadow-2xs">Admin: <strong class="text-primary">Admin@123</strong></span>
+                    <span class="badge bg-white text-dark border px-2 py-1 shadow-2xs">Instructor: <strong class="text-success">Instructor@123</strong></span>
+                </div>
             </div>
 
             <div class="text-center mt-auto pt-2 border-top d-lg-none">
@@ -182,9 +187,9 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="btn btn-brand w-100 py-3 rounded-pill shadow-glow fw-bold mb-2 d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-rocket-takeoff-fill"></i>
-                    <span>Tạo Tài Khoản Ngay</span>
+                <button type="submit" class="btn btn-brand w-100 py-3 rounded-pill shadow-glow fw-bold mb-2 d-flex align-items-center justify-content-center gap-2" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important; color: #ffffff !important; border: none !important; font-size: 1rem;">
+                    <i class="bi bi-rocket-takeoff-fill text-white"></i>
+                    <span class="text-white">Tạo Tài Khoản Ngay</span>
                 </button>
             </form>
 
