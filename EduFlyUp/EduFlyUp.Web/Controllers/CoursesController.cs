@@ -43,7 +43,7 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var viewModel = new CourseDetailViewModel
+        var viewModel = new DetailCourseModel
         {
             Id = course.Id,
             Title = course.Title,
@@ -70,14 +70,14 @@ public class CoursesController : Controller
     [Authorize(Roles = "Admin,Instructor")]
     public IActionResult Create()
     {
-        return View(new CourseCreateModel());
+        return View(new CreateCourseModel());
     }
 
     // POST: /Courses/Create
     [HttpPost]
     [Authorize(Roles = "Admin,Instructor")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CourseCreateModel model)
+    public async Task<IActionResult> Create(CreateCourseModel model)
     {
         if (!ModelState.IsValid)
         {
@@ -111,7 +111,7 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var model = new CourseEditModel
+        var model = new EditCourseModel
         {
             Id = course.Id,
             Title = course.Title,
@@ -129,7 +129,7 @@ public class CoursesController : Controller
     [HttpPost]
     [Authorize(Roles = "Admin,Instructor")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, CourseEditModel model)
+    public async Task<IActionResult> Edit(int id, EditCourseModel model)
     {
         if (id != model.Id)
         {

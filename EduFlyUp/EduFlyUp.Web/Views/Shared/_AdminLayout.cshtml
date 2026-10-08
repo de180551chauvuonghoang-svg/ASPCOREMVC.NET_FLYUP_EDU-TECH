@@ -73,7 +73,7 @@
                 @if (User.IsInRole("Admin"))
                 {
                     <div class="admin-nav-item">
-                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="admin-nav-link @(ViewContext.RouteData.Values["area"]?.ToString() == "Admin" ? "active" : "")">
+                        <a asp-area="" asp-controller="Admin" asp-action="Index" class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
                             <i class="bi bi-speedometer2"></i>
                             <span>Admin Hub (Hệ Thống)</span>
                         </a>
@@ -180,7 +180,7 @@
                             @if (User.IsInRole("Admin"))
                             {
                                 <li>
-                                    <a class="dropdown-item rounded-3 py-2" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                                    <a class="dropdown-item rounded-3 py-2" asp-area="" asp-controller="Admin" asp-action="Index">
                                         <i class="bi bi-speedometer2 me-2 text-warning"></i>Admin Hub
                                     </a>
                                 </li>
