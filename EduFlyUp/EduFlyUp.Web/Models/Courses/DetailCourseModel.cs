@@ -2,7 +2,7 @@ using EduFlyUp.BusinessObjects;
 
 namespace EduFlyUp.Web.Models.Courses;
 
-public class CourseDetailViewModel
+public class DetailCourseModel
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;

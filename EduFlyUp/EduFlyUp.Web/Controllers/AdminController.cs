@@ -3,16 +3,15 @@ using EduFlyUp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace EduFlyUp.Web.Areas.Admin.Controllers;
+namespace EduFlyUp.Web.Controllers;
 
-[Area("Admin")]
 [Authorize(Roles = "Admin")]
-public class DashboardController : Controller
+public class AdminController : Controller
 {
     private readonly ICourseService _courseService;
     private readonly ILessonService _lessonService;
 
-    public DashboardController(ICourseService courseService, ILessonService lessonService)
+    public AdminController(ICourseService courseService, ILessonService lessonService)
     {
         _courseService = courseService;
         _lessonService = lessonService;
@@ -27,5 +26,10 @@ public class DashboardController : Controller
         ViewBag.TotalLessons = await _lessonService.GetTotalLessonsCountAsync();
 
         return View(courses);
+    }
+
+    public IActionResult Dashboard()
+    {
+        return RedirectToAction(nameof(Index));
     }
 }

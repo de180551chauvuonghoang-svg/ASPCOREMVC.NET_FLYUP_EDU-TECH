@@ -69,19 +69,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseMiddleware<EduFlyUp.Web.Middleware.RequestTimingMiddleware>();
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Route cho phân hệ Areas (Admin)
-app.MapControllerRoute(
-    name: "areas",
-    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
 // Route mặc định cho Web
 app.MapControllerRoute(

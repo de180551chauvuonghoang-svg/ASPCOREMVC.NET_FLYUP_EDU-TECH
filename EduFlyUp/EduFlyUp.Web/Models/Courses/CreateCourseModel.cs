@@ -3,19 +3,8 @@ using EduFlyUp.BusinessObjects;
 
 namespace EduFlyUp.Web.Models.Courses;
 
-/// <summary>
-/// ViewModel dùng cho form chỉnh sửa khóa học.
-/// 
-/// Kiến thức: Over-posting Attack Prevention
-///   - Entity Course có InstructorId, CreatedAt... mà người dùng không được phép sửa.
-///   - Nếu dùng thẳng Entity vào form, hacker có thể POST thêm field ẩn để thay đổi chúng.
-///   - Dùng ViewModel riêng: chỉ expose đúng field cần thiết, Controller tự map vào Entity.
-/// </summary>
-public class CourseEditModel
+public class CreateCourseModel
 {
-    // Id ẩn trong form để biết đang sửa Course nào
-    public int Id { get; set; }
-
     [Required(ErrorMessage = "Vui lòng nhập tiêu đề khóa học.")]
     [StringLength(200, MinimumLength = 5, ErrorMessage = "Tiêu đề phải từ 5 đến 200 ký tự.")]
     [Display(Name = "Tiêu đề khóa học")]
@@ -38,6 +27,6 @@ public class CourseEditModel
     [Display(Name = "Cấp độ")]
     public CourseLevel Level { get; set; } = CourseLevel.Beginner;
 
-    [Display(Name = "Công khai khóa học")]
-    public bool IsPublished { get; set; }
+    [Display(Name = "Công khai khóa học ngay")]
+    public bool IsPublished { get; set; } = true;
 }
