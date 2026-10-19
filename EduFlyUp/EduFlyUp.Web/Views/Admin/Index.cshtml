@@ -23,9 +23,9 @@
             </p>
         </div>
         <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 d-flex flex-wrap gap-2 justify-content-lg-end">
-            <a asp-area="" asp-controller="Instructor" asp-action="Dashboard" class="btn btn-outline-light rounded-pill px-4 py-3 d-inline-flex align-items-center gap-2">
-                <i class="bi bi-mortarboard-fill fs-5 text-warning"></i>
-                <span>Xem Kênh Giảng Viên</span>
+            <a asp-action="Courses" class="btn btn-outline-light rounded-pill px-4 py-3 d-inline-flex align-items-center gap-2">
+                <i class="bi bi-journal-check fs-5 text-warning"></i>
+                <span>Quản lý khóa học</span>
             </a>
             <a asp-area="" asp-controller="Courses" asp-action="Create" class="btn btn-brand rounded-pill px-4 py-3 shadow-glow d-inline-flex align-items-center gap-2 fw-bold">
                 <i class="bi bi-plus-circle-fill fs-5"></i>
@@ -151,7 +151,7 @@
                             <td class="text-muted small">@c.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
                             <td class="text-end pe-4">
                                 <div class="d-inline-flex gap-1">
-                                    <a asp-area="" asp-controller="Courses" asp-action="Details" asp-route-id="@c.Id" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" title="Xem">
+                                    <a asp-area="" asp-controller="Admin" asp-action="CourseDetails" asp-route-id="@c.Id" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" title="Xem">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     <a asp-area="" asp-controller="Courses" asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1" title="Sửa">
