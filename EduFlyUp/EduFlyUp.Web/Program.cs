@@ -42,6 +42,9 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<ICourseAccessService, CourseAccessService>();
 builder.Services.AddScoped<IAdminCourseRepository, AdminCourseRepository>();
 builder.Services.AddScoped<IAdminCourseService, AdminCourseService>();
+builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();
+builder.Services.AddScoped<IAdminUserStatusLock, SqlServerAdminUserStatusLock>();
+builder.Services.AddScoped<IAdminUserService, AdminUserService>();
 
 // 4. Cấu hình Cookie Authentication
 builder.Services.ConfigureApplicationCookie(options =>
