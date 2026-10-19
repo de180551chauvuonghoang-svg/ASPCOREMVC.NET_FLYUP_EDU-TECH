@@ -114,6 +114,16 @@
                 </div>
 
                 <!-- Section 3: Navigation & System -->
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="admin-nav-section mt-3">Quản Lý Tài Khoản</div>
+                    <div class="admin-nav-item">
+                        <a asp-controller="Admin" asp-action="Users" class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && (ViewContext.RouteData.Values["action"]?.ToString() == "Users" || ViewContext.RouteData.Values["action"]?.ToString() == "UserDetails") ? "active" : "")">
+                            <i class="bi bi-people"></i><span>Quản lý người dùng</span>
+                        </a>
+                    </div>
+                }
+
                 <div class="admin-nav-section mt-3">Điều Hướng & Hệ Thống</div>
 
                 <div class="admin-nav-item">
