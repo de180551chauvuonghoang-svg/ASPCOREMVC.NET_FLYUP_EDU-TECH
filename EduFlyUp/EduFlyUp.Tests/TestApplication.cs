@@ -50,6 +50,8 @@ internal sealed class TestApplication : IDisposable
                 services.AddScoped<ICourseService, CourseService>();
                 services.AddScoped<ILessonService, LessonService>();
                 services.AddScoped<ICourseAccessService, CourseAccessService>();
+                services.AddScoped<IAdminCourseRepository, AdminCourseRepository>();
+                services.AddScoped<IAdminCourseService, AdminCourseService>();
                 services.AddControllersWithViews().AddApplicationPart(typeof(AccountController).Assembly);
             })
             .Configure(app =>
