@@ -12,6 +12,7 @@ public class DetailCourseModel
     public bool IsFree => Price == 0;
     public CourseLevel Level { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool CanManage { get; set; }
     public List<LessonItemViewModel> Lessons { get; set; } = new();
 }
 

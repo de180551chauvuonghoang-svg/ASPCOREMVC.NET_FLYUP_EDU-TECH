@@ -9,13 +9,16 @@ namespace EduFlyUp.Web.Controllers;
 public class CoursesController : Controller
 {
     private readonly ICourseService _courseService;
+    private readonly ICourseAccessService _courseAccess;
 
-    public CoursesController(ICourseService courseService)
+    public CoursesController(ICourseService courseService, ICourseAccessService courseAccess)
     {
         _courseService = courseService;
+        _courseAccess = courseAccess;
     }
 
     // GET: /Courses
+    [HttpGet]
     public async Task<IActionResult> Index()
     {
         var courses = await _courseService.GetPublishedCoursesAsync();
@@ -35,13 +38,16 @@ public class CoursesController : Controller
     }
 
     // GET: /Courses/Details/5
-    public async Task<IActionResult> Details(int id)
+    [HttpGet]
+    public async Task<IActionResult> Details([FromRoute] int id)
     {
         var course = await _courseService.GetCourseByIdAsync(id);
         if (course == null)
         {
             return NotFound();
         }
+
+        if (!await _courseAccess.CanViewCourseAsync(course, User)) return NotFound();
 
         var viewModel = new DetailCourseModel
         {
@@ -52,6 +58,7 @@ public class CoursesController : Controller
             Price = course.Price,
             Level = course.Level,
             CreatedAt = course.CreatedAt,
+            CanManage = _courseAccess.CanManageCourse(course, User),
             Lessons = course.Lessons.OrderBy(l => l.Order).Select(l => new LessonItemViewModel
             {
                 Id = l.Id,
@@ -68,9 +75,10 @@ public class CoursesController : Controller
     // GET: /Courses/Create
     // Chỉ Admin và Instructor mới có quyền tạo khóa học mới
     [Authorize(Roles = "Admin,Instructor")]
+    [HttpGet]
     public IActionResult Create()
     {
-        return View(new CreateCourseModel());
+        return View(new CreateCourseModel { IsPublished = User.IsInRole("Admin") });
     }
 
     // POST: /Courses/Create
@@ -79,6 +87,8 @@ public class CoursesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateCourseModel model)
     {
+        if (string.IsNullOrWhiteSpace(User.Identity?.Name)) return Forbid();
+
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -91,25 +101,29 @@ public class CoursesController : Controller
             ThumbnailUrl = model.ThumbnailUrl ?? string.Empty,
             Price = model.Price,
             Level = model.Level,
-            IsPublished = model.IsPublished,
-            InstructorId = User.Identity?.Name ?? "instructor@eduflyup.vn"
+            IsPublished = User.IsInRole("Admin") && model.IsPublished,
+            InstructorId = User.Identity!.Name!
         };
 
         await _courseService.CreateCourseAsync(course);
 
         TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã được tạo thành công!";
+        if (!User.IsInRole("Admin")) return RedirectToAction("Dashboard", "Instructor");
         return RedirectToAction(nameof(Index));
     }
 
     // GET: /Courses/Edit/5
+    [HttpGet]
     [Authorize(Roles = "Admin,Instructor")]
-    public async Task<IActionResult> Edit(int id)
+    public async Task<IActionResult> Edit([FromRoute] int id)
     {
         var course = await _courseService.GetCourseByIdAsync(id);
         if (course == null)
         {
             return NotFound();
         }
+
+        if (!_courseAccess.CanManageCourse(course, User)) return Forbid();
 
         var model = new EditCourseModel
         {
@@ -129,16 +143,11 @@ public class CoursesController : Controller
     [HttpPost]
     [Authorize(Roles = "Admin,Instructor")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, EditCourseModel model)
+    public async Task<IActionResult> Edit([FromRoute] int id, EditCourseModel model)
     {
         if (id != model.Id)
         {
             return BadRequest();
-        }
-
-        if (!ModelState.IsValid)
-        {
-            return View(model);
         }
 
         var course = await _courseService.GetCourseByIdAsync(id);
@@ -147,14 +156,27 @@ public class CoursesController : Controller
             return NotFound();
         }
 
+        if (!_courseAccess.CanManageCourse(course, User)) return Forbid();
+
+        if (!User.IsInRole("Admin"))
+        {
+            ModelState.Remove(nameof(model.IsPublished));
+            model.IsPublished = course.IsPublished;
+        }
+
+        if (!ModelState.IsValid) return View(model);
+
         course.Title = model.Title;
         course.Description = model.Description;
         course.ThumbnailUrl = model.ThumbnailUrl ?? string.Empty;
         course.Price = model.Price;
         course.Level = model.Level;
-        course.IsPublished = model.IsPublished;
+        if (User.IsInRole("Admin")) course.IsPublished = model.IsPublished;
 
-        await _courseService.UpdateCourseAsync(course);
+        if (User.IsInRole("Admin"))
+            await _courseService.UpdateCourseAsync(course);
+        else
+            await _courseService.UpdateCourseContentAsync(course);
 
         TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã được cập nhật thành công!";
         return RedirectToAction(nameof(Details), new { id = course.Id });
@@ -164,13 +186,15 @@ public class CoursesController : Controller
     [HttpPost, ActionName("Delete")]
     [Authorize(Roles = "Admin,Instructor")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
+    public async Task<IActionResult> DeleteConfirmed([FromRoute] int id)
     {
         var course = await _courseService.GetCourseByIdAsync(id);
         if (course == null)
         {
             return NotFound();
         }
+
+        if (!_courseAccess.CanManageCourse(course, User)) return Forbid();
 
         await _courseService.DeleteCourseAsync(id);
 

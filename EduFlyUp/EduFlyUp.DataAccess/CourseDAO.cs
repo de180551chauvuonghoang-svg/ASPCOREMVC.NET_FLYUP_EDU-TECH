@@ -30,10 +30,24 @@ namespace EduFlyUp.DataAccess
             return course;
         }
 
-        public async Task UpdateAsync(Course course)
+        public Task UpdateAsync(Course course) => UpdateAsync(course, includePublication: true);
+
+        public Task UpdateContentAsync(Course course) => UpdateAsync(course, includePublication: false);
+
+        private async Task UpdateAsync(Course course, bool includePublication)
         {
             using var context = new AppDbContext();
-            context.Courses.Update(course);
+            var stored = await context.Courses.FindAsync(course.Id)
+                ?? throw new DbUpdateConcurrencyException("Khóa học không còn tồn tại.");
+
+            stored.Title = course.Title;
+            stored.Description = course.Description;
+            stored.ThumbnailUrl = course.ThumbnailUrl;
+            stored.Price = course.Price;
+            stored.Level = course.Level;
+            // Instructor content edits must never write a stale publication flag,
+            // even when an Admin hides the course concurrently.
+            if (includePublication) stored.IsPublished = course.IsPublished;
             await context.SaveChangesAsync();
         }
 

@@ -39,6 +39,7 @@ builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<ICourseAccessService, CourseAccessService>();
 
 // 4. Cấu hình Cookie Authentication
 builder.Services.ConfigureApplicationCookie(options =>

@@ -8,6 +8,7 @@ namespace EduFlyUp.Repositories
         Task<Course?> GetByIdAsync(int id);
         Task<Course> AddAsync(Course course);
         Task UpdateAsync(Course course);
+        Task UpdateContentAsync(Course course);
         Task DeleteAsync(int id);
         Task<int> CountAsync();
         Task<int> CountPublishedAsync();

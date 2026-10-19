@@ -12,6 +12,7 @@ namespace EduFlyUp.Repositories
         public async Task<Course> AddAsync(Course course) => await CourseDAO.Instance.AddAsync(course);
 
         public async Task UpdateAsync(Course course) => await CourseDAO.Instance.UpdateAsync(course);
+        public async Task UpdateContentAsync(Course course) => await CourseDAO.Instance.UpdateContentAsync(course);
 
         public async Task DeleteAsync(int id) => await CourseDAO.Instance.DeleteAsync(id);
 

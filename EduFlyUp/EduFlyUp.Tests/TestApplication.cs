@@ -22,6 +22,7 @@ internal sealed class TestApplication : IDisposable
     public const string Password = "Test-only@12345";
     private readonly TestServer _server;
     public TestCourseRepository Courses { get; } = new();
+    public TestEnrollmentRepository Enrollments { get; } = new();
     public IServiceProvider Services => _server.Services;
 
     public TestApplication()
@@ -44,9 +45,11 @@ internal sealed class TestApplication : IDisposable
                     options.AccessDeniedPath = "/Account/AccessDenied";
                 });
                 services.AddSingleton<ICourseRepository>(Courses);
+                services.AddSingleton<IEnrollmentRepository>(Enrollments);
                 services.AddSingleton<ILessonRepository, TestLessonRepository>();
                 services.AddScoped<ICourseService, CourseService>();
                 services.AddScoped<ILessonService, LessonService>();
+                services.AddScoped<ICourseAccessService, CourseAccessService>();
                 services.AddControllersWithViews().AddApplicationPart(typeof(AccountController).Assembly);
             })
             .Configure(app =>

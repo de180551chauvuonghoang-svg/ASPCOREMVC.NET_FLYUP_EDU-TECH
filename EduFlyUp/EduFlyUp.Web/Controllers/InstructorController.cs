@@ -9,34 +9,23 @@ namespace EduFlyUp.Web.Controllers;
 public class InstructorController : Controller
 {
     private readonly ICourseService _courseService;
-    private readonly ILessonService _lessonService;
+    private readonly ICourseAccessService _courseAccess;
 
-    public InstructorController(ICourseService courseService, ILessonService lessonService)
+    public InstructorController(ICourseService courseService, ICourseAccessService courseAccess)
     {
         _courseService = courseService;
-        _lessonService = lessonService;
+        _courseAccess = courseAccess;
     }
 
     // GET: /Instructor/Dashboard or /Instructor
     [HttpGet]
     public async Task<IActionResult> Dashboard(string? search, string? level, string? status)
     {
-        var userName = User.Identity?.Name ?? string.Empty;
         var isAdmin = User.IsInRole("Admin");
 
         var allCourses = (await _courseService.GetAllCoursesAsync()).ToList();
 
-        // Admin can manage all; Instructor manages their courses (or default instructor courses)
-        var instructorCourses = isAdmin
-            ? allCourses
-            : allCourses.Where(c => string.Equals(c.InstructorId, userName, StringComparison.OrdinalIgnoreCase) 
-                                 || c.InstructorId == "instructor@eduflyup.vn" 
-                                 || c.InstructorId == "seed-instructor-1").ToList();
-
-        if (!isAdmin && !instructorCourses.Any())
-        {
-            instructorCourses = allCourses;
-        }
+        var instructorCourses = allCourses.Where(c => _courseAccess.CanManageCourse(c, User)).ToList();
 
         var filtered = instructorCourses.AsEnumerable();
 
