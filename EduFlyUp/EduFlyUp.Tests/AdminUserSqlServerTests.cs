@@ -78,7 +78,7 @@ public sealed class AdminUserSqlServerTests
         private sealed class SimulatedDatabaseException : DbException;
     }
 
-    private sealed class SqlDatabase(ServiceProvider services, string connection) : IAsyncDisposable
+    internal sealed class SqlDatabase(ServiceProvider services, string connection) : IAsyncDisposable
     {
         public ServiceProvider Services => services;
         public static async Task<SqlDatabase> CreateAsync()
@@ -96,6 +96,8 @@ public sealed class AdminUserSqlServerTests
             collection.AddScoped<IAdminUserRepository, AdminUserRepository>();
             collection.AddScoped<IAdminUserStatusLock, SqlServerAdminUserStatusLock>();
             collection.AddScoped<IAdminUserService, AdminUserService>();
+            collection.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
+            collection.AddScoped<IAdminDashboardService, AdminDashboardService>();
             var provider = collection.BuildServiceProvider();
             try
             {

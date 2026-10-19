@@ -55,6 +55,8 @@ internal sealed class TestApplication : IDisposable
                 services.AddScoped<IAdminUserRepository, AdminUserRepository>();
                 services.AddSingleton<IAdminUserStatusLock, TestAdminUserStatusLock>();
                 services.AddScoped<IAdminUserService, AdminUserService>();
+                services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
+                services.AddScoped<IAdminDashboardService, AdminDashboardService>();
                 services.AddControllersWithViews().AddApplicationPart(typeof(AccountController).Assembly);
             })
             .Configure(app =>
