@@ -70,10 +70,16 @@ public class AccountController : Controller
     }
 
     // GET: /Account/Login
+    [HttpGet]
     [AllowAnonymous]
-    public IActionResult Login(string? returnUrl = null)
+    public IActionResult Login(string? returnUrl = null, bool accountUnavailable = false)
     {
         ViewData["ReturnUrl"] = returnUrl;
+        if (accountUnavailable)
+        {
+            ModelState.AddModelError(string.Empty,
+                "Phiên đăng nhập không còn hợp lệ hoặc tài khoản đã bị vô hiệu hóa. Vui lòng đăng nhập lại hoặc liên hệ quản trị viên.");
+        }
         return View(new LoginViewModel());
     }
 
@@ -104,6 +110,13 @@ public class AccountController : Controller
             return RedirectToAction("Index", "Home");
         }
 
+        if (result.IsNotAllowed)
+        {
+            ModelState.AddModelError(string.Empty,
+                "Tài khoản không được phép đăng nhập. Vui lòng liên hệ quản trị viên.");
+            return View(model);
+        }
+
         if (result.IsLockedOut)
         {
             _logger.LogWarning("Tài khoản {Email} bị khóa.", model.Email);
@@ -114,6 +127,9 @@ public class AccountController : Controller
         ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không đúng.");
         return View(model);
     }
+
+    [HttpGet]
+    public IActionResult AccessDenied() => View();
 
     // POST: /Account/Logout
     [HttpPost]
