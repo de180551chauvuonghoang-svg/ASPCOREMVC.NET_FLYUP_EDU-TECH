@@ -6,13 +6,21 @@ Nhánh `feature/admin-management` bổ sung kiểm tra `IsActive` khi đăng nh�
 
 Admin quản lý mọi khóa học. Instructor chỉ sửa/xóa khóa học có `InstructorId` khớp username/email của mình, tạo khóa học chưa công khai và không được đổi `IsPublished`. Course ẩn chỉ cho Admin, Instructor sở hữu hoặc người có Enrollment `Active`/`Completed` xem chi tiết. Role `Teacher` không tự có quyền Instructor.
 
-Phần nền này không thêm migration. Xem [hướng dẫn kiểm thử và tích hợp](EduFlyUp/EduFlyUp.Tests/README.md) trước khi nối các thao tác mới. Khóa/mở tài khoản và bảo vệ Admin cuối cùng thuộc bước 3.
+Phần nền này không thêm migration. Xem [hướng dẫn kiểm thử và tích hợp](EduFlyUp/EduFlyUp.Tests/README.md) trước khi nối các thao tác mới.
 
 ## Quản lý khóa học Admin — bước 2
 
 Admin mở `/Admin/Courses` từ dashboard hoặc sidebar để tìm theo tiêu đề, lọc giảng viên/cấp độ/trạng thái và phân trang 10 khóa học mỗi trang. `/Admin/CourseDetails/{id}` hiển thị cả course ẩn, thông tin giảng viên và nội dung/video bài học dưới dạng văn bản an toàn.
 
 Các form `POST /Admin/EnableCourse/{id}` và `POST /Admin/DisableCourse/{id}` yêu cầu role Admin và anti-forgery, đặt trạng thái cụ thể thay vì toggle. Chỉ trạng thái hiển thị và timestamp được cập nhật; nội dung, owner và ghi danh được giữ nguyên. Học viên có Enrollment Active/Completed vẫn giữ quyền truy cập course ẩn. Không có migration mới ở bước 2.
+
+## Quản lý người dùng Admin — bước 3
+
+`/Admin/Users` tìm tên/email, lọc role/trạng thái và phân trang. `/Admin/UserDetails/{id}` hiển thị hồ sơ, vai trò, khóa học đã tạo và lịch sử ghi danh; không đưa dữ liệu xác thực nội bộ vào model giao diện.
+
+`POST /Admin/DeactivateUser/{id}` và `POST /Admin/ActivateUser/{id}` yêu cầu Admin và anti-forgery. Khóa tài khoản đổi cả IsActive và security stamp qua Identity; mở khóa yêu cầu đăng nhập lại, giữ role/mật khẩu/lockout bảo mật và dữ liệu liên quan. Không cho Admin tự khóa.
+
+Các thao tác trạng thái dùng transaction SQL Server và application lock chung; quyền của Admin đang thao tác được đọc lại sau khi lấy khóa, cùng kiểm tra Admin hoạt động cuối cùng. Không thêm schema/migration. Kiểm thử SQL Server thật là điều kiện nghiệm thu phần đồng thời; xem hướng dẫn kiểm thử bên dưới để bật hai test tích hợp.
 
 ## Giới thiệu
 

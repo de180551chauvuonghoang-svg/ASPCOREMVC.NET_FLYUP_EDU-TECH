@@ -6,7 +6,7 @@ Chạy tại thư mục gốc repository với .NET SDK hỗ trợ `net8.0` và 
 dotnet test EduFlyUp/EduFlyUp.Tests/EduFlyUp.Tests.csproj --configuration Release
 ```
 
-Project dùng ASP.NET Core TestServer và Identity store thật trên EF Core InMemory. Các test bước 1 dùng repository course/enrollment giả lập; test Admin bước 2 chạy repository Admin thật trên InMemory. Một test dùng provider SQL Server để biên dịch các truy vấn thực tế, không mở kết nối database. Không chạy migration/seed của ứng dụng. Bộ kiểm thử hiện có 65 trường hợp: 49 từ bước 1 và 16 thêm ở bước 2.
+Project dùng ASP.NET Core TestServer và Identity store thật trên EF Core InMemory. Các test bước 1 dùng repository course/enrollment giả lập; test Admin bước 2/3 chạy repository Admin thật trên InMemory. Có test biên dịch truy vấn bằng provider SQL Server mà không mở kết nối DB. Bộ kiểm thử có 83 trường hợp: 65 từ bước 1/2, 16 test thông thường và 2 test SQL Server thêm ở bước 3. Chạy mặc định: 81 pass, 2 SQL test skip nếu chưa đặt `FLYUP_TEST_SQLSERVER`.
 
 ## Các quy tắc đã kiểm tra
 
@@ -21,6 +21,10 @@ Project dùng ASP.NET Core TestServer và Identity store thật trên EF Core In
 - Enable/Disable yêu cầu Admin còn hoạt động, POST và token; ID sai trả 404, returnUrl ngoài bị bỏ qua. Gửi lặp không toggle và không đổi timestamp nếu trạng thái đã đúng.
 - Mutation bỏ qua các field ngoài ID trên route; giữ mô tả, giá, owner, bài học và enrollment. Quyền đọc của Guest/học viên sau mutation vẫn theo contract bước 1.
 - Chi tiết Admin đọc course ẩn, bài học theo thứ tự, có empty state; Content được encode, VideoUrl chỉ hiển thị văn bản.
+- User list lọc tên/email, role và IsActive, phân trang ổn định, giữ filter và đọc nhiều role theo batch cho trang hiện tại.
+- User details lấy course theo username/email, enrollment theo Identity ID; encode hồ sơ và không đưa password hash/security stamp/token vào DTO hoặc HTML.
+- Khóa → mở yêu cầu đăng nhập lại; bản sao cookie cũ vẫn bị từ chối sau mở. Giữ role, mật khẩu, lockout do nhập sai, khóa học và enrollment; POST giả mạo field bị bỏ qua.
+- Không tự khóa, từ chối actor đã mất role Admin, từ chối role/Guest, xử lý ID/token/filter sai và lỗi ghi Identity. Hai yêu cầu khóa chéo được kiểm tra lại actor sau khi chờ khóa.
 
 ## Contract cho các bước tiếp theo
 
@@ -28,9 +32,35 @@ Project dùng ASP.NET Core TestServer và Identity store thật trên EF Core In
 
 `AddActiveAccountProtection()` đăng ký SignInManager và cookie events. Mỗi request có cookie đọc lại user và security stamp từ Identity store. Nếu user không còn tồn tại hoặc `IsActive=false`, principal bị từ chối và cookie trình duyệt bị xóa. Request cần xác thực chuyển về Login với thông báo; public content vẫn mở được như Guest. Request đã được xác thực trước khi khóa không bị hủy ngược.
 
-Khi triển khai mutation khóa ở bước 3, phải lưu `IsActive=false` và đổi security stamp qua API Identity trong cùng thao tác được kiểm soát, kiểm tra kết quả lưu/concurrency. Không chỉ đổi bool: một bản sao cookie cũ chưa được gửi trong thời gian khóa có thể dùng lại sau mở khóa nếu stamp vẫn giữ nguyên. Mở khóa không tạo phiên mới; yêu cầu đăng nhập lại. Giữ `IsActive` riêng với lockout do sai mật khẩu, đồng thời bổ sung quy tắc không tự khóa/không khóa Admin cuối cùng.
+Mutation khóa bước 3 lưu `IsActive=false` cùng security stamp mới qua `UserManager.UpdateSecurityStampAsync`; activation dùng `UserManager.UpdateAsync`, không reset lockout bảo mật. Không thay bằng cập nhật bool trực tiếp: bản sao cookie cũ có thể sống lại sau mở khóa nếu stamp giữ nguyên. Gửi lặp trạng thái đã đúng không ghi lại hoặc đổi stamp. Kết quả Identity thất bại trả thông báo conflict, lỗi DB trả thông báo thử lại; transaction chưa commit được rollback.
 
 Cookie validation kiểm tra stamp mỗi request để phát hiện thay đổi ngay; Identity vẫn thực hiện chu kỳ renewal của principal. Đây là thêm truy vấn theo phiên có xác thực, không phải cơ chế online-presence.
+
+`AdminUserService` giữ quy tắc nghiệp vụ, `AdminUserRepository` dùng UserManager/AppDbContext scoped từ cùng DI scope. `SqlServerAdminUserStatusLock` bắt đầu transaction Serializable, lấy `sp_getapplock` Exclusive với owner Transaction, timeout 10 giây và resource `EduFlyUp.AdminUserStatus`. Sau khi lấy khóa, xóa snapshot tracked từ cookie validation rồi đọc lại actor: phải còn active và có role Admin. Sau đó kiểm tra target, tự khóa và số Admin hoạt động trước khi lưu/commit. Hai request khóa chéo không thể cùng dùng trạng thái actor cũ. Khóa được quản lý tại DB nên dùng được qua nhiều app instance; không dựa vào semaphore trong production.
+
+Mọi đường đổi trạng thái hoặc thay đổi role Admin trong tương lai phải phối hợp cùng guard/quy tắc này. Đường quản lý hiện tại không đổi role hoặc xóa tài khoản. Production guard từ chối provider không phải SQL Server; test/preview InMemory dùng lock riêng chỉ để kiểm tra thứ tự service/HTTP, không chứng minh transaction SQL.
+
+| Method | Route | Hành vi |
+| --- | --- | --- |
+| GET | `/Admin/Users` | Search, Role, IsActive, Page; 10 tài khoản/trang; page được giới hạn, filter sai kiểu trả 400 |
+| GET | `/Admin/UserDetails/{id}` | Hồ sơ, roles, course đã tạo, enrollment và status; user không tồn tại trả 404 |
+| POST | `/Admin/DeactivateUser/{id}` | Khóa, đổi stamp, ngăn tự khóa và Admin cuối cùng |
+| POST | `/Admin/ActivateUser/{id}` | Mở, giữ role/mật khẩu/lockout, không cấp phiên mới |
+
+POST lấy target ID từ route, actor ID từ cookie; không nhận entity/role/field nhạy cảm từ form. ReturnUrl chỉ cho URL local. Log actor ID/target ID/trạng thái/kết quả để debug; chưa phải dữ liệu UC-51 Login History.
+
+### Chạy hai kiểm thử SQL Server
+
+Chạy từ phiên Windows có quyền kết nối SQL Server phát triển và quyền tạo/xóa database:
+
+```powershell
+$env:FLYUP_TEST_SQLSERVER = 'Server=.\SQLEXPRESS;Integrated Security=True;TrustServerCertificate=True;Connect Timeout=10;'
+dotnet test EduFlyUp/EduFlyUp.Tests/EduFlyUp.Tests.csproj --configuration Release --filter FullyQualifiedName~AdminUserSqlServerTests
+```
+
+Mỗi test tạo database mới tên `FlyUpAdminStatusTest_<GUID>`, dùng EnsureCreated và xóa đúng database do fixture tạo khi kết thúc. InitialCatalog đầu vào được thay bằng tên mới; AttachDBFilename bị loại bỏ để không đính kèm file DB sẵn có. Không chạy migration/seed hoặc xóa database của ứng dụng. Dùng SQL Server phát triển riêng; không trỏ tới server production.
+
+Hai test chạy production guard với các DI scope/context độc lập: Admin A/B cùng khóa chéo; giả lập commit thất bại sau khi Identity đã lưu để kiểm tra rollback cả IsActive và security stamp. Test không có biến môi trường sẽ báo skip rõ ràng. Chỉ khi hai test pass trên SQL Server mới xác nhận nghiệm thu transaction/concurrency bước 3.
 
 ### Quyền khóa học và bài học
 
@@ -61,6 +91,6 @@ POST kiểm tra anti-forgery. Sau khi lưu, returnUrl local được giữ để
 
 ## Giới hạn xác minh
 
-Release build và 65 ca kiểm thử đã pass. Đã kiểm tra trình duyệt với dữ liệu mẫu InMemory: danh sách, chi tiết, công khai → confirm ẩn, thông báo, bộ lọc, bố cục desktop/mobile; console không có warning/error trong luồng đã xem. Biên dịch truy vấn bằng provider SQL Server đã pass, nhưng chưa xác minh persistence/transaction/constraint trên SQL Server: kết nối SQL Express trong phiên tự động bị chặn bởi xác thực Windows/TLS. Không có thay đổi schema hoặc migration ở bước 1/2.
+Release build và 81 test thông thường đã pass; 2 test SQL Server chưa chạy trong phiên tự động vì chưa có kết nối SQL được xác thực. Đã kiểm tra browser với dữ liệu mẫu InMemory: quản lý course và user, chi tiết, confirm khóa → mở, thông báo và bộ lọc; có kiểm tra bố cục điện thoại, body không tràn ngang, bảng cuộn trong vùng riêng. Không có console warning/error trong luồng đã xem. Biên dịch query bằng SQL Server provider đã pass; không thay thế kiểm thử persistence/transaction trên server thật. Không có thay đổi schema/migration ở bước 1–3.
 
 Trước nghiệm thu trên DB của nhóm, dùng database phát triển riêng, cấu hình `ConnectionStrings__DefaultConnection`, chạy từ `EduFlyUp/EduFlyUp.Web` để DAO và Identity cùng cấu hình. Startup tự migrate/seed. Kiểm tra Admin bật/ẩn course, tải lại `/Courses`, thử URL course ẩn với Guest/owner/học viên Active/Completed/Cancelled, đối chiếu lesson/enrollment trước và sau thao tác. Test InMemory và biên dịch SQL không thay thế bước này, cũng không thay thế thử concurrency trên database.
