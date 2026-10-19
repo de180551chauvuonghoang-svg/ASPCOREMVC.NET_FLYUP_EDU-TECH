@@ -10,30 +10,20 @@ namespace EduFlyUp.Web.Controllers;
 [Authorize(Roles = "Admin")]
 public class AdminController : Controller
 {
-    private readonly ICourseService _courseService;
-    private readonly ILessonService _lessonService;
+    private readonly IAdminDashboardService _dashboard;
     private readonly IAdminCourseService _adminCourses;
     private readonly IAdminUserService _adminUsers;
 
-    public AdminController(ICourseService courseService, ILessonService lessonService, IAdminCourseService adminCourses, IAdminUserService adminUsers)
+    public AdminController(IAdminDashboardService dashboard, IAdminCourseService adminCourses, IAdminUserService adminUsers)
     {
-        _courseService = courseService;
-        _lessonService = lessonService;
+        _dashboard = dashboard;
         _adminCourses = adminCourses;
         _adminUsers = adminUsers;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index()
-    {
-        var courses = (await _courseService.GetAllCoursesAsync()).ToList();
-
-        ViewBag.TotalCourses = courses.Count;
-        ViewBag.PublishedCourses = courses.Count(c => c.IsPublished);
-        ViewBag.TotalLessons = await _lessonService.GetTotalLessonsCountAsync();
-
-        return View(courses);
-    }
+        => View(new AdminDashboardModel(await _dashboard.GetStatsAsync()));
 
     [HttpGet]
     public IActionResult Dashboard()
