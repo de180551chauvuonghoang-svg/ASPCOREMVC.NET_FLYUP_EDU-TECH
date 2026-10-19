@@ -6,7 +6,13 @@ Nhánh `feature/admin-management` bổ sung kiểm tra `IsActive` khi đăng nh�
 
 Admin quản lý mọi khóa học. Instructor chỉ sửa/xóa khóa học có `InstructorId` khớp username/email của mình, tạo khóa học chưa công khai và không được đổi `IsPublished`. Course ẩn chỉ cho Admin, Instructor sở hữu hoặc người có Enrollment `Active`/`Completed` xem chi tiết. Role `Teacher` không tự có quyền Instructor.
 
-Đây là phần nền; danh sách Admin mới, nút bật/ẩn khóa học, khóa/mở tài khoản và bảo vệ Admin cuối cùng thuộc các bước tiếp theo. Bước này không thêm migration. Xem [hướng dẫn kiểm thử và tích hợp](EduFlyUp/EduFlyUp.Tests/README.md) trước khi nối các thao tác mới.
+Phần nền này không thêm migration. Xem [hướng dẫn kiểm thử và tích hợp](EduFlyUp/EduFlyUp.Tests/README.md) trước khi nối các thao tác mới. Khóa/mở tài khoản và bảo vệ Admin cuối cùng thuộc bước 3.
+
+## Quản lý khóa học Admin — bước 2
+
+Admin mở `/Admin/Courses` từ dashboard hoặc sidebar để tìm theo tiêu đề, lọc giảng viên/cấp độ/trạng thái và phân trang 10 khóa học mỗi trang. `/Admin/CourseDetails/{id}` hiển thị cả course ẩn, thông tin giảng viên và nội dung/video bài học dưới dạng văn bản an toàn.
+
+Các form `POST /Admin/EnableCourse/{id}` và `POST /Admin/DisableCourse/{id}` yêu cầu role Admin và anti-forgery, đặt trạng thái cụ thể thay vì toggle. Chỉ trạng thái hiển thị và timestamp được cập nhật; nội dung, owner và ghi danh được giữ nguyên. Học viên có Enrollment Active/Completed vẫn giữ quyền truy cập course ẩn. Không có migration mới ở bước 2.
 
 ## Giới thiệu
 
