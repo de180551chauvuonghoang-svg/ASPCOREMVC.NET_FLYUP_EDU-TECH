@@ -1,5 +1,13 @@
 # 🚀 .NET Toàn Diện - Project: **EduFlyUp** (Nền tảng học trực tuyến)
 
+## Nền phân quyền Admin — bước 1
+
+Nhánh `feature/admin-management` bổ sung kiểm tra `IsActive` khi đăng nhập và trên mỗi request có cookie. Cookie của tài khoản bị khóa, đã xóa hoặc có security stamp thay đổi bị từ chối; cơ chế lockout và kiểm tra stamp của Identity vẫn được giữ.
+
+Admin quản lý mọi khóa học. Instructor chỉ sửa/xóa khóa học có `InstructorId` khớp username/email của mình, tạo khóa học chưa công khai và không được đổi `IsPublished`. Course ẩn chỉ cho Admin, Instructor sở hữu hoặc người có Enrollment `Active`/`Completed` xem chi tiết. Role `Teacher` không tự có quyền Instructor.
+
+Đây là phần nền; danh sách Admin mới, nút bật/ẩn khóa học, khóa/mở tài khoản và bảo vệ Admin cuối cùng thuộc các bước tiếp theo. Bước này không thêm migration. Xem [hướng dẫn kiểm thử và tích hợp](EduFlyUp/EduFlyUp.Tests/README.md) trước khi nối các thao tác mới.
+
 ## Giới thiệu
 
 **EduFlyUp** là nền tảng học trực tuyến mini được thiết kế chuẩn mực theo mô hình kiến trúc **N-Tier (Layered Architecture)** kết hợp mẫu thiết kế **Singleton DAO & Repository Pattern** theo định hướng chuẩn đào tạo chuyên sâu (tương thích cấu trúc đồ án/kỳ thi thực hành FPT/PRN như mẫu `examAPIandOData`), loại bỏ sự phức tạp không cần thiết của Web API/OData để tập trung tối đa vào **Pure ASP.NET Core 8 MVC**.
