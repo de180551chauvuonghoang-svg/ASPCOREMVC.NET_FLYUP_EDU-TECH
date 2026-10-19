@@ -6,7 +6,7 @@ Chạy tại thư mục gốc repository với .NET SDK hỗ trợ `net8.0` và 
 dotnet test EduFlyUp/EduFlyUp.Tests/EduFlyUp.Tests.csproj --configuration Release
 ```
 
-Project dùng ASP.NET Core TestServer và Identity store thật trên EF Core InMemory. Các test bước 1 dùng repository course/enrollment giả lập; test Admin bước 2/3 chạy repository Admin thật trên InMemory. Có test biên dịch truy vấn bằng provider SQL Server mà không mở kết nối DB. Bộ kiểm thử có 83 trường hợp: 65 từ bước 1/2, 16 test thông thường và 2 test SQL Server thêm ở bước 3. Chạy mặc định: 81 pass, 2 SQL test skip nếu chưa đặt `FLYUP_TEST_SQLSERVER`.
+Project dùng ASP.NET Core TestServer và Identity store thật trên EF Core InMemory. Các test bước 1 dùng repository course/enrollment giả lập; test Admin bước 2–4 chạy repository Admin thật trên InMemory. Có test biên dịch truy vấn bằng provider SQL Server mà không mở kết nối DB. Bộ kiểm thử có 88 trường hợp: 83 từ bước 1–3, 4 test thông thường và 1 test SQL Server thêm ở bước 4. Chạy mặc định: 85 pass, 3 SQL test skip nếu chưa đặt `FLYUP_TEST_SQLSERVER`.
 
 ## Các quy tắc đã kiểm tra
 
@@ -25,6 +25,10 @@ Project dùng ASP.NET Core TestServer và Identity store thật trên EF Core In
 - User details lấy course theo username/email, enrollment theo Identity ID; encode hồ sơ và không đưa password hash/security stamp/token vào DTO hoặc HTML.
 - Khóa → mở yêu cầu đăng nhập lại; bản sao cookie cũ vẫn bị từ chối sau mở. Giữ role, mật khẩu, lockout do nhập sai, khóa học và enrollment; POST giả mạo field bị bỏ qua.
 - Không tự khóa, từ chối actor đã mất role Admin, từ chối role/Guest, xử lý ID/token/filter sai và lỗi ghi Identity. Hai yêu cầu khóa chéo được kiểm tra lại actor sau khi chờ khóa.
+
+- Dashboard đếm dữ liệu rỗng, user nhiều role, IsActive độc lập với login lockout, tổng bài học gồm course ẩn; các thẻ mở đúng URL lọc.
+- Qua HTTP có cookie/token thật: khóa/mở user, ẩn/bật course rồi tải dashboard, đối chiếu cả 7 số liệu sau từng thao tác.
+- Truy vấn dashboard biên dịch thành SQL aggregate, không join role hoặc tải nội dung entity để đếm.
 
 ## Contract cho các bước tiếp theo
 
@@ -62,6 +66,21 @@ Mỗi test tạo database mới tên `FlyUpAdminStatusTest_<GUID>`, dùng Ensure
 
 Hai test chạy production guard với các DI scope/context độc lập: Admin A/B cùng khóa chéo; giả lập commit thất bại sau khi Identity đã lưu để kiểm tra rollback cả IsActive và security stamp. Test không có biến môi trường sẽ báo skip rõ ràng. Chỉ khi hai test pass trên SQL Server mới xác nhận nghiệm thu transaction/concurrency bước 3.
 
+### Dashboard UC-44 và kiểm thử SQL Server
+
+`GET /Admin` và `/Admin/Index` chỉ dành cho Admin đang hoạt động. `/Admin/Dashboard` chuyển về `/Admin`. Controller trả `AdminDashboardModel` chứa `AdminDashboardStats`; repository dùng AppDbContext từ DI chung với Identity. Hai truy vấn group/count lấy tổng và trạng thái của user/course; truy vấn thứ ba đếm lesson. Empty group trả 0. User nhiều role được tính một lần; IsActive không đo online và không phụ thuộc LockoutEnd. Không dùng cache: tải lại trang sau mutation để đọc số liệu mới. Ba truy vấn không tạo snapshot chung xuyên bảng.
+
+Kiểm thử SQL bước 4 chạy aggregate trên database mới rỗng rồi thêm user/course/lesson; khóa/mở user qua production guard, ẩn/bật course qua repository thật và đọc lại số liệu từ scope khác:
+
+```powershell
+$env:FLYUP_TEST_SQLSERVER = 'Server=.\SQLEXPRESS;Integrated Security=True;TrustServerCertificate=True;Connect Timeout=10;'
+dotnet test EduFlyUp/EduFlyUp.Tests/EduFlyUp.Tests.csproj --configuration Release --filter FullyQualifiedName~AdminDashboardSqlServerTests
+```
+
+Phải có **1 passed, 0 failed, 0 skipped**. Test dùng chung fixture database GUID của bước 3, không đọc/ghi database ứng dụng. Có thể đặt biến môi trường rồi chạy toàn bộ suite để chạy cả 3 SQL test. TestServer/InMemory và ToQueryString không thay thế việc chạy test này trên SQL Server.
+
+Giao diện dashboard đã kiểm tra bằng browser với dữ liệu mẫu InMemory: 14 user (10 hoạt động, 4 khóa), 13 course (9 công khai, 4 ẩn), 13 lesson. Thẻ khóa tài khoản/khóa học ẩn mở đúng danh sách gồm 4 dòng; cả 6 URL liên kết được kiểm tra qua HTTP. Bố cục mặc định và viewport 390×844 hiển thị đủ các thẻ, không tràn ngang; không ghi nhận console warning/error trong luồng đã xem.
+
 ### Quyền khóa học và bài học
 
 Inject `ICourseAccessService` khi thêm endpoint:
@@ -91,6 +110,6 @@ POST kiểm tra anti-forgery. Sau khi lưu, returnUrl local được giữ để
 
 ## Giới hạn xác minh
 
-Release build và 81 test thông thường đã pass; lần chạy mặc định có 2 test SQL Server skip. Khi bật hai test SQL thật trong phiên tự động, cả hai dừng tại mở kết nối (SQL Client báo máy không hỗ trợ encryption mà server yêu cầu), trước khi tạo database/kiểm tra nghiệp vụ. Cần chạy lại từ phiên Windows kết nối được SQL Server; chưa nghiệm thu transaction/concurrency. Đã kiểm tra browser với dữ liệu mẫu InMemory: quản lý course và user, chi tiết, confirm khóa → mở, thông báo và bộ lọc; có kiểm tra bố cục điện thoại, body không tràn ngang, bảng cuộn trong vùng riêng. Không có console warning/error trong luồng đã xem. Biên dịch query bằng SQL Server provider đã pass; không thay thế kiểm thử persistence/transaction trên server thật. Không có thay đổi schema/migration ở bước 1–3.
+Release build và 85 test thông thường đã pass; lần chạy mặc định có 3 test SQL Server skip. Hai test transaction/concurrency bước 3 đã pass khi chạy từ phiên Windows của người dùng. Phiên tự động trước đó không mở được kết nối do SQL Client báo không hỗ trợ encryption mà server yêu cầu. Kiểm thử aggregate SQL bước 4 cần được chạy riêng theo hướng dẫn trên trước nghiệm thu. Không giảm yêu cầu encryption để vượt qua giới hạn môi trường. Browser các bước trước đã kiểm tra với dữ liệu mẫu InMemory: quản lý course/user, chi tiết, confirm khóa → mở, thông báo, bộ lọc và bố cục điện thoại. Biên dịch query bằng SQL Server provider không thay thế kiểm thử persistence/transaction trên server thật. Không có thay đổi schema/migration ở bước 1–4.
 
 Trước nghiệm thu trên DB của nhóm, dùng database phát triển riêng, cấu hình `ConnectionStrings__DefaultConnection`, chạy từ `EduFlyUp/EduFlyUp.Web` để DAO và Identity cùng cấu hình. Startup tự migrate/seed. Kiểm tra Admin bật/ẩn course, tải lại `/Courses`, thử URL course ẩn với Guest/owner/học viên Active/Completed/Cancelled, đối chiếu lesson/enrollment trước và sau thao tác. Test InMemory và biên dịch SQL không thay thế bước này, cũng không thay thế thử concurrency trên database.

@@ -22,6 +22,12 @@ Các form `POST /Admin/EnableCourse/{id}` và `POST /Admin/DisableCourse/{id}` y
 
 Các thao tác trạng thái dùng transaction SQL Server và application lock chung; quyền của Admin đang thao tác được đọc lại sau khi lấy khóa, cùng kiểm tra Admin hoạt động cuối cùng. Không thêm schema/migration. Kiểm thử SQL Server thật là điều kiện nghiệm thu phần đồng thời; xem hướng dẫn kiểm thử bên dưới để bật hai test tích hợp.
 
+## Dashboard Admin — bước 4
+
+`/Admin` (hoặc `/Admin/Index`) dùng `AdminDashboardModel` để hiển thị 7 số liệu thật: tổng người dùng, hoạt động, đã khóa; tổng khóa học, công khai, ẩn/chưa công khai; tổng bài học. Sáu thẻ người dùng/khóa học mở danh sách với bộ lọc tương ứng. Tổng bài học gồm cả khóa học công khai và ẩn.
+
+“Hoạt động” là `IsActive=true`, độc lập với online và lockout do nhập sai mật khẩu. “Ẩn/chưa công khai” là `IsPublished=false`. `AdminDashboardService` gọi repository scoped thực hiện 3 truy vấn aggregate ở database, không tải toàn bộ entity để đếm. Số liệu cập nhật khi tải lại trang; mỗi nhóm người dùng/khóa học được đếm trong cùng truy vấn, không cam kết snapshot chung giữa các nhóm khi có thay đổi đồng thời. Dữ liệu rỗng hiển thị 0. Không thêm migration ở bước 4.
+
 ## Giới thiệu
 
 **EduFlyUp** là nền tảng học trực tuyến mini được thiết kế chuẩn mực theo mô hình kiến trúc **N-Tier (Layered Architecture)** kết hợp mẫu thiết kế **Singleton DAO & Repository Pattern** theo định hướng chuẩn đào tạo chuyên sâu (tương thích cấu trúc đồ án/kỳ thi thực hành FPT/PRN như mẫu `examAPIandOData`), loại bỏ sự phức tạp không cần thiết của Web API/OData để tập trung tối đa vào **Pure ASP.NET Core 8 MVC**.
