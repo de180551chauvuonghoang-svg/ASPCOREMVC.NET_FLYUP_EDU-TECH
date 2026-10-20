@@ -13,6 +13,13 @@ namespace EduFlyUp.DataAccess
         public DbSet<Course> Courses => Set<Course>();
         public DbSet<Lesson> Lessons => Set<Lesson>();
         public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+        public DbSet<Question> Questions => Set<Question>();
+        public DbSet<QuestionOption> QuestionOptions => Set<QuestionOption>();
+        public DbSet<Quiz> Quizzes => Set<Quiz>();
+        public DbSet<QuizQuestion> QuizQuestions => Set<QuizQuestion>();
+        public DbSet<QuizAttempt> QuizAttempts => Set<QuizAttempt>();
+        public DbSet<Coupon> Coupons => Set<Coupon>();
+        public DbSet<PayoutRequest> PayoutRequests => Set<PayoutRequest>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

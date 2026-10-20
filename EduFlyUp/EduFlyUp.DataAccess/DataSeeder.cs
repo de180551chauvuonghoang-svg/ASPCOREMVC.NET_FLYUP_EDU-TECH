@@ -1,4 +1,4 @@
-﻿using EduFlyUp.BusinessObjects;
+using EduFlyUp.BusinessObjects;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,12 +21,14 @@ namespace EduFlyUp.DataAccess
                     Price = 299000,
                     Level = CourseLevel.Beginner,
                     IsPublished = true,
+                    Status = CourseStatus.Approved,
+                    Category = "Lập trình C#",
                     InstructorId = "instructor@eduflyup.vn",
                     Lessons = new List<Lesson>
                     {
-                        new Lesson { Title = "Giới thiệu C#", Order = 1, DurationMinutes = 15, IsPreview = true },
-                        new Lesson { Title = "Biến và kiểu dữ liệu", Order = 2, DurationMinutes = 25 },
-                        new Lesson { Title = "Vòng lặp và điều kiện", Order = 3, DurationMinutes = 30 },
+                        new Lesson { Title = "Giới thiệu C#", Order = 1, DurationMinutes = 15, IsPreview = true, SectionName = "Chương 1: Giới thiệu & Căn bản" },
+                        new Lesson { Title = "Biến và kiểu dữ liệu", Order = 2, DurationMinutes = 25, SectionName = "Chương 1: Giới thiệu & Căn bản" },
+                        new Lesson { Title = "Vòng lặp và điều kiện", Order = 3, DurationMinutes = 30, SectionName = "Chương 1: Giới thiệu & Căn bản" },
                     }
                 },
                 new Course
@@ -36,6 +38,8 @@ namespace EduFlyUp.DataAccess
                     Price = 499000,
                     Level = CourseLevel.Intermediate,
                     IsPublished = true,
+                    Status = CourseStatus.Approved,
+                    Category = "ASP.NET Core",
                     InstructorId = "instructor@eduflyup.vn",
                 }
             };
