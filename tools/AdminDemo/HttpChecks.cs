@@ -54,10 +54,16 @@ internal sealed class HttpChecks(DemoSession session, DemoReport report)
     private static void Status(HttpResponseMessage response, HttpStatusCode status)
         => Require(response.StatusCode == status, $"{response.RequestMessage?.RequestUri?.AbsolutePath}: expected {status}, got {response.StatusCode}.");
 
-    private static void Redirect(HttpResponseMessage response, string path)
+    internal static void Redirect(HttpResponseMessage response, string path)
     {
         Status(response, HttpStatusCode.Redirect);
-        Require(response.Headers.Location?.ToString().StartsWith(path, StringComparison.Ordinal) == true, "Unexpected redirect, expected " + path);
+        var request = response.RequestMessage?.RequestUri;
+        var location = response.Headers.Location;
+        Require(request is { IsAbsoluteUri: true } && location is not null, "Redirect has no request URI or Location.");
+        var destination = new Uri(request!, location!);
+        Require(destination.GetLeftPart(UriPartial.Authority).Equals(request!.GetLeftPart(UriPartial.Authority), StringComparison.OrdinalIgnoreCase)
+            && destination.AbsolutePath.Equals(path, StringComparison.Ordinal),
+            $"{request.AbsolutePath}: expected same-origin redirect to {path}, got {destination.GetLeftPart(UriPartial.Authority)}{destination.AbsolutePath}.");
     }
 
     private async Task<DemoBrowser> SignInAsync(string key)

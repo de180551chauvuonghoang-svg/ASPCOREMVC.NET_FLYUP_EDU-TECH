@@ -15,6 +15,10 @@ StreamWriter? log = null;
 var json = new JsonSerializerOptions { WriteIndented = true };
 try
 {
+    var allowedOptions = new[] { "--repo", "--server", "--keep-open", "--wait-for-stop-file" };
+    if (options.Keys.Except(allowedOptions).Any()) throw new ArgumentException("Unknown demo option.");
+    if (options.ContainsKey("--keep-open") && options.ContainsKey("--wait-for-stop-file"))
+        throw new ArgumentException("Choose one server lifetime mode.");
     var server = options.GetValueOrDefault("--server", @".\SQLEXPRESS");
     // A fresh database for every run; never accept an existing application DB name.
     var session = new DemoSession(server, "FlyUpAdminDemo_" + Guid.NewGuid().ToString("N"),
@@ -48,6 +52,7 @@ try
     if (!web.Start()) throw new InvalidOperationException("Could not start the Web process.");
     web.BeginOutputReadLine(); web.BeginErrorReadLine();
     session.ProcessId = web.Id;
+    session.StopFile = Path.Combine(output, session.Database + ".stop");
     await File.WriteAllTextAsync(Path.Combine(output, "session.json"), JsonSerializer.Serialize(session, json));
     using var probe = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
     var ready = false;
@@ -68,7 +73,16 @@ try
     Console.WriteLine($"PASS: {report.Checks.Count} integration scenarios. Demo: {session.BaseUrl}/Admin");
     Console.WriteLine("Demo accounts and generated password: .admin-demo/session.json (local only; ignored by Git).");
     Console.WriteLine("Report: .admin-demo/report.json. Database is retained for the demo; no application database was modified.");
-    if (options.ContainsKey("--keep-open"))
+    if (options.ContainsKey("--wait-for-stop-file"))
+    {
+        Console.WriteLine("Leave this window open and report the eight PASS results to Codex for browser verification.");
+        Console.WriteLine("Waiting for the session stop file. Codex will signal after checking the browser.");
+        await DemoLifetime.WaitForStopFileAsync(session.StopFile, () => web.HasExited);
+        report.BrowserVerified = true;
+        report.FinishedUtc = DateTimeOffset.UtcNow;
+        await File.WriteAllTextAsync(Path.Combine(output, "report.json"), JsonSerializer.Serialize(report, json));
+    }
+    else if (options.ContainsKey("--keep-open"))
     {
         Console.WriteLine("Leave this window open for browser verification. Press Enter when finished to stop the demo server.");
         Console.ReadLine();

@@ -36,6 +36,7 @@ internal sealed class DemoReport(DateTimeOffset startedUtc)
     public string? Database { get; set; }
     public string? BaseUrl { get; set; }
     public bool Passed { get; set; }
+    public bool BrowserVerified { get; set; }
     public List<DemoCheck> Checks { get; } = [];
     public string? Error { get; set; }
 }

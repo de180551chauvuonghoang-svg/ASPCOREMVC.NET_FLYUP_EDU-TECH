@@ -34,7 +34,15 @@ Demo gồm Admin A/B; Instructor A/B có khóa học riêng; Teacher; Student Ac
 7. GET mutation, POST thiếu token, ID sai, tự khóa Admin và khóa lặp; phục hồi trạng thái demo.
 8. Hai Admin khóa chéo qua HTTP đồng thời: còn đúng một Admin hoạt động; Admin còn lại mở lại tài khoản kia để tiếp tục demo.
 
-Chỉ coi chạy thành công khi `Passed=true`, đủ 8 nhóm đều pass và không có `Error` trong report; process trả exit code 0. Build hoặc việc tạo được DB chưa chứng minh nghiệm thu. Khi lỗi, xem report/log, sửa rồi chạy một lần mới trên database demo mới.
+Chỉ coi chạy HTTP thành công khi `Passed=true`, đủ 8 nhóm đều pass và không có `Error` trong report; process trả exit code 0. Với chế độ `--wait-for-stop-file`, `BrowserVerified` còn false trong lúc giữ Web mở, chỉ thành true sau tín hiệu xác nhận. Wrapper phải đợi trạng thái này trước push. Build hoặc việc tạo được DB chưa chứng minh nghiệm thu. Khi lỗi, xem report/log, sửa rồi chạy một lần mới trên database demo mới.
+
+Kiểm thử hồi quy riêng cho công cụ, không cần SQL Server:
+
+```powershell
+dotnet test tools/AdminDemo.Tests/AdminDemo.Tests.csproj --configuration Release
+```
+
+Có 8 ca kiểm tra redirect tương đối/tuyệt đối từ Kestrel, từ chối redirect khác origin/cổng/đường dẫn và cơ chế chờ tín hiệu browser. Redirect được đối chiếu cùng origin và đúng path; query ReturnUrl được giữ theo ứng dụng. Số ca này tách biệt với 88 test ứng dụng và 8 nhóm HTTP/SQL.
 
 ## Kiểm tra hồi quy và demo thủ công
 
