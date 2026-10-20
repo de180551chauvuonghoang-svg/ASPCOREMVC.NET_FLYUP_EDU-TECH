@@ -28,6 +28,10 @@ Các thao tác trạng thái dùng transaction SQL Server và application lock c
 
 “Hoạt động” là `IsActive=true`, độc lập với online và lockout do nhập sai mật khẩu. “Ẩn/chưa công khai” là `IsPublished=false`. `AdminDashboardService` gọi repository scoped thực hiện 3 truy vấn aggregate ở database, không tải toàn bộ entity để đếm. Số liệu cập nhật khi tải lại trang; mỗi nhóm người dùng/khóa học được đếm trong cùng truy vấn, không cam kết snapshot chung giữa các nhóm khi có thay đổi đồng thời. Dữ liệu rỗng hiển thị 0. Không thêm migration ở bước 4.
 
+## Kiểm tra và demo tích hợp — bước 5
+
+Công cụ [AdminDemo](tools/AdminDemo/README.md) tạo database demo SQL Server riêng, chạy startup/migrations và Web thật, kiểm tra 8 nhóm tích hợp qua HTTP rồi giữ dữ liệu để demo. Bao gồm cookie đang tồn tại, SQL filters/paging, ownership, publication, Enrollment và dashboard; có kiểm tra hai Admin khóa chéo qua HTTP. URL/tài khoản demo sinh cục bộ trong `.admin-demo/` và không đưa vào Git. Xem hướng dẫn công cụ để chạy và đọc kết quả; chỉ đánh dấu nghiệm thu khi có report pass và đã kiểm tra giao diện.
+
 ## Giới thiệu
 
 **EduFlyUp** là nền tảng học trực tuyến mini được thiết kế chuẩn mực theo mô hình kiến trúc **N-Tier (Layered Architecture)** kết hợp mẫu thiết kế **Singleton DAO & Repository Pattern** theo định hướng chuẩn đào tạo chuyên sâu (tương thích cấu trúc đồ án/kỳ thi thực hành FPT/PRN như mẫu `examAPIandOData`), loại bỏ sự phức tạp không cần thiết của Web API/OData để tập trung tối đa vào **Pure ASP.NET Core 8 MVC**.

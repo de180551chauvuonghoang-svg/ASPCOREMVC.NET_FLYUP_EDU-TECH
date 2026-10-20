@@ -30,6 +30,10 @@ Project dùng ASP.NET Core TestServer và Identity store thật trên EF Core In
 - Qua HTTP có cookie/token thật: khóa/mở user, ẩn/bật course rồi tải dashboard, đối chiếu cả 7 số liệu sau từng thao tác.
 - Truy vấn dashboard biên dịch thành SQL aggregate, không join role hoặc tải nội dung entity để đếm.
 
+## Kiểm tra Web thật trên database demo
+
+[Công cụ AdminDemo](../../tools/AdminDemo/README.md) chạy production startup/Kestrel và toàn bộ luồng HTTP trên database SQL Server mới, gồm DAO public với Identity/Admin context. Đây là phần bổ sung cho TestServer/InMemory và ba SQL test của suite, không tăng số test xUnit. Report ghi riêng 8 nhóm kiểm tra; không gộp thành 96 test xUnit. Công cụ giữ database để demo và không có lệnh xóa database ứng dụng. Các số liệu pass runtime lấy từ `.admin-demo/report.json` sau khi chạy, không suy ra từ build.
+
 ## Contract cho các bước tiếp theo
 
 ### Khóa/mở tài khoản
