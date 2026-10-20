@@ -17,6 +17,8 @@ internal sealed class DemoSession(string server, string database, string passwor
     public string Password { get; } = password;
     public string BaseUrl { get; set; } = "";
     public int ProcessId { get; set; }
+    public DateTimeOffset? ProcessStartedUtc { get; set; }
+    public string WebAssemblyPath { get; set; } = "";
     public string StopFile { get; set; } = "";
     public Dictionary<string, DemoAccount> Accounts { get; } = [];
     public Dictionary<string, int> Courses { get; } = [];

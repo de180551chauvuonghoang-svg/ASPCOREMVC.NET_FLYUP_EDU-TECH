@@ -11,7 +11,9 @@ dotnet run --project tools/AdminDemo/AdminDemo.csproj --configuration Release --
 
 Mỗi lần chạy tạo database mới `FlyUpAdminDemo_<GUID>`. Công cụ không nhận tên database có sẵn, kiểm tra tên chưa tồn tại trước khi migrate/seed và không xóa database tự động. Dữ liệu được giữ để demo. Dùng migration và startup seed thật; Admin mặc định của startup seed được vô hiệu hóa **chỉ trong database demo**, để còn đúng hai Admin demo hoạt động cho thử nghiệm đồng thời.
 
-App chỉ lắng nghe `127.0.0.1` trên cổng trống. Process Web chạy từ thư mục `EduFlyUp.Web` với `ConnectionStrings__DefaultConnection` trỏ về database mới: Identity từ DI và DAO tạo context riêng phải cùng đọc dữ liệu. Công cụ tắt đúng process Web do nó khởi tạo khi kết thúc; không dừng các app khác. Với `--keep-open`, nhấn Enter để kết thúc server. Chế độ `--wait-for-stop-file` giữ server cho kiểm tra browser đến khi file được ghi tại đường dẫn `StopFile` trong session; dùng cho quy trình bàn giao có điều khiển.
+App chỉ lắng nghe `127.0.0.1` trên cổng trống. Các file build Web (kể cả dependency native) được sao chép vào thư mục mới `.admin-demo/runtimes/<database GUID>/`; app chạy từ bản sao này để không khóa `bin/Release` khi build lại. Working directory vẫn là `EduFlyUp.Web`, với `ConnectionStrings__DefaultConnection` trỏ về database mới: Identity từ DI và DAO tạo context riêng phải cùng đọc dữ liệu.
+
+Công cụ tắt đúng process Web do nó khởi tạo khi kết thúc; không dừng các app khác. Ctrl+C được xử lý như hủy tác vụ để đi qua cleanup và không cho push. Với `--keep-open`, nhấn Enter để kết thúc server. Chế độ `--wait-for-stop-file` giữ server đến khi có file tại `StopFile` trong session; nếu cần hủy mà không xác nhận browser, tạo file `StopFile + ".cancel"`. Hủy làm report thất bại và dừng Web. Session lưu thêm đường dẫn assembly và thời điểm tạo process để nhận diện PID ở lần chạy sau. Việc cưỡng bức đóng process hoặc cửa sổ có thể bỏ qua cleanup; wrapper bàn giao kiểm tra đúng PID, command line, URL và thời điểm tạo trước khi dừng demo còn sót, kể cả bản cũ chạy trực tiếp từ bin. Không dừng toàn bộ các tiến trình dotnet.
 
 ## Dữ liệu và kết quả
 
@@ -42,7 +44,7 @@ Kiểm thử hồi quy riêng cho công cụ, không cần SQL Server:
 dotnet test tools/AdminDemo.Tests/AdminDemo.Tests.csproj --configuration Release
 ```
 
-Có 8 ca kiểm tra redirect tương đối/tuyệt đối từ Kestrel, từ chối redirect khác origin/cổng/đường dẫn và cơ chế chờ tín hiệu browser. Redirect được đối chiếu cùng origin và đúng path; query ReturnUrl được giữ theo ứng dụng. Số ca này tách biệt với 88 test ứng dụng và 8 nhóm HTTP/SQL.
+Có 11 ca kiểm tra redirect tương đối/tuyệt đối từ Kestrel, từ chối redirect khác origin/cổng/đường dẫn, cơ chế chờ/hủy xác nhận browser và bản sao runtime giữ nguyên khi build output đổi. Redirect được đối chiếu cùng origin và đúng path; query ReturnUrl được giữ theo ứng dụng. Số ca này tách biệt với 88 test ứng dụng và 8 nhóm HTTP/SQL.
 
 ## Kiểm tra hồi quy và demo thủ công
 

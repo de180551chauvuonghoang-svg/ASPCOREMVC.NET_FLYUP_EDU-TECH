@@ -47,6 +47,58 @@ public sealed class DemoHarnessTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => DemoLifetime.WaitForStopFileAsync(signal, () => true));
     }
 
+    [Fact]
+    public async Task Canceling_the_runner_ends_the_browser_wait_without_approval()
+    {
+        var signal = Path.Combine(Path.GetTempPath(), "FlyUpDemoSignal_" + Guid.NewGuid().ToString("N"));
+        using var cancellation = new CancellationTokenSource();
+        var wait = DemoLifetime.WaitForStopFileAsync(signal, () => false, cancellation.Token);
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => wait);
+        Assert.False(File.Exists(signal));
+    }
+
+    [Fact]
+    public async Task Browser_cancel_file_aborts_instead_of_approving_the_demo()
+    {
+        var signal = Path.Combine(Path.GetTempPath(), "FlyUpDemoSignal_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            await File.WriteAllTextAsync(signal + ".cancel", "browser issue found");
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => DemoLifetime.WaitForStopFileAsync(signal, () => false));
+            Assert.False(File.Exists(signal));
+        }
+        finally { File.Delete(signal + ".cancel"); }
+    }
+
+    [Fact]
+    public void Running_demo_uses_an_isolated_copy_including_native_dependencies()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "FlyUpRuntime_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var source = Path.Combine(root, "build");
+            Directory.CreateDirectory(Path.Combine(source, "runtimes", "win-x64", "native"));
+            File.WriteAllText(Path.Combine(source, "EduFlyUp.Web.dll"), "old assembly");
+            File.WriteAllText(Path.Combine(source, "runtimes", "win-x64", "native", "dependency.dll"), "native dependency");
+            var runtime = Path.Combine(root, "demo");
+            var assembly = DemoLifetime.StageWebRuntime(source, runtime);
+            File.WriteAllText(Path.Combine(source, "EduFlyUp.Web.dll"), "rebuilt assembly");
+            Assert.Equal("old assembly", File.ReadAllText(assembly));
+            Assert.Equal("native dependency", File.ReadAllText(Path.Combine(runtime, "runtimes", "win-x64", "native", "dependency.dll")));
+            Assert.Throws<InvalidOperationException>(() => DemoLifetime.StageWebRuntime(source, runtime));
+        }
+        finally
+        {
+            // The only recursively removed directory is the fresh GUID fixture root.
+            var full = Path.GetFullPath(root);
+            var temp = Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!full.StartsWith(temp, StringComparison.OrdinalIgnoreCase) || !Path.GetFileName(full).StartsWith("FlyUpRuntime_", StringComparison.Ordinal))
+                throw new InvalidOperationException("Unexpected test cleanup target.");
+            if (Directory.Exists(full)) Directory.Delete(full, recursive: true);
+        }
+    }
+
     private static HttpResponseMessage Response(string location) => new(HttpStatusCode.Redirect)
     {
         RequestMessage = new HttpRequestMessage(HttpMethod.Get, "http://127.0.0.1:59687/Admin"),

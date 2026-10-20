@@ -12,6 +12,10 @@ Directory.CreateDirectory(output);
 var report = new DemoReport(DateTimeOffset.UtcNow);
 Process? web = null;
 StreamWriter? log = null;
+var webStarted = false;
+using var demoCancellation = new CancellationTokenSource();
+ConsoleCancelEventHandler cancelDemo = (_, eventArgs) => { eventArgs.Cancel = true; demoCancellation.Cancel(); };
+Console.CancelKeyPress += cancelDemo;
 var json = new JsonSerializerOptions { WriteIndented = true };
 try
 {
@@ -26,14 +30,16 @@ try
     report.Database = session.Database;
     Console.WriteLine($"Preparing isolated demo database {session.Database} on {server}.");
     await DemoData.PrepareAsync(session);
+    demoCancellation.Token.ThrowIfCancellationRequested();
     using (var port = new TcpListener(IPAddress.Loopback, 0))
     {
         port.Start();
         session.BaseUrl = "http://127.0.0.1:" + ((IPEndPoint)port.LocalEndpoint).Port;
     }
     var webRoot = Path.Combine(root, "EduFlyUp", "EduFlyUp.Web");
-    var assembly = Path.Combine(webRoot, "bin", "Release", "net8.0", "EduFlyUp.Web.dll");
-    if (!File.Exists(assembly)) throw new InvalidOperationException("Build the Web project in Release before running the demo.");
+    var assembly = DemoLifetime.StageWebRuntime(Path.Combine(webRoot, "bin", "Release", "net8.0"),
+        Path.Combine(output, "runtimes", session.Database));
+    session.WebAssemblyPath = assembly;
     var start = new ProcessStartInfo("dotnet")
     {
         WorkingDirectory = webRoot, UseShellExecute = false, CreateNoWindow = true,
@@ -50,8 +56,10 @@ try
     void Log(object sender, DataReceivedEventArgs line) { if (line.Data is not null) lock (log) log.WriteLine(line.Data); }
     web.OutputDataReceived += Log; web.ErrorDataReceived += Log;
     if (!web.Start()) throw new InvalidOperationException("Could not start the Web process.");
+    webStarted = true;
     web.BeginOutputReadLine(); web.BeginErrorReadLine();
     session.ProcessId = web.Id;
+    session.ProcessStartedUtc = new DateTimeOffset(web.StartTime.ToUniversalTime());
     session.StopFile = Path.Combine(output, session.Database + ".stop");
     await File.WriteAllTextAsync(Path.Combine(output, "session.json"), JsonSerializer.Serialize(session, json));
     using var probe = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
@@ -62,7 +70,7 @@ try
         catch (HttpRequestException) { }
         catch (TaskCanceledException) { }
         if (ready) break;
-        await Task.Delay(500);
+        await Task.Delay(500, demoCancellation.Token);
     }
     if (!ready) throw new InvalidOperationException("Web did not become ready. See .admin-demo/web.log.");
     report.BaseUrl = session.BaseUrl;
@@ -77,7 +85,7 @@ try
     {
         Console.WriteLine("Leave this window open and report the eight PASS results to Codex for browser verification.");
         Console.WriteLine("Waiting for the session stop file. Codex will signal after checking the browser.");
-        await DemoLifetime.WaitForStopFileAsync(session.StopFile, () => web.HasExited);
+        await DemoLifetime.WaitForStopFileAsync(session.StopFile, () => web.HasExited, demoCancellation.Token);
         report.BrowserVerified = true;
         report.FinishedUtc = DateTimeOffset.UtcNow;
         await File.WriteAllTextAsync(Path.Combine(output, "report.json"), JsonSerializer.Serialize(report, json));
@@ -85,7 +93,7 @@ try
     else if (options.ContainsKey("--keep-open"))
     {
         Console.WriteLine("Leave this window open for browser verification. Press Enter when finished to stop the demo server.");
-        Console.ReadLine();
+        await Console.In.ReadLineAsync(demoCancellation.Token);
     }
     return 0;
 }
@@ -100,7 +108,12 @@ catch (Exception error)
 }
 finally
 {
-    if (web is { HasExited: false }) { web.Kill(entireProcessTree: true); await web.WaitForExitAsync(); }
+    Console.CancelKeyPress -= cancelDemo;
+    if (webStarted && web is { HasExited: false })
+    {
+        try { web.Kill(entireProcessTree: true); await web.WaitForExitAsync(); }
+        catch (InvalidOperationException) when (web.HasExited) { }
+    }
     web?.Dispose();
     log?.Dispose();
 }
