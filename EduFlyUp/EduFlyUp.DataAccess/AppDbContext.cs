@@ -35,7 +35,7 @@ namespace EduFlyUp.DataAccess
 
                 var connectionString = config.GetConnectionString("DefaultConnection")
                     ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                    ?? "Server=DESKTOP-IJV2BTH\\SQLEXPRESS;Database=EduFlyUpDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True";
+                    ?? "Server=.\\SQLEXPRESS;Database=EduFlyUpDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True";
 
                 optionsBuilder.UseSqlServer(connectionString);
             }
