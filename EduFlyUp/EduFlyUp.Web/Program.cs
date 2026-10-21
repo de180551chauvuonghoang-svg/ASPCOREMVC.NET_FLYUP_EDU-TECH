@@ -2,6 +2,7 @@ using EduFlyUp.BusinessObjects;
 using EduFlyUp.DataAccess;
 using EduFlyUp.Repositories;
 using EduFlyUp.Services;
+using EduFlyUp.Web.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,7 +29,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<AppDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddActiveAccountProtection();
 
 // 3. Đăng ký Repositories & Services theo mô hình N-Tier Repository Pattern
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
@@ -41,6 +43,14 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddScoped<ICourseAccessService, CourseAccessService>();
+builder.Services.AddScoped<IAdminCourseRepository, AdminCourseRepository>();
+builder.Services.AddScoped<IAdminCourseService, AdminCourseService>();
+builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();
+builder.Services.AddScoped<IAdminUserStatusLock, SqlServerAdminUserStatusLock>();
+builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+builder.Services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 
 // 4. Cấu hình Cookie Authentication
 builder.Services.ConfigureApplicationCookie(options =>

@@ -1,0 +1,119 @@
+using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+using System.Text.Json;
+using AdminDemo;
+
+var options = args.Select((value, index) => (value, index)).Where(x => x.value.StartsWith("--"))
+    .ToDictionary(x => x.value, x => x.index + 1 < args.Length && !args[x.index + 1].StartsWith("--") ? args[x.index + 1] : "true");
+var root = Path.GetFullPath(options.GetValueOrDefault("--repo", Path.Combine(AppContext.BaseDirectory, "../../../../../")));
+var output = Path.Combine(root, ".admin-demo");
+Directory.CreateDirectory(output);
+var report = new DemoReport(DateTimeOffset.UtcNow);
+Process? web = null;
+StreamWriter? log = null;
+var webStarted = false;
+using var demoCancellation = new CancellationTokenSource();
+ConsoleCancelEventHandler cancelDemo = (_, eventArgs) => { eventArgs.Cancel = true; demoCancellation.Cancel(); };
+Console.CancelKeyPress += cancelDemo;
+var json = new JsonSerializerOptions { WriteIndented = true };
+try
+{
+    var allowedOptions = new[] { "--repo", "--server", "--keep-open", "--wait-for-stop-file" };
+    if (options.Keys.Except(allowedOptions).Any()) throw new ArgumentException("Unknown demo option.");
+    if (options.ContainsKey("--keep-open") && options.ContainsKey("--wait-for-stop-file"))
+        throw new ArgumentException("Choose one server lifetime mode.");
+    var server = options.GetValueOrDefault("--server", @".\SQLEXPRESS");
+    // A fresh database for every run; never accept an existing application DB name.
+    var session = new DemoSession(server, "FlyUpAdminDemo_" + Guid.NewGuid().ToString("N"),
+        "DemoOnly@" + Guid.NewGuid().ToString("N"));
+    report.Database = session.Database;
+    Console.WriteLine($"Preparing isolated demo database {session.Database} on {server}.");
+    await DemoData.PrepareAsync(session);
+    demoCancellation.Token.ThrowIfCancellationRequested();
+    using (var port = new TcpListener(IPAddress.Loopback, 0))
+    {
+        port.Start();
+        session.BaseUrl = "http://127.0.0.1:" + ((IPEndPoint)port.LocalEndpoint).Port;
+    }
+    var webRoot = Path.Combine(root, "EduFlyUp", "EduFlyUp.Web");
+    var assembly = DemoLifetime.StageWebRuntime(Path.Combine(webRoot, "bin", "Release", "net8.0"),
+        Path.Combine(output, "runtimes", session.Database));
+    session.WebAssemblyPath = assembly;
+    var start = new ProcessStartInfo("dotnet")
+    {
+        WorkingDirectory = webRoot, UseShellExecute = false, CreateNoWindow = true,
+        RedirectStandardOutput = true, RedirectStandardError = true
+    };
+    start.ArgumentList.Add(assembly);
+    start.ArgumentList.Add("--urls"); start.ArgumentList.Add(session.BaseUrl);
+    start.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
+    start.Environment["DOTNET_ENVIRONMENT"] = "Development";
+    start.Environment["ConnectionStrings__DefaultConnection"] = session.Connection;
+    start.Environment["ASPNETCORE_HTTPS_PORT"] = "";
+    log = new StreamWriter(Path.Combine(output, "web.log")) { AutoFlush = true };
+    web = new Process { StartInfo = start };
+    void Log(object sender, DataReceivedEventArgs line) { if (line.Data is not null) lock (log) log.WriteLine(line.Data); }
+    web.OutputDataReceived += Log; web.ErrorDataReceived += Log;
+    if (!web.Start()) throw new InvalidOperationException("Could not start the Web process.");
+    webStarted = true;
+    web.BeginOutputReadLine(); web.BeginErrorReadLine();
+    session.ProcessId = web.Id;
+    session.ProcessStartedUtc = new DateTimeOffset(web.StartTime.ToUniversalTime());
+    session.StopFile = Path.Combine(output, session.Database + ".stop");
+    await File.WriteAllTextAsync(Path.Combine(output, "session.json"), JsonSerializer.Serialize(session, json));
+    using var probe = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+    var ready = false;
+    for (var attempt = 0; attempt < 60 && !web.HasExited; attempt++)
+    {
+        try { using var response = await probe.GetAsync(session.BaseUrl + "/Account/Login"); ready = response.IsSuccessStatusCode; }
+        catch (HttpRequestException) { }
+        catch (TaskCanceledException) { }
+        if (ready) break;
+        await Task.Delay(500, demoCancellation.Token);
+    }
+    if (!ready) throw new InvalidOperationException("Web did not become ready. See .admin-demo/web.log.");
+    report.BaseUrl = session.BaseUrl;
+    await new HttpChecks(session, report).RunAsync();
+    report.Passed = true;
+    report.FinishedUtc = DateTimeOffset.UtcNow;
+    await File.WriteAllTextAsync(Path.Combine(output, "report.json"), JsonSerializer.Serialize(report, json));
+    Console.WriteLine($"PASS: {report.Checks.Count} integration scenarios. Demo: {session.BaseUrl}/Admin");
+    Console.WriteLine("Demo accounts and generated password: .admin-demo/session.json (local only; ignored by Git).");
+    Console.WriteLine("Report: .admin-demo/report.json. Database is retained for the demo; no application database was modified.");
+    if (options.ContainsKey("--wait-for-stop-file"))
+    {
+        Console.WriteLine("Leave this window open and report the eight PASS results to Codex for browser verification.");
+        Console.WriteLine("Waiting for the session stop file. Codex will signal after checking the browser.");
+        await DemoLifetime.WaitForStopFileAsync(session.StopFile, () => web.HasExited, demoCancellation.Token);
+        report.BrowserVerified = true;
+        report.FinishedUtc = DateTimeOffset.UtcNow;
+        await File.WriteAllTextAsync(Path.Combine(output, "report.json"), JsonSerializer.Serialize(report, json));
+    }
+    else if (options.ContainsKey("--keep-open"))
+    {
+        Console.WriteLine("Leave this window open for browser verification. Press Enter when finished to stop the demo server.");
+        await Console.In.ReadLineAsync(demoCancellation.Token);
+    }
+    return 0;
+}
+catch (Exception error)
+{
+    report.Passed = false;
+    report.FinishedUtc = DateTimeOffset.UtcNow;
+    report.Error = error.Message;
+    await File.WriteAllTextAsync(Path.Combine(output, "report.json"), JsonSerializer.Serialize(report, json));
+    Console.Error.WriteLine("FAIL: " + error.Message);
+    return 1;
+}
+finally
+{
+    Console.CancelKeyPress -= cancelDemo;
+    if (webStarted && web is { HasExited: false })
+    {
+        try { web.Kill(entireProcessTree: true); await web.WaitForExitAsync(); }
+        catch (InvalidOperationException) when (web.HasExited) { }
+    }
+    web?.Dispose();
+    log?.Dispose();
+}

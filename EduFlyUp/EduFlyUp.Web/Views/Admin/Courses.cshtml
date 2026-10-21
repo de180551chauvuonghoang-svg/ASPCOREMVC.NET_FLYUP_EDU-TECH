@@ -1,0 +1,72 @@
+@using EduFlyUp.BusinessObjects
+@model EduFlyUp.Web.Models.Admin.AdminCourseListModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý khóa học";
+    var filter = Model.Filter;
+    var result = Model.Result;
+    var returnUrl = ViewContext.HttpContext.Request.Path + ViewContext.HttpContext.Request.QueryString;
+}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div><h1 class="h3 fw-bold mb-1">Quản lý khóa học</h1><p class="text-muted mb-0">Tìm kiếm và quản lý trạng thái hiển thị của toàn bộ khóa học.</p></div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Về dashboard</a>
+</div>
+<form asp-action="Courses" method="get" class="card card-modern p-4 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-lg-4"><label for="search" class="form-label">Tên khóa học</label><input id="search" name="Search" value="@filter.Search" maxlength="200" class="form-control" placeholder="Nhập tiêu đề khóa học" /></div>
+        <div class="col-lg-3"><label for="instructor" class="form-label">Giảng viên sở hữu</label>
+            <select id="instructor" name="Instructor" class="form-select"><option value="">Tất cả</option>
+                @if (!string.IsNullOrEmpty(filter.Instructor) && !result.Instructors.Any(i => string.Equals(i.UserName, filter.Instructor, StringComparison.OrdinalIgnoreCase)))
+                { <option value="@filter.Instructor" selected>@filter.Instructor</option> }
+                @foreach (var item in result.Instructors)
+                { <option value="@item.UserName" selected="@(string.Equals(filter.Instructor, item.UserName, StringComparison.OrdinalIgnoreCase))">@(string.IsNullOrEmpty(item.DisplayName) ? "Chưa gán giảng viên" : item.DisplayName)</option> }
+            </select>
+        </div>
+        <div class="col-lg-2"><label for="level" class="form-label">Cấp độ</label>
+            <select id="level" name="Level" class="form-select"><option value="">Tất cả</option>
+                @foreach (var level in Enum.GetValues<CourseLevel>())
+                { <option value="@((int)level)" selected="@(filter.Level == level)">@level</option> }
+            </select>
+        </div>
+        <div class="col-lg-3"><label for="published" class="form-label">Trạng thái</label>
+            <select id="published" name="IsPublished" class="form-select"><option value="">Tất cả</option><option value="true" selected="@(filter.IsPublished == true)">Công khai</option><option value="false" selected="@(filter.IsPublished == false)">Ẩn / chưa công khai</option></select>
+        </div>
+        <div class="col-12 d-flex gap-2"><button class="btn btn-brand" type="submit">Áp dụng bộ lọc</button><a asp-action="Courses" class="btn btn-outline-secondary">Xóa bộ lọc</a></div>
+    </div>
+</form>
+<div class="card card-modern overflow-hidden">
+    <div class="card-header bg-white py-3">@result.TotalCount khóa học · Trang @result.Page / @result.TotalPages</div>
+    <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr><th>Khóa học</th><th>Giảng viên</th><th>Cấp độ</th><th>Học phí</th><th>Bài học</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+        <tbody>
+        @if (result.Items.Count == 0)
+        { <tr><td colspan="7" class="text-center text-muted py-5">Không tìm thấy khóa học phù hợp.</td></tr> }
+        @foreach (var course in result.Items)
+        {
+            <tr>
+                <td><a asp-action="CourseDetails" asp-route-id="@course.Id" class="fw-semibold">@course.Title</a><div class="small text-muted">#@course.Id · @course.CreatedAt.ToString("dd/MM/yyyy")</div></td>
+                <td><div>@(string.IsNullOrWhiteSpace(course.InstructorName) ? (string.IsNullOrEmpty(course.InstructorId) ? "Chưa gán giảng viên" : course.InstructorId) : course.InstructorName)</div><small class="text-muted">@(course.InstructorEmail ?? course.InstructorId)</small></td>
+                <td>@course.Level</td><td>@(course.Price == 0 ? "Miễn phí" : course.Price.ToString("N0") + " VNĐ")</td><td>@course.LessonCount</td>
+                <td><span class="badge @(course.IsPublished ? "bg-success" : "bg-secondary")">@(course.IsPublished ? "Công khai" : "Ẩn / chưa công khai")</span></td>
+                <td>
+                    <form asp-action="@(course.IsPublished ? "DisableCourse" : "EnableCourse")" asp-route-id="@course.Id" method="post" onsubmit="@(course.IsPublished ? "return confirm('Ẩn khóa học này? Học viên đã ghi danh hợp lệ vẫn giữ quyền học.');" : null)">
+                        @Html.AntiForgeryToken()<input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <button type="submit" class="btn btn-sm @(course.IsPublished ? "btn-outline-warning" : "btn-outline-success")">@(course.IsPublished ? "Ẩn khóa học" : "Công khai")</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table></div>
+</div>
+@if (result.TotalPages > 1)
+{
+    <nav class="mt-4" aria-label="Phân trang khóa học"><ul class="pagination flex-wrap">
+        @if (result.Page > 1)
+        { <li class="page-item"><a class="page-link" asp-action="Courses" asp-route-Search="@filter.Search" asp-route-Instructor="@filter.Instructor" asp-route-Level="@filter.Level" asp-route-IsPublished="@filter.IsPublished" asp-route-Page="@(result.Page - 1)">Trước</a></li> }
+        @for (var page = Math.Max(1, result.Page - 2); page <= Math.Min(result.TotalPages, result.Page + 2); page++)
+        { <li class="page-item @(page == result.Page ? "active" : "")"><a class="page-link" aria-current="@(page == result.Page ? "page" : null)" asp-action="Courses" asp-route-Search="@filter.Search" asp-route-Instructor="@filter.Instructor" asp-route-Level="@filter.Level" asp-route-IsPublished="@filter.IsPublished" asp-route-Page="@(page)">@(page)</a></li> }
+        @if (result.Page < result.TotalPages)
+        { <li class="page-item"><a class="page-link" asp-action="Courses" asp-route-Search="@filter.Search" asp-route-Instructor="@filter.Instructor" asp-route-Level="@filter.Level" asp-route-IsPublished="@filter.IsPublished" asp-route-Page="@(result.Page + 1)">Sau</a></li> }
+    </ul></nav>
+}

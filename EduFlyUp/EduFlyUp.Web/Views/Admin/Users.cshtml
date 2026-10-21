@@ -1,0 +1,72 @@
+@using System.Security.Claims
+@model EduFlyUp.Web.Models.Admin.AdminUserListModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý người dùng";
+    var filter = Model.Filter;
+    var result = Model.Result;
+    var actorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var returnUrl = ViewContext.HttpContext.Request.Path + ViewContext.HttpContext.Request.QueryString;
+}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div><h1 class="h3 fw-bold mb-1">Quản lý người dùng</h1><p class="text-muted mb-0">Tra cứu hồ sơ và quản lý trạng thái hoạt động của tài khoản.</p></div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Về dashboard</a>
+</div>
+<form asp-action="Users" method="get" class="card card-modern p-4 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-lg-5"><label for="search" class="form-label">Họ tên hoặc email</label><input id="search" name="Search" value="@filter.Search" maxlength="256" class="form-control" placeholder="Nhập tên hoặc email" /></div>
+        <div class="col-lg-3"><label for="role" class="form-label">Vai trò</label>
+            <select id="role" name="Role" class="form-select"><option value="">Tất cả</option>
+                @if (!string.IsNullOrEmpty(filter.Role) && !result.Roles.Any(r => string.Equals(r, filter.Role, StringComparison.OrdinalIgnoreCase)))
+                { <option value="@filter.Role" selected>@filter.Role</option> }
+                @foreach (var role in result.Roles)
+                { <option value="@role" selected="@(string.Equals(filter.Role, role, StringComparison.OrdinalIgnoreCase))">@role</option> }
+            </select>
+        </div>
+        <div class="col-lg-4"><label for="active" class="form-label">Trạng thái tài khoản</label>
+            <select id="active" name="IsActive" class="form-select"><option value="">Tất cả</option><option value="true" selected="@(filter.IsActive == true)">Hoạt động</option><option value="false" selected="@(filter.IsActive == false)">Đã khóa</option></select>
+        </div>
+        <div class="col-12 d-flex gap-2"><button type="submit" class="btn btn-brand">Áp dụng bộ lọc</button><a asp-action="Users" class="btn btn-outline-secondary">Xóa bộ lọc</a></div>
+    </div>
+</form>
+<div class="card card-modern overflow-hidden">
+    <div class="card-header bg-white py-3">@result.TotalCount tài khoản · Trang @result.Page / @result.TotalPages</div>
+    <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr><th>Người dùng</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo (UTC)</th><th>Thao tác</th></tr></thead>
+        <tbody>
+        @if (result.Items.Count == 0)
+        { <tr><td colspan="5" class="text-center text-muted py-5">Không tìm thấy tài khoản phù hợp.</td></tr> }
+        @foreach (var user in result.Items)
+        {
+            <tr>
+                <td><a asp-action="UserDetails" asp-route-id="@user.Id" class="fw-semibold">@(string.IsNullOrWhiteSpace(user.FullName) ? user.Email ?? "Chưa có tên" : user.FullName)</a><div class="small text-muted">@user.Email</div></td>
+                <td>@(user.Roles.Count == 0 ? "Chưa có vai trò" : string.Join(", ", user.Roles))</td>
+                <td><span class="badge @(user.IsActive ? "bg-success" : "bg-secondary")">@(user.IsActive ? "Hoạt động" : "Đã khóa")</span></td><td>@user.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>
+                    @if (user.Id == actorId)
+                    { <span class="text-muted small">Tài khoản của bạn</span> }
+                    else
+                    {
+                        <form asp-action="@(user.IsActive ? "DeactivateUser" : "ActivateUser")" asp-route-id="@user.Id" method="post" onsubmit="@(user.IsActive ? "return confirm('Khóa tài khoản này? Người dùng sẽ mất quyền từ request tiếp theo.');" : null)">
+                            @Html.AntiForgeryToken()<input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <button type="submit" class="btn btn-sm @(user.IsActive ? "btn-outline-danger" : "btn-outline-success")">@(user.IsActive ? "Khóa tài khoản" : "Mở khóa")</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table></div>
+</div>
+<p class="text-muted small mt-3">Trạng thái hoạt động của tài khoản độc lập với khóa tạm thời do nhập sai mật khẩu.</p>
+@if (result.TotalPages > 1)
+{
+    <nav class="mt-4" aria-label="Phân trang người dùng"><ul class="pagination flex-wrap">
+        @if (result.Page > 1)
+        { <li class="page-item"><a class="page-link" asp-action="Users" asp-route-Search="@filter.Search" asp-route-Role="@filter.Role" asp-route-IsActive="@filter.IsActive" asp-route-Page="@(result.Page - 1)">Trước</a></li> }
+        @for (var number = Math.Max(1, result.Page - 2); number <= Math.Min(result.TotalPages, result.Page + 2); number++)
+        { <li class="page-item @(number == result.Page ? "active" : "")"><a class="page-link" aria-current="@(number == result.Page ? "page" : null)" asp-action="Users" asp-route-Search="@filter.Search" asp-route-Role="@filter.Role" asp-route-IsActive="@filter.IsActive" asp-route-Page="@number">@number</a></li> }
+        @if (result.Page < result.TotalPages)
+        { <li class="page-item"><a class="page-link" asp-action="Users" asp-route-Search="@filter.Search" asp-route-Role="@filter.Role" asp-route-IsActive="@filter.IsActive" asp-route-Page="@(result.Page + 1)">Sau</a></li> }
+    </ul></nav>
+}

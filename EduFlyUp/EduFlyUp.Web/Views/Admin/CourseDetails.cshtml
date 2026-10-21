@@ -1,0 +1,34 @@
+@model EduFlyUp.BusinessObjects.AdminCourseDetail
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Chi tiết khóa học";
+    var course = Model.Course;
+}
+<a asp-action="Courses" class="btn btn-outline-secondary mb-4">Về danh sách khóa học</a>
+<div class="card card-modern p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+        <div><h1 class="h3 fw-bold">@course.Title</h1><span class="badge @(course.IsPublished ? "bg-success" : "bg-secondary")">@(course.IsPublished ? "Công khai" : "Ẩn / chưa công khai")</span></div>
+        <form asp-action="@(course.IsPublished ? "DisableCourse" : "EnableCourse")" asp-route-id="@course.Id" method="post" onsubmit="@(course.IsPublished ? "return confirm('Ẩn khóa học này? Học viên đã ghi danh hợp lệ vẫn giữ quyền học.');" : null)">
+            @Html.AntiForgeryToken()<button type="submit" class="btn @(course.IsPublished ? "btn-outline-warning" : "btn-success")">@(course.IsPublished ? "Ẩn khóa học" : "Công khai khóa học")</button>
+        </form>
+    </div>
+    <dl class="row mt-4 mb-0">
+        <dt class="col-sm-3">Giảng viên sở hữu</dt><dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.InstructorName) ? (string.IsNullOrEmpty(course.InstructorId) ? "Chưa gán giảng viên" : course.InstructorId) : Model.InstructorName)<div class="small text-muted">@(Model.InstructorEmail ?? course.InstructorId)</div></dd>
+        <dt class="col-sm-3">Cấp độ</dt><dd class="col-sm-9">@course.Level</dd>
+        <dt class="col-sm-3">Học phí</dt><dd class="col-sm-9">@(course.Price == 0 ? "Miễn phí" : course.Price.ToString("N0") + " VNĐ")</dd>
+        <dt class="col-sm-3">Ngày tạo (UTC)</dt><dd class="col-sm-9">@course.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+        <dt class="col-sm-3">Mô tả</dt><dd class="col-sm-9" style="white-space: pre-wrap; overflow-wrap: anywhere;">@(string.IsNullOrWhiteSpace(course.Description) ? "Chưa có mô tả." : course.Description)</dd>
+    </dl>
+</div>
+<h2 class="h4 mb-3">Nội dung bài học (@course.Lessons.Count)</h2>
+@if (course.Lessons.Count == 0)
+{ <div class="alert alert-light border">Khóa học chưa có bài học.</div> }
+@foreach (var lesson in course.Lessons.OrderBy(l => l.Order).ThenBy(l => l.Id))
+{
+    <section class="card card-modern p-4 mb-3">
+        <h3 class="h5">@lesson.Order. @lesson.Title</h3>
+        <p class="text-muted small">@lesson.DurationMinutes phút · @(lesson.IsPreview ? "Có xem trước" : "Bài học thường")</p>
+        <h4 class="h6">Nội dung</h4><div style="white-space: pre-wrap; overflow-wrap: anywhere;">@(string.IsNullOrWhiteSpace(lesson.Content) ? "Chưa có nội dung." : lesson.Content)</div>
+        <h4 class="h6 mt-3">Địa chỉ video</h4><div style="overflow-wrap: anywhere;">@(string.IsNullOrWhiteSpace(lesson.VideoUrl) ? "Chưa có video." : lesson.VideoUrl)</div>
+    </section>
+}

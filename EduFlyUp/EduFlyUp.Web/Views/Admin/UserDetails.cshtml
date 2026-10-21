@@ -1,0 +1,52 @@
+@using System.Security.Claims
+@model EduFlyUp.BusinessObjects.AdminUserDetail
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Hồ sơ người dùng";
+    var user = Model.User;
+}
+<a asp-action="Users" class="btn btn-outline-secondary mb-4">Về danh sách người dùng</a>
+<div class="card card-modern p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+        <div><h1 class="h3 fw-bold">@(string.IsNullOrWhiteSpace(user.FullName) ? user.Email ?? "Chưa có tên" : user.FullName)</h1><span class="badge @(user.IsActive ? "bg-success" : "bg-secondary")">@(user.IsActive ? "Hoạt động" : "Đã khóa")</span></div>
+        @if (user.Id == User.FindFirstValue(ClaimTypes.NameIdentifier))
+        { <span class="text-muted">Bạn không thể tự khóa tài khoản của mình.</span> }
+        else
+        {
+            <form asp-action="@(user.IsActive ? "DeactivateUser" : "ActivateUser")" asp-route-id="@user.Id" method="post" onsubmit="@(user.IsActive ? "return confirm('Khóa tài khoản này? Người dùng sẽ mất quyền từ request tiếp theo.');" : null)">
+                @Html.AntiForgeryToken()<button type="submit" class="btn @(user.IsActive ? "btn-outline-danger" : "btn-outline-success")">@(user.IsActive ? "Khóa tài khoản" : "Mở khóa")</button>
+            </form>
+        }
+    </div>
+    <dl class="row mt-4 mb-0">
+        <dt class="col-sm-3">Email</dt><dd class="col-sm-9">@(user.Email ?? "Chưa có email")</dd>
+        <dt class="col-sm-3">Tên đăng nhập</dt><dd class="col-sm-9">@(Model.UserName ?? "Chưa có")</dd>
+        <dt class="col-sm-3">Vai trò</dt><dd class="col-sm-9">@(user.Roles.Count == 0 ? "Chưa có vai trò" : string.Join(", ", user.Roles))</dd>
+        <dt class="col-sm-3">Ngày tạo (UTC)</dt><dd class="col-sm-9">@user.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+        <dt class="col-sm-3">Số điện thoại</dt><dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "Chưa có" : Model.PhoneNumber)</dd>
+        <dt class="col-sm-3">Địa chỉ ảnh đại diện</dt><dd class="col-sm-9" style="overflow-wrap: anywhere;">@(string.IsNullOrWhiteSpace(Model.AvatarUrl) ? "Chưa có" : Model.AvatarUrl)</dd>
+        <dt class="col-sm-3">Giới thiệu</dt><dd class="col-sm-9" style="white-space: pre-wrap; overflow-wrap: anywhere;">@(string.IsNullOrWhiteSpace(Model.Bio) ? "Chưa có giới thiệu." : Model.Bio)</dd>
+    </dl>
+    <p class="small text-muted mt-3 mb-0">Khóa/mở tài khoản giữ nguyên vai trò, khóa học và lịch sử ghi danh. Mở khóa không bỏ khóa bảo mật do nhập sai mật khẩu; người dùng cần đăng nhập lại.</p>
+</div>
+<div class="card card-modern p-4 mb-4">
+    <h2 class="h4">Khóa học đã tạo (@Model.Courses.Count)</h2>
+    @if (Model.Courses.Count == 0)
+    { <p class="text-muted mb-0">Người dùng chưa tạo khóa học.</p> }
+    else
+    {
+        <ul class="list-group list-group-flush">
+            @foreach (var course in Model.Courses)
+            { <li class="list-group-item d-flex flex-wrap justify-content-between gap-2"><a asp-action="CourseDetails" asp-route-id="@course.Id">@course.Title</a><span class="badge @(course.IsPublished ? "bg-success" : "bg-secondary")">@(course.IsPublished ? "Công khai" : "Ẩn / chưa công khai")</span></li> }
+        </ul>
+    }
+</div>
+<div class="card card-modern overflow-hidden">
+    <h2 class="h4 p-4 mb-0">Khóa học đã ghi danh (@Model.Enrollments.Count)</h2>
+    <div class="table-responsive"><table class="table mb-0"><thead class="table-light"><tr><th>Khóa học</th><th>Trạng thái ghi danh</th><th>Ngày ghi danh (UTC)</th></tr></thead><tbody>
+        @if (Model.Enrollments.Count == 0)
+        { <tr><td colspan="3" class="text-muted p-4">Người dùng chưa có ghi danh.</td></tr> }
+        @foreach (var enrollment in Model.Enrollments)
+        { <tr><td><a asp-action="CourseDetails" asp-route-id="@enrollment.CourseId">@enrollment.Title</a></td><td>@enrollment.Status</td><td>@enrollment.EnrolledAt.ToString("dd/MM/yyyy HH:mm")</td></tr> }
+    </tbody></table></div>
+</div>

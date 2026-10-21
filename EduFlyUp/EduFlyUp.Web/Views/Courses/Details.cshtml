@@ -173,7 +173,7 @@
                 <span>Đăng ký học ngay</span>
             </button>
 
-            @if (User.IsInRole("Admin") || User.IsInRole("Instructor") || User.IsInRole("Teacher"))
+            @if (Model.CanManage)
             {
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning w-100 py-2 rounded-pill small mb-2 d-flex align-items-center justify-content-center gap-2 text-dark fw-semibold">
                     <i class="bi bi-pencil-square"></i>

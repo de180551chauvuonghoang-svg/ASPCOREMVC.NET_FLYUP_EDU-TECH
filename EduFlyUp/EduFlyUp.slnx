@@ -6,4 +6,7 @@
     <Project Path="EduFlyUp.Services/EduFlyUp.Services.csproj" />
     <Project Path="EduFlyUp.Web/EduFlyUp.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="EduFlyUp.Tests/EduFlyUp.Tests.csproj" />
+  </Folder>
 </Solution>

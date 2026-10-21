@@ -247,7 +247,7 @@
                                     <a asp-controller="Courses" asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1" title="Chỉnh sửa">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <form asp-controller="Courses" asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa khóa học '@c.Title' không?');">
+                                    <form asp-controller="Courses" asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa khóa học này không?');">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" title="Xóa">
                                             <i class="bi bi-trash"></i>

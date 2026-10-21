@@ -85,7 +85,7 @@
                                             </a>
                                         </li>
                                     }
-                                    @if (User.IsInRole("Admin") || User.IsInRole("Instructor") || User.IsInRole("Teacher"))
+                                    @if (User.IsInRole("Admin") || User.IsInRole("Instructor"))
                                     {
                                         <li>
                                             <a class="dropdown-item rounded-3 py-2" asp-area="" asp-controller="Instructor" asp-action="Dashboard">

@@ -73,7 +73,7 @@
                 @if (User.IsInRole("Admin"))
                 {
                     <div class="admin-nav-item">
-                        <a asp-area="" asp-controller="Admin" asp-action="Index" class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
+                        <a asp-area="" asp-controller="Admin" asp-action="Index" class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
                             <i class="bi bi-speedometer2"></i>
                             <span>Admin Hub (Hệ Thống)</span>
                         </a>
@@ -90,6 +90,15 @@
                 <!-- Section 2: Course Management -->
                 <div class="admin-nav-section mt-3">Quản Lý Đào Tạo</div>
 
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="admin-nav-item">
+                        <a asp-controller="Admin" asp-action="Courses" class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && (ViewContext.RouteData.Values["action"]?.ToString() == "Courses" || ViewContext.RouteData.Values["action"]?.ToString() == "CourseDetails") ? "active" : "")">
+                            <i class="bi bi-journal-check"></i><span>Quản lý khóa học</span>
+                        </a>
+                    </div>
+                }
+
                 <div class="admin-nav-item">
                     <a asp-area="" asp-controller="Courses" asp-action="Create" class="admin-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" ? "active" : "")">
                         <i class="bi bi-plus-circle-fill"></i>
@@ -105,6 +114,16 @@
                 </div>
 
                 <!-- Section 3: Navigation & System -->
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="admin-nav-section mt-3">Quản Lý Tài Khoản</div>
+                    <div class="admin-nav-item">
+                        <a asp-controller="Admin" asp-action="Users" class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && (ViewContext.RouteData.Values["action"]?.ToString() == "Users" || ViewContext.RouteData.Values["action"]?.ToString() == "UserDetails") ? "active" : "")">
+                            <i class="bi bi-people"></i><span>Quản lý người dùng</span>
+                        </a>
+                    </div>
+                }
+
                 <div class="admin-nav-section mt-3">Điều Hướng & Hệ Thống</div>
 
                 <div class="admin-nav-item">

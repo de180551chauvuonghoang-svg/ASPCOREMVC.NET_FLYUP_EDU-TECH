@@ -1,5 +1,37 @@
 # 🚀 .NET Toàn Diện - Project: **EduFlyUp** (Nền tảng học trực tuyến)
 
+## Nền phân quyền Admin — bước 1
+
+Nhánh `feature/admin-management` bổ sung kiểm tra `IsActive` khi đăng nhập và trên mỗi request có cookie. Cookie của tài khoản bị khóa, đã xóa hoặc có security stamp thay đổi bị từ chối; cơ chế lockout và kiểm tra stamp của Identity vẫn được giữ.
+
+Admin quản lý mọi khóa học. Instructor chỉ sửa/xóa khóa học có `InstructorId` khớp username/email của mình, tạo khóa học chưa công khai và không được đổi `IsPublished`. Course ẩn chỉ cho Admin, Instructor sở hữu hoặc người có Enrollment `Active`/`Completed` xem chi tiết. Role `Teacher` không tự có quyền Instructor.
+
+Phần nền này không thêm migration. Xem [hướng dẫn kiểm thử và tích hợp](EduFlyUp/EduFlyUp.Tests/README.md) trước khi nối các thao tác mới.
+
+## Quản lý khóa học Admin — bước 2
+
+Admin mở `/Admin/Courses` từ dashboard hoặc sidebar để tìm theo tiêu đề, lọc giảng viên/cấp độ/trạng thái và phân trang 10 khóa học mỗi trang. `/Admin/CourseDetails/{id}` hiển thị cả course ẩn, thông tin giảng viên và nội dung/video bài học dưới dạng văn bản an toàn.
+
+Các form `POST /Admin/EnableCourse/{id}` và `POST /Admin/DisableCourse/{id}` yêu cầu role Admin và anti-forgery, đặt trạng thái cụ thể thay vì toggle. Chỉ trạng thái hiển thị và timestamp được cập nhật; nội dung, owner và ghi danh được giữ nguyên. Học viên có Enrollment Active/Completed vẫn giữ quyền truy cập course ẩn. Không có migration mới ở bước 2.
+
+## Quản lý người dùng Admin — bước 3
+
+`/Admin/Users` tìm tên/email, lọc role/trạng thái và phân trang. `/Admin/UserDetails/{id}` hiển thị hồ sơ, vai trò, khóa học đã tạo và lịch sử ghi danh; không đưa dữ liệu xác thực nội bộ vào model giao diện.
+
+`POST /Admin/DeactivateUser/{id}` và `POST /Admin/ActivateUser/{id}` yêu cầu Admin và anti-forgery. Khóa tài khoản đổi cả IsActive và security stamp qua Identity; mở khóa yêu cầu đăng nhập lại, giữ role/mật khẩu/lockout bảo mật và dữ liệu liên quan. Không cho Admin tự khóa.
+
+Các thao tác trạng thái dùng transaction SQL Server và application lock chung; quyền của Admin đang thao tác được đọc lại sau khi lấy khóa, cùng kiểm tra Admin hoạt động cuối cùng. Không thêm schema/migration. Kiểm thử SQL Server thật là điều kiện nghiệm thu phần đồng thời; xem hướng dẫn kiểm thử bên dưới để bật hai test tích hợp.
+
+## Dashboard Admin — bước 4
+
+`/Admin` (hoặc `/Admin/Index`) dùng `AdminDashboardModel` để hiển thị 7 số liệu thật: tổng người dùng, hoạt động, đã khóa; tổng khóa học, công khai, ẩn/chưa công khai; tổng bài học. Sáu thẻ người dùng/khóa học mở danh sách với bộ lọc tương ứng. Tổng bài học gồm cả khóa học công khai và ẩn.
+
+“Hoạt động” là `IsActive=true`, độc lập với online và lockout do nhập sai mật khẩu. “Ẩn/chưa công khai” là `IsPublished=false`. `AdminDashboardService` gọi repository scoped thực hiện 3 truy vấn aggregate ở database, không tải toàn bộ entity để đếm. Số liệu cập nhật khi tải lại trang; mỗi nhóm người dùng/khóa học được đếm trong cùng truy vấn, không cam kết snapshot chung giữa các nhóm khi có thay đổi đồng thời. Dữ liệu rỗng hiển thị 0. Không thêm migration ở bước 4.
+
+## Kiểm tra và demo tích hợp — bước 5
+
+Công cụ [AdminDemo](tools/AdminDemo/README.md) tạo database demo SQL Server riêng, chạy startup/migrations và Web thật, kiểm tra 8 nhóm tích hợp qua HTTP rồi giữ dữ liệu để demo. Bao gồm cookie đang tồn tại, SQL filters/paging, ownership, publication, Enrollment và dashboard; có kiểm tra hai Admin khóa chéo qua HTTP. URL/tài khoản demo sinh cục bộ trong `.admin-demo/` và không đưa vào Git. Xem hướng dẫn công cụ để chạy và đọc kết quả; chỉ đánh dấu nghiệm thu khi có report pass và đã kiểm tra giao diện.
+
 ## Giới thiệu
 
 **EduFlyUp** là nền tảng học trực tuyến mini được thiết kế chuẩn mực theo mô hình kiến trúc **N-Tier (Layered Architecture)** kết hợp mẫu thiết kế **Singleton DAO & Repository Pattern** theo định hướng chuẩn đào tạo chuyên sâu (tương thích cấu trúc đồ án/kỳ thi thực hành FPT/PRN như mẫu `examAPIandOData`), loại bỏ sự phức tạp không cần thiết của Web API/OData để tập trung tối đa vào **Pure ASP.NET Core 8 MVC**.
