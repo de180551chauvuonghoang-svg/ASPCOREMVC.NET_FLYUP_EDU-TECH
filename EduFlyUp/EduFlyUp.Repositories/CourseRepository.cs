@@ -18,5 +18,14 @@ namespace EduFlyUp.Repositories
         public async Task<int> CountAsync() => await CourseDAO.Instance.CountAsync();
 
         public async Task<int> CountPublishedAsync() => await CourseDAO.Instance.CountPublishedAsync();
+
+        public async Task<IEnumerable<Course>> GetByInstructorIdAsync(string instructorId, CourseStatus? status = null, string? search = null, string? category = null) =>
+            await CourseDAO.Instance.GetByInstructorIdAsync(instructorId, status, search, category);
+
+        public async Task<bool> UpdateStatusAsync(int id, CourseStatus newStatus, string? rejectionReason = null) =>
+            await CourseDAO.Instance.UpdateStatusAsync(id, newStatus, rejectionReason);
+
+        public async Task<IEnumerable<string>> GetCategoriesAsync() =>
+            await CourseDAO.Instance.GetCategoriesAsync();
     }
 }
