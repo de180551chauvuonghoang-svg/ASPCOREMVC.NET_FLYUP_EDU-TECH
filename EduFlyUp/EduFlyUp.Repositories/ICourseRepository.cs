@@ -11,5 +11,8 @@ namespace EduFlyUp.Repositories
         Task DeleteAsync(int id);
         Task<int> CountAsync();
         Task<int> CountPublishedAsync();
+        Task<IEnumerable<Course>> GetByInstructorIdAsync(string instructorId, CourseStatus? status = null, string? search = null, string? category = null);
+        Task<bool> UpdateStatusAsync(int id, CourseStatus newStatus, string? rejectionReason = null);
+        Task<IEnumerable<string>> GetCategoriesAsync();
     }
 }

@@ -13,6 +13,10 @@ namespace EduFlyUp.Services
         Task DeleteCourseAsync(int id);
         Task<int> GetTotalCoursesCountAsync();
         Task<int> GetPublishedCoursesCountAsync();
+        Task<IEnumerable<Course>> GetCoursesByInstructorIdAsync(string instructorId, CourseStatus? status = null, string? search = null, string? category = null);
+        Task<(bool Success, string Message)> SubmitCourseForApprovalAsync(int courseId, string instructorId);
+        Task<(bool Success, string Message)> ArchiveCourseAsync(int courseId, string instructorId);
+        Task<IEnumerable<string>> GetCategoriesAsync();
     }
 
     public class CourseService : ICourseService
@@ -43,5 +47,65 @@ namespace EduFlyUp.Services
         public async Task<int> GetTotalCoursesCountAsync() => await _courseRepository.CountAsync();
 
         public async Task<int> GetPublishedCoursesCountAsync() => await _courseRepository.CountPublishedAsync();
+
+        public async Task<IEnumerable<Course>> GetCoursesByInstructorIdAsync(
+            string instructorId, 
+            CourseStatus? status = null, 
+            string? search = null, 
+            string? category = null) =>
+            await _courseRepository.GetByInstructorIdAsync(instructorId, status, search, category);
+
+        public async Task<(bool Success, string Message)> SubmitCourseForApprovalAsync(int courseId, string instructorId)
+        {
+            var course = await _courseRepository.GetByIdAsync(courseId);
+            if (course == null)
+            {
+                return (false, "Không tìm thấy khóa học.");
+            }
+
+            if (course.InstructorId != instructorId)
+            {
+                return (false, "Bạn không có quyền gửi duyệt khóa học này.");
+            }
+
+            if (course.Status == CourseStatus.PendingApproval)
+            {
+                return (false, "Khóa học này đang trong trạng thái chờ phê duyệt.");
+            }
+
+            if (course.Lessons == null || !course.Lessons.Any())
+            {
+                return (false, "Khóa học phải có ít nhất 1 bài giảng trước khi gửi phê duyệt.");
+            }
+
+            // Xóa lý do từ chối cũ (nếu có từ lần duyệt trước) khi gửi phê duyệt lại
+            await _courseRepository.UpdateStatusAsync(courseId, CourseStatus.PendingApproval, string.Empty);
+            return (true, "Đã gửi yêu cầu phê duyệt khóa học thành công đến Admin.");
+        }
+
+        public async Task<(bool Success, string Message)> ArchiveCourseAsync(int courseId, string instructorId)
+        {
+            var course = await _courseRepository.GetByIdAsync(courseId);
+            if (course == null)
+            {
+                return (false, "Không tìm thấy khóa học.");
+            }
+
+            if (course.InstructorId != instructorId)
+            {
+                return (false, "Bạn không có quyền thao tác trên khóa học này.");
+            }
+
+            if (course.Status == CourseStatus.Archived)
+            {
+                return (false, "Khóa học này đã được lưu trữ trước đó.");
+            }
+
+            await _courseRepository.UpdateStatusAsync(courseId, CourseStatus.Archived);
+            return (true, "Đã lưu trữ / tạm ẩn khóa học thành công.");
+        }
+
+        public async Task<IEnumerable<string>> GetCategoriesAsync() =>
+            await _courseRepository.GetCategoriesAsync();
     }
 }
