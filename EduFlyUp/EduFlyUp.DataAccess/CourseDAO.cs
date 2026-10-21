@@ -59,5 +59,66 @@ namespace EduFlyUp.DataAccess
             using var context = new AppDbContext();
             return await context.Courses.CountAsync(c => c.IsPublished);
         }
+
+        public async Task<IEnumerable<Course>> GetByInstructorIdAsync(
+            string instructorId, 
+            CourseStatus? status = null, 
+            string? search = null, 
+            string? category = null)
+        {
+            using var context = new AppDbContext();
+            var query = context.Courses
+                .Include(c => c.Lessons)
+                .Include(c => c.Quizzes)
+                .Include(c => c.Questions)
+                .Where(c => c.InstructorId == instructorId);
+
+            if (status.HasValue)
+            {
+                query = query.Where(c => c.Status == status.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var keyword = search.Trim();
+                query = query.Where(c => c.Title.Contains(keyword) || c.Description.Contains(keyword));
+            }
+
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                query = query.Where(c => c.Category == category);
+            }
+
+            return await query.OrderByDescending(c => c.CreatedAt).ToListAsync();
+        }
+
+        public async Task<bool> UpdateStatusAsync(int id, CourseStatus newStatus, string? rejectionReason = null)
+        {
+            using var context = new AppDbContext();
+            var course = await context.Courses.FindAsync(id);
+            if (course == null) return false;
+
+            course.Status = newStatus;
+            course.IsPublished = (newStatus == CourseStatus.Approved);
+
+            if (rejectionReason != null)
+            {
+                course.RejectionReason = rejectionReason;
+            }
+
+            await context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<IEnumerable<string>> GetCategoriesAsync()
+        {
+            using var context = new AppDbContext();
+            return await context.Courses
+                .Where(c => !string.IsNullOrEmpty(c.Category))
+                .Select(c => c.Category)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+        }
     }
 }
