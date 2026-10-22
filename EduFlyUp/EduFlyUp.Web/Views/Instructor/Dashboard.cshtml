@@ -293,6 +293,11 @@
                                         <i class="bi bi-pencil"></i>
                                     </a>
 
+                                    <!-- Quản lý Giáo trình & Bài giảng (UC-21) -->
+                                    <a asp-action="Curriculum" asp-route-id="@c.Id" class="btn btn-outline-success btn-sm rounded-pill px-2 py-1" title="Quản lý Giáo trình & Bài giảng (UC-21)">
+                                        <i class="bi bi-collection-play"></i>
+                                    </a>
+
                                     <!-- Nút Gửi duyệt (UC-22): Chỉ hiện khi là Draft hoặc Rejected -->
                                     @if (c.Status == EduFlyUp.BusinessObjects.CourseStatus.Draft || c.Status == EduFlyUp.BusinessObjects.CourseStatus.Rejected)
                                     {

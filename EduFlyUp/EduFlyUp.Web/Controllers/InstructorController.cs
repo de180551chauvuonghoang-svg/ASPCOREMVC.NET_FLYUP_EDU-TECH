@@ -1,5 +1,6 @@
 using EduFlyUp.BusinessObjects;
 using EduFlyUp.Services;
+using EduFlyUp.Web.Models.Instructor;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,11 +11,13 @@ public class InstructorController : Controller
 {
     private readonly ICourseService _courseService;
     private readonly ICourseAccessService _courseAccess;
+    private readonly ILessonService _lessonService;
 
-    public InstructorController(ICourseService courseService, ICourseAccessService courseAccess)
+    public InstructorController(ICourseService courseService, ICourseAccessService courseAccess, ILessonService lessonService)
     {
         _courseService = courseService;
         _courseAccess = courseAccess;
+        _lessonService = lessonService;
     }
 
     // GET: /Instructor/Dashboard or /Instructor
@@ -178,5 +181,158 @@ public class InstructorController : Controller
         }
 
         return RedirectToAction(nameof(Dashboard));
+    }
+
+    // ==========================================
+    // KHỐI 2: QUẢN LÝ GIÁO TRÌNH & BÀI GIẢNG (CURRICULUM BUILDER - UC-21, UC-24)
+    // ==========================================
+
+    // GET: /Instructor/Curriculum/5
+    [HttpGet]
+    public async Task<IActionResult> Curriculum(int id)
+    {
+        var course = await _courseService.GetCourseByIdAsync(id);
+        if (course == null)
+        {
+            TempData["ErrorMessage"] = "Không tìm thấy khóa học.";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        if (!_courseAccess.CanManageCourse(course, User))
+        {
+            TempData["ErrorMessage"] = "Bạn không có quyền quản lý khóa học này.";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        var lessons = (await _lessonService.GetLessonsByCourseIdAsync(id))
+            .OrderBy(l => l.Order)
+            .ToList();
+
+        var sections = lessons
+            .GroupBy(l => string.IsNullOrWhiteSpace(l.SectionName) ? "Chương 1: Tổng quan" : l.SectionName.Trim())
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var model = new CurriculumViewModel
+        {
+            Course = course,
+            Lessons = lessons,
+            Sections = sections
+        };
+
+        return View(model);
+    }
+
+    // POST: /Instructor/CreateLesson
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateLesson(LessonInputModel model)
+    {
+        var course = await _courseService.GetCourseByIdAsync(model.CourseId);
+        if (course == null)
+        {
+            TempData["ErrorMessage"] = "Không tìm thấy khóa học.";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        if (!_courseAccess.CanManageCourse(course, User))
+        {
+            TempData["ErrorMessage"] = "Bạn không có quyền thao tác trên khóa học này.";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var firstError = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage;
+            TempData["ErrorMessage"] = string.IsNullOrEmpty(firstError) ? "Thông tin bài giảng không hợp lệ. Vui lòng kiểm tra lại." : firstError;
+            return RedirectToAction(nameof(Curriculum), new { id = model.CourseId });
+        }
+
+        var existingLessons = (await _lessonService.GetLessonsByCourseIdAsync(model.CourseId)).ToList();
+        var nextOrder = model.Order > 0 ? model.Order : (existingLessons.Count + 1);
+
+        var lesson = new Lesson
+        {
+            CourseId = model.CourseId,
+            Title = model.Title.Trim(),
+            SectionName = string.IsNullOrWhiteSpace(model.SectionName) ? "Chương 1: Tổng quan" : model.SectionName.Trim(),
+            VideoUrl = model.VideoUrl?.Trim() ?? string.Empty,
+            Content = model.Content?.Trim() ?? string.Empty,
+            DurationMinutes = model.DurationMinutes,
+            Order = nextOrder,
+            IsPreview = model.IsPreview,
+            MaterialUrl = model.MaterialUrl?.Trim() ?? string.Empty,
+            AttachmentName = model.AttachmentName?.Trim() ?? string.Empty,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _lessonService.CreateLessonAsync(lesson);
+        TempData["SuccessMessage"] = $"Đã thêm bài giảng \"{lesson.Title}\" thành công.";
+        return RedirectToAction(nameof(Curriculum), new { id = model.CourseId });
+    }
+
+    // POST: /Instructor/EditLesson
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditLesson(LessonInputModel model)
+    {
+        var lesson = await _lessonService.GetLessonByIdAsync(model.Id);
+        if (lesson == null)
+        {
+            TempData["ErrorMessage"] = "Không tìm thấy bài giảng cần chỉnh sửa.";
+            return RedirectToAction(nameof(Curriculum), new { id = model.CourseId });
+        }
+
+        var course = await _courseService.GetCourseByIdAsync(lesson.CourseId);
+        if (course == null || !_courseAccess.CanManageCourse(course, User))
+        {
+            TempData["ErrorMessage"] = "Bạn không có quyền chỉnh sửa bài giảng của khóa học này.";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var firstError = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage;
+            TempData["ErrorMessage"] = string.IsNullOrEmpty(firstError) ? "Thông tin chỉnh sửa không hợp lệ." : firstError;
+            return RedirectToAction(nameof(Curriculum), new { id = lesson.CourseId });
+        }
+
+        lesson.Title = model.Title.Trim();
+        lesson.SectionName = string.IsNullOrWhiteSpace(model.SectionName) ? "Chương 1: Tổng quan" : model.SectionName.Trim();
+        lesson.VideoUrl = model.VideoUrl?.Trim() ?? string.Empty;
+        lesson.Content = model.Content?.Trim() ?? string.Empty;
+        lesson.DurationMinutes = model.DurationMinutes;
+        lesson.Order = model.Order;
+        lesson.IsPreview = model.IsPreview;
+        lesson.MaterialUrl = model.MaterialUrl?.Trim() ?? string.Empty;
+        lesson.AttachmentName = model.AttachmentName?.Trim() ?? string.Empty;
+        lesson.UpdatedAt = DateTime.UtcNow;
+
+        await _lessonService.UpdateLessonAsync(lesson);
+        TempData["SuccessMessage"] = $"Đã cập nhật bài giảng \"{lesson.Title}\" thành công.";
+        return RedirectToAction(nameof(Curriculum), new { id = lesson.CourseId });
+    }
+
+    // POST: /Instructor/DeleteLesson
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteLesson(int id, int courseId)
+    {
+        var lesson = await _lessonService.GetLessonByIdAsync(id);
+        if (lesson == null)
+        {
+            TempData["ErrorMessage"] = "Không tìm thấy bài giảng cần xóa.";
+            return RedirectToAction(nameof(Curriculum), new { id = courseId });
+        }
+
+        var course = await _courseService.GetCourseByIdAsync(lesson.CourseId);
+        if (course == null || !_courseAccess.CanManageCourse(course, User))
+        {
+            TempData["ErrorMessage"] = "Bạn không có quyền xóa bài giảng của khóa học này.";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        await _lessonService.DeleteLessonAsync(id);
+        TempData["SuccessMessage"] = "Đã xóa bài giảng thành công.";
+        return RedirectToAction(nameof(Curriculum), new { id = courseId });
     }
 }
