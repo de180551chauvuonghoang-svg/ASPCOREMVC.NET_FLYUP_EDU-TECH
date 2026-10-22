@@ -17,6 +17,7 @@ namespace EduFlyUp.Services
         Task<IEnumerable<Course>> GetCoursesByInstructorIdAsync(string instructorId, CourseStatus? status = null, string? search = null, string? category = null);
         Task<(bool Success, string Message)> SubmitCourseForApprovalAsync(int courseId, string instructorId);
         Task<(bool Success, string Message)> ArchiveCourseAsync(int courseId, string instructorId);
+        Task<(bool Success, string Message)> UnarchiveCourseAsync(int courseId, string instructorId);
         Task<IEnumerable<string>> GetCategoriesAsync();
     }
 
@@ -105,6 +106,28 @@ namespace EduFlyUp.Services
 
             await _courseRepository.UpdateStatusAsync(courseId, CourseStatus.Archived);
             return (true, "Đã lưu trữ / tạm ẩn khóa học thành công.");
+        }
+
+        public async Task<(bool Success, string Message)> UnarchiveCourseAsync(int courseId, string instructorId)
+        {
+            var course = await _courseRepository.GetByIdAsync(courseId);
+            if (course == null)
+            {
+                return (false, "Không tìm thấy khóa học.");
+            }
+
+            if (course.InstructorId != instructorId)
+            {
+                return (false, "Bạn không có quyền thao tác trên khóa học này.");
+            }
+
+            if (course.Status != CourseStatus.Archived)
+            {
+                return (false, "Khóa học này không ở trạng thái lưu trữ.");
+            }
+
+            await _courseRepository.UpdateStatusAsync(courseId, CourseStatus.Approved);
+            return (true, "Đã khôi phục và mở bán lại khóa học thành công.");
         }
 
         public async Task<IEnumerable<string>> GetCategoriesAsync() =>
