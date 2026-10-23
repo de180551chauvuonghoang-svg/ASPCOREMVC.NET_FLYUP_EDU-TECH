@@ -303,6 +303,11 @@
                                         <i class="bi bi-patch-question"></i>
                                     </a>
 
+                                    <!-- Quản lý Đề thi & Khảo thí CAT (UC-32) -->
+                                    <a asp-controller="Quiz" asp-action="Index" asp-route-courseId="@c.Id" class="btn btn-outline-purple btn-sm rounded-pill px-2 py-1" style="color: #6f42c1; border-color: #6f42c1;" title="Quản lý Đề thi & Khảo thí CAT (UC-32)">
+                                        <i class="bi bi-journal-check"></i>
+                                    </a>
+
                                     <!-- Nút Gửi duyệt (UC-22): Chỉ hiện khi là Draft hoặc Rejected -->
                                     @if (c.Status == EduFlyUp.BusinessObjects.CourseStatus.Draft || c.Status == EduFlyUp.BusinessObjects.CourseStatus.Rejected)
                                     {

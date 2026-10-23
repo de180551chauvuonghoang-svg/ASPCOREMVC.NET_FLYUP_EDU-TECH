@@ -1,0 +1,547 @@
+@model EduFlyUp.Web.Models.Quiz.QuizManageQuestionsViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Quản lý câu hỏi - {Model.Quiz.Title}";
+}
+
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">
+                    <i class="bi bi-house-door me-1"></i>Trang chủ
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-controller="Instructor" asp-action="Dashboard" class="text-decoration-none text-muted">
+                    Studio Giảng viên
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-action="Index" asp-route-courseId="@Model.Course.Id" class="text-decoration-none text-muted">
+                    Đề thi (@Model.Course.Title)
+                </a>
+            </li>
+            <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">
+                Quản lý câu hỏi (@Model.Quiz.Title)
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Quiz Header Banner -->
+    <div class="card card-modern p-4 mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(111, 66, 193, 0.08) 0%, rgba(79, 70, 229, 0.08) 100%);">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-inline-flex align-items-center gap-2 mb-2 flex-wrap">
+                    @if (Model.Quiz.IsCAT)
+                    {
+                        <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background-color: #6f42c1; color: white;">
+                            <i class="bi bi-cpu-fill me-1"></i>Chế độ CAT Thích ứng
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary rounded-pill px-3 py-2 fw-semibold">
+                            <i class="bi bi-card-checklist me-1"></i>Đề thi tiêu chuẩn
+                        </span>
+                    }
+                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs">
+                        <i class="bi bi-clock-history me-1 text-primary"></i>@Model.Quiz.DurationMinutes phút
+                    </span>
+                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs">
+                        <i class="bi bi-percent me-1 text-warning-emphasis"></i>Điểm sàn: @Model.Quiz.PassingScorePercentage%
+                    </span>
+                </div>
+
+                <h1 class="h3 fw-bold mb-1 text-dark">@Model.Quiz.Title</h1>
+                <p class="text-secondary mb-0 small">
+                    @(string.IsNullOrWhiteSpace(Model.Quiz.Description) ? "Khóa học: " + Model.Course.Title : Model.Quiz.Description)
+                </p>
+            </div>
+
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0 d-flex flex-wrap gap-2 justify-content-lg-end">
+                <a asp-action="Edit" asp-route-id="@Model.Quiz.Id" class="btn btn-outline-warning rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2" title="Chỉnh sửa cấu hình đề">
+                    <i class="bi bi-pencil"></i>
+                    <span>Cấu hình đề</span>
+                </a>
+                <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@Model.Course.Id" target="_blank" class="btn btn-outline-info rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2" title="Mở ngân hàng câu hỏi trong tab mới">
+                    <i class="bi bi-patch-question-fill"></i>
+                    <span>Ngân hàng câu hỏi</span>
+                </a>
+                <a asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-secondary rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Quay lại</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Assignment Form -->
+    <form asp-action="ManageQuestions" asp-route-id="@Model.Quiz.Id" method="post" id="assignQuestionsForm">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-4 mb-5">
+            <!-- ============================================== -->
+            <!-- CỘT TRÁI: CÂU HỎI ĐÃ CHỌN TRONG ĐỀ THI (~40%) -->
+            <!-- ============================================== -->
+            <div class="col-lg-5">
+                <div class="card card-modern shadow-sm border-0 sticky-top" style="top: 85px; z-index: 10;">
+                    <div class="card-header bg-white py-3 px-4 border-bottom">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-ui-checks text-primary fs-5"></i>
+                                <h5 class="mb-0 fw-bold">Câu hỏi trong đề thi</h5>
+                            </div>
+                            <span class="badge bg-primary rounded-pill px-3 py-2 fs-6" id="selectedCountBadge">
+                                @Model.SelectedQuestionIds.Count câu hỏi
+                            </span>
+                        </div>
+
+                        <!-- Difficulty stats breakdown -->
+                        <div class="d-flex align-items-center gap-2 pt-2 border-top">
+                            <span class="text-muted small">Cơ cấu:</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
+                                Dễ: <strong id="statEasy">0</strong>
+                            </span>
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">
+                                Vừa: <strong id="statMedium">0</strong>
+                            </span>
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">
+                                Khó: <strong id="statHard">0</strong>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-3" style="max-height: calc(100vh - 280px); overflow-y: auto;" id="selectedListContainer">
+                        <!-- Dynamic items will be rendered / updated here -->
+                        <div id="selectedQuestionsEmptyNotice" class="text-center py-5 @(Model.SelectedQuestionIds.Any() ? "d-none" : "")">
+                            <i class="bi bi-inbox text-muted fs-1 d-block mb-2"></i>
+                            <h6 class="fw-bold text-secondary mb-1">Chưa có câu hỏi nào trong đề</h6>
+                            <p class="text-muted small mb-0">Tick chọn câu hỏi từ danh sách bên phải để thêm vào đề thi này.</p>
+                        </div>
+
+                        <div class="d-flex flex-column gap-2" id="selectedQuestionsList">
+                            <!-- Pre-rendered assigned questions list -->
+                            @for (int i = 0; i < Model.AssignedQuestions.Count; i++)
+                            {
+                                var q = Model.AssignedQuestions[i];
+                                <div class="card border rounded-3 p-3 shadow-xs selected-item" id="selected-card-@q.Id" data-id="@q.Id" data-difficulty="@q.Difficulty">
+                                    <div class="d-flex align-items-start justify-content-between gap-2">
+                                        <div class="d-flex align-items-start gap-2">
+                                            <span class="badge bg-light text-secondary border rounded-circle d-flex align-items-center justify-content-center item-seq-num" style="width: 26px; height: 26px; flex-shrink: 0;">
+                                                @(i + 1)
+                                            </span>
+                                            <div>
+                                                @switch (q.Difficulty)
+                                                {
+                                                    case EduFlyUp.BusinessObjects.QuestionDifficulty.Easy:
+                                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0 small mb-1">Dễ</span>
+                                                        break;
+                                                    case EduFlyUp.BusinessObjects.QuestionDifficulty.Medium:
+                                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0 small mb-1">Vừa</span>
+                                                        break;
+                                                    case EduFlyUp.BusinessObjects.QuestionDifficulty.Hard:
+                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0 small mb-1">Khó</span>
+                                                        break;
+                                                }
+                                                <div class="fw-semibold text-dark small text-truncate-2" title="@q.Content">
+                                                    @q.Content
+                                                </div>
+                                                <span class="text-muted" style="font-size: 0.75rem;">
+                                                    <i class="bi bi-list-check me-1"></i>@(q.Options?.Count ?? 0) lựa chọn
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 flex-shrink-0" title="Gỡ khỏi đề thi" onclick="uncheckQuestion(@q.Id)">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-light p-3 border-top text-center">
+                        <button type="submit" class="btn btn-brand rounded-pill px-4 py-2 w-100 fw-bold shadow-glow">
+                            <i class="bi bi-cloud-check-fill me-1"></i>Lưu cấu hình câu hỏi
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- CỘT PHẢI: KHO CÂU HỎI TỪ NGÂN HÀNG (~60%)     -->
+            <!-- ============================================== -->
+            <div class="col-lg-7">
+                <div class="card card-modern shadow-sm border-0">
+                    <div class="card-header bg-white py-3 px-4 border-bottom">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-database text-info fs-5"></i>
+                                <h5 class="mb-0 fw-bold">Ngân hàng câu hỏi của Khóa học</h5>
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1">
+                                    @Model.AvailableQuestions.Count câu có sẵn
+                                </span>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1" onclick="toggleSelectAll(true)">
+                                    <i class="bi bi-check-all me-1"></i>Chọn tất cả
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1" onclick="toggleSelectAll(false)">
+                                    <i class="bi bi-dash-circle me-1"></i>Bỏ chọn tất cả
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Live Filters Bar -->
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-7">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-search text-muted"></i>
+                                    </span>
+                                    <input type="text" id="bankSearchInput" class="form-control bg-light border-start-0" placeholder="Lọc câu hỏi theo từ khóa..." />
+                                </div>
+                            </div>
+
+                            <div class="col-md-5">
+                                <div class="btn-group w-100" role="group" id="difficultyFilterGroup">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary active" data-filter="all">Tất cả</button>
+                                    <button type="button" class="btn btn-sm btn-outline-success" data-filter="Easy">Dễ</button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning" data-filter="Medium">Vừa</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-filter="Hard">Khó</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-3 p-md-4">
+                        @if (Model.AvailableQuestions.Any())
+                        {
+                            <div class="d-flex flex-column gap-3" id="availableQuestionsList">
+                                @foreach (var q in Model.AvailableQuestions)
+                                {
+                                    bool isChecked = Model.SelectedQuestionIds.Contains(q.Id);
+                                    <div class="card border rounded-3 p-3 question-bank-card transition-all @(isChecked ? "border-primary bg-primary-subtle bg-opacity-10" : "")" 
+                                         id="bank-card-@q.Id" 
+                                         data-id="@q.Id" 
+                                         data-difficulty="@q.Difficulty" 
+                                         data-prompt="@q.Content">
+                                        <div class="d-flex align-items-start gap-3">
+                                            <!-- Checkbox input -->
+                                            <div class="form-check pt-1 fs-5">
+                                                <input class="form-check-input question-checkbox" 
+                                                       type="checkbox" 
+                                                       name="selectedQuestionIds" 
+                                                       value="@q.Id" 
+                                                       id="chk_@q.Id" 
+                                                       @(isChecked ? "checked" : "") 
+                                                       onchange="onQuestionCheckChanged(this, @q.Id, '@q.Difficulty', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(q.Content))', @(q.Options?.Count ?? 0))" />
+                                            </div>
+
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                                    @switch (q.Difficulty)
+                                                    {
+                                                        case EduFlyUp.BusinessObjects.QuestionDifficulty.Easy:
+                                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
+                                                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Dễ (Easy)
+                                                            </span>
+                                                            break;
+                                                        case EduFlyUp.BusinessObjects.QuestionDifficulty.Medium:
+                                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">
+                                                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Vừa (Medium)
+                                                            </span>
+                                                            break;
+                                                        case EduFlyUp.BusinessObjects.QuestionDifficulty.Hard:
+                                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">
+                                                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Khó (Hard)
+                                                            </span>
+                                                            break;
+                                                    }
+                                                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 small">
+                                                        ID: #@q.Id
+                                                    </span>
+                                                    <span class="text-muted small ms-auto">
+                                                        @(q.Options?.Count ?? 0) phương án
+                                                    </span>
+                                                </div>
+
+                                                <!-- Question Prompt -->
+                                                <label for="chk_@q.Id" class="fw-bold text-dark d-block mb-2 cursor-pointer" style="cursor: pointer;">
+                                                    @q.Content
+                                                </label>
+
+                                                <!-- Options Accordion / Preview -->
+                                                @if (q.Options != null && q.Options.Any())
+                                                {
+                                                    <div class="bg-light bg-opacity-50 rounded-3 p-2 small border">
+                                                        <div class="row g-2">
+                                                            @foreach (var opt in q.Options)
+                                                            {
+                                                                <div class="col-md-6">
+                                                                    <div class="d-flex align-items-center gap-2 p-1 rounded @(opt.IsCorrect ? "bg-success-subtle text-success fw-bold border border-success-subtle" : "text-secondary")">
+                                                                        <i class="bi @(opt.IsCorrect ? "bi-check-circle-fill text-success" : "bi-circle text-muted")"></i>
+                                                                        <span class="text-truncate">@opt.Text</span>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div id="bankNoResultRow" class="text-center py-5" style="display: none;">
+                                    <i class="bi bi-search text-muted fs-1 d-block mb-2"></i>
+                                    <h6 class="fw-bold text-secondary mb-1">Không tìm thấy câu hỏi phù hợp với bộ lọc</h6>
+                                    <p class="text-muted small mb-0">Thử tìm kiếm với từ khóa khác hoặc chuyển mức độ khó.</p>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Empty Bank State -->
+                            <div class="text-center py-5 px-3">
+                                <div class="mb-3">
+                                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: rgba(13, 202, 240, 0.1); color: #0dcaf0;">
+                                        <i class="bi bi-patch-question fs-1"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Ngân hàng câu hỏi của khóa học đang trống</h5>
+                                <p class="text-muted mb-4" style="max-width: 450px; margin: 0 auto;">
+                                    Khóa học này chưa có câu hỏi nào trong Ngân hàng câu hỏi. Hãy tạo câu hỏi trước để có thể gán vào đề thi.
+                                </p>
+                                <a asp-controller="QuestionBank" asp-action="Create" asp-route-courseId="@Model.Course.Id" target="_blank" class="btn btn-brand rounded-pill px-4 py-2 fw-semibold shadow-glow">
+                                    <i class="bi bi-plus-circle me-1"></i>Thêm câu hỏi vào Ngân hàng
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+@section Styles {
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .text-truncate-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .transition-all { transition: all 0.2s ease-in-out; }
+</style>
+}
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        updateDifficultyStats();
+        setupFilterListeners();
+    });
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // 1. Khi check hoặc uncheck câu hỏi ở cột phải
+    function onQuestionCheckChanged(checkbox, questionId, difficulty, promptText, optionsCount) {
+        const bankCard = document.getElementById('bank-card-' + questionId);
+        if (checkbox.checked) {
+            if (bankCard) bankCard.classList.add('border-primary', 'bg-primary-subtle', 'bg-opacity-10');
+            addQuestionToLeftColumn(questionId, difficulty, promptText, optionsCount);
+        } else {
+            if (bankCard) bankCard.classList.remove('border-primary', 'bg-primary-subtle', 'bg-opacity-10');
+            removeQuestionFromLeftColumn(questionId);
+        }
+        updateDifficultyStats();
+    }
+
+    // 2. Gỡ câu hỏi khi nhấn nút [X] ở cột trái
+    function uncheckQuestion(questionId) {
+        const chk = document.getElementById('chk_' + questionId);
+        if (chk) {
+            chk.checked = false;
+            const bankCard = document.getElementById('bank-card-' + questionId);
+            if (bankCard) bankCard.classList.remove('border-primary', 'bg-primary-subtle', 'bg-opacity-10');
+        }
+        removeQuestionFromLeftColumn(questionId);
+        updateDifficultyStats();
+    }
+
+    // 3. Thêm item vào cột trái
+    function addQuestionToLeftColumn(questionId, difficulty, promptText, optionsCount) {
+        const container = document.getElementById('selectedQuestionsList');
+        if (!container) return;
+
+        if (document.getElementById('selected-card-' + questionId)) return; // đã có
+
+        let badgeHtml = '';
+        if (difficulty === 'Easy') {
+            badgeHtml = '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0 small mb-1">Dễ</span>';
+        } else if (difficulty === 'Medium') {
+            badgeHtml = '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0 small mb-1">Vừa</span>';
+        } else {
+            badgeHtml = '<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0 small mb-1">Khó</span>';
+        }
+
+        const safePrompt = escapeHtml(promptText);
+        const card = document.createElement('div');
+        card.className = 'card border rounded-3 p-3 shadow-xs selected-item';
+        card.id = 'selected-card-' + questionId;
+        card.setAttribute('data-id', questionId);
+        card.setAttribute('data-difficulty', difficulty);
+
+        card.innerHTML = `
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div class="d-flex align-items-start gap-2">
+                    <span class="badge bg-light text-secondary border rounded-circle d-flex align-items-center justify-content-center item-seq-num" style="width: 26px; height: 26px; flex-shrink: 0;">
+                        1
+                    </span>
+                    <div>
+                        ${badgeHtml}
+                        <div class="fw-semibold text-dark small text-truncate-2" title="${safePrompt}">
+                            ${safePrompt}
+                        </div>
+                        <span class="text-muted" style="font-size: 0.75rem;">
+                            <i class="bi bi-list-check me-1"></i>${optionsCount} lựa chọn
+                        </span>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 flex-shrink-0" title="Gỡ khỏi đề thi" onclick="uncheckQuestion(${questionId})">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        `;
+
+        container.appendChild(card);
+        refreshSequenceNumbers();
+    }
+
+    // 4. Xóa item khỏi cột trái
+    function removeQuestionFromLeftColumn(questionId) {
+        const card = document.getElementById('selected-card-' + questionId);
+        if (card) {
+            card.remove();
+        }
+        refreshSequenceNumbers();
+    }
+
+    // 5. Cập nhật số thứ tự (#1, #2...) và đếm thống kê
+    function refreshSequenceNumbers() {
+        const items = document.querySelectorAll('#selectedQuestionsList .selected-item');
+        const emptyNotice = document.getElementById('selectedQuestionsEmptyNotice');
+
+        if (emptyNotice) {
+            emptyNotice.className = items.length === 0 ? 'text-center py-5' : 'text-center py-5 d-none';
+        }
+
+        items.forEach((item, index) => {
+            const seq = item.querySelector('.item-seq-num');
+            if (seq) seq.textContent = (index + 1);
+        });
+
+        const badge = document.getElementById('selectedCountBadge');
+        if (badge) {
+            badge.textContent = `${items.length} câu hỏi`;
+        }
+    }
+
+    // 6. Cập nhật số lượng Dễ / Vừa / Khó
+    function updateDifficultyStats() {
+        const items = document.querySelectorAll('#selectedQuestionsList .selected-item');
+        let easy = 0, medium = 0, hard = 0;
+
+        items.forEach(item => {
+            const diff = item.getAttribute('data-difficulty');
+            if (diff === 'Easy') easy++;
+            else if (diff === 'Medium') medium++;
+            else if (diff === 'Hard') hard++;
+        });
+
+        const elEasy = document.getElementById('statEasy');
+        const elMedium = document.getElementById('statMedium');
+        const elHard = document.getElementById('statHard');
+
+        if (elEasy) elEasy.textContent = easy;
+        if (elMedium) elMedium.textContent = medium;
+        if (elHard) elHard.textContent = hard;
+    }
+
+    // 7. Chọn tất cả / Bỏ chọn tất cả (chỉ tác động các card đang visible)
+    function toggleSelectAll(checked) {
+        const visibleCards = document.querySelectorAll('#availableQuestionsList .question-bank-card');
+        visibleCards.forEach(card => {
+            if (card.style.display !== 'none') {
+                const chk = card.querySelector('.question-checkbox');
+                if (chk && chk.checked !== checked) {
+                    chk.checked = checked;
+                    if (typeof chk.onchange === 'function') {
+                        chk.onchange();
+                    } else {
+                        chk.dispatchEvent(new Event('change'));
+                    }
+                }
+            }
+        });
+    }
+
+    // 8. Lọc tìm kiếm và Độ khó cột phải
+    function setupFilterListeners() {
+        const searchInput = document.getElementById('bankSearchInput');
+        const filterButtons = document.querySelectorAll('#difficultyFilterGroup button');
+        const cards = document.querySelectorAll('#availableQuestionsList .question-bank-card');
+        const noResultRow = document.getElementById('bankNoResultRow');
+
+        let currentDifficulty = 'all';
+
+        function filterCards() {
+            const keyword = (searchInput ? searchInput.value.trim().toLowerCase() : '');
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const prompt = (card.getAttribute('data-prompt') || '').toLowerCase();
+                const diff = card.getAttribute('data-difficulty') || '';
+
+                const matchesKeyword = !keyword || prompt.includes(keyword);
+                const matchesDifficulty = (currentDifficulty === 'all') || (diff.toLowerCase() === currentDifficulty.toLowerCase());
+
+                if (matchesKeyword && matchesDifficulty) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (noResultRow) {
+                noResultRow.style.display = (visibleCount === 0 && cards.length > 0) ? '' : 'none';
+            }
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', filterCards);
+        }
+
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentDifficulty = this.getAttribute('data-filter') || 'all';
+                filterCards();
+            });
+        });
+    }
+</script>
+}

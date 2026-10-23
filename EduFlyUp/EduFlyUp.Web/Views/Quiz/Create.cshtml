@@ -1,0 +1,141 @@
+@model EduFlyUp.Web.Models.Quiz.QuizCreateEditViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Tạo đề thi mới - {Model.CourseTitle}";
+}
+
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">
+                    <i class="bi bi-house-door me-1"></i>Trang chủ
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-controller="Instructor" asp-action="Dashboard" class="text-decoration-none text-muted">
+                    Studio Giảng viên
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-action="Index" asp-route-courseId="@Model.CourseId" class="text-decoration-none text-muted">
+                    Quản lý Đề thi
+                </a>
+            </li>
+            <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">
+                Tạo đề thi mới
+            </li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card card-modern shadow-sm border-0">
+                <div class="card-header bg-white py-4 px-4 border-bottom">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center shadow-xs" 
+                             style="width: 48px; height: 48px; background: linear-gradient(135deg, #6f42c1, #4f46e5); color: white;">
+                            <i class="bi bi-journal-plus fs-4"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-1">Cấu hình Đề thi Mới (UC-32.1)</h4>
+                            <p class="text-muted small mb-0">
+                                Khóa học: <strong class="text-dark">@Model.CourseTitle</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="CourseId" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 mb-4" role="alert"></div>
+
+                        <!-- 1. Tiêu đề đề thi -->
+                        <div class="mb-4">
+                            <label asp-for="Title" class="form-label fw-bold">
+                                Tiêu đề đề thi <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Title" class="form-control form-control-lg rounded-3" 
+                                   placeholder="Ví dụ: Bài kiểm tra đánh giá năng lực cuối khóa..." autofocus />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <!-- 2. Mô tả đề thi -->
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-bold">
+                                Mô tả / Hướng dẫn làm bài
+                            </label>
+                            <textarea asp-for="Description" class="form-control rounded-3" rows="3" 
+                                      placeholder="Mô tả nội dung bài thi, lưu ý cho học viên khi làm bài..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <!-- 3. Cấu hình Thời gian & Điểm sàn -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label asp-for="DurationMinutes" class="form-label fw-bold">
+                                    <i class="bi bi-clock-history me-1 text-primary"></i>Thời gian làm bài (Phút) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="DurationMinutes" type="number" min="1" max="300" class="form-control rounded-start-3" />
+                                    <span class="input-group-text bg-light text-muted rounded-end-3">phút</span>
+                                </div>
+                                <div class="form-text small">Thời gian cho phép làm bài: từ 1 đến 300 phút.</div>
+                                <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="PassingScorePercentage" class="form-label fw-bold">
+                                    <i class="bi bi-percent me-1 text-warning-emphasis"></i>Điểm sàn đạt yêu cầu (%) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="PassingScorePercentage" type="number" min="1" max="100" class="form-control rounded-start-3" />
+                                    <span class="input-group-text bg-light text-muted rounded-end-3">%</span>
+                                </div>
+                                <div class="form-text small">Tỷ lệ trả lời đúng để tính là đỗ: từ 1% đến 100%.</div>
+                                <span asp-validation-for="PassingScorePercentage" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <!-- 4. Công tắc CAT Mode (Computer Adaptive Testing) -->
+                        <div class="card mb-4 border-2 shadow-xs" style="border-color: rgba(111, 66, 193, 0.3) !important; background: linear-gradient(135deg, rgba(111, 66, 193, 0.04) 0%, rgba(79, 70, 229, 0.04) 100%);">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="me-3">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="bi bi-cpu-fill fs-5" style="color: #6f42c1;"></i>
+                                            <h6 class="fw-bold mb-0 text-dark">Chế độ thi thích ứng CAT (Computer Adaptive Testing)</h6>
+                                            <span class="badge rounded-pill" style="background-color: #6f42c1; color: white; font-size: 0.72rem;">CAT IRT</span>
+                                        </div>
+                                        <p class="text-muted small mb-0">
+                                            Khi kích hoạt, bài thi sẽ tự động thích ứng độ khó của câu hỏi tiếp theo dựa trên kết quả trả lời từng câu của học viên (áp dụng mô hình xác suất 3-Tham số IRT).
+                                        </p>
+                                    </div>
+                                    <div class="form-check form-switch fs-4 mb-0">
+                                        <input asp-for="IsCAT" class="form-check-input" type="checkbox" role="switch" id="catModeSwitch" style="cursor: pointer;" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex align-items-center justify-content-end gap-2 pt-3 border-top">
+                            <a asp-action="Index" asp-route-courseId="@Model.CourseId" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+                                <i class="bi bi-arrow-left me-1"></i>Hủy bỏ
+                            </a>
+                            <button type="submit" class="btn btn-brand rounded-pill px-5 py-2 fw-semibold shadow-glow">
+                                <i class="bi bi-check-circle-fill me-1"></i>Tạo đề thi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
