@@ -143,16 +143,21 @@ public class QuestionBankController : Controller
             return View(model);
         }
 
-        if (model.CorrectOptionIndex < 0 || model.CorrectOptionIndex >= validOptions.Count)
-        {
-            model.CorrectOptionIndex = 0;
-        }
+        var chosenIndex = model.CorrectOptionIndex;
+        var selectedOpt = (chosenIndex >= 0 && chosenIndex < model.Options.Count) 
+            ? model.Options[chosenIndex] 
+            : null;
 
         var entityOptions = validOptions.Select((o, idx) => new QuestionOption
         {
             Text = o.Text.Trim(),
-            IsCorrect = (idx == model.CorrectOptionIndex)
+            IsCorrect = (selectedOpt != null ? o == selectedOpt : idx == 0)
         }).ToList();
+
+        if (!entityOptions.Any(o => o.IsCorrect))
+        {
+            entityOptions[0].IsCorrect = true;
+        }
 
         var question = new Question
         {
@@ -265,18 +270,23 @@ public class QuestionBankController : Controller
             return View(model);
         }
 
-        if (model.CorrectOptionIndex < 0 || model.CorrectOptionIndex >= validOptions.Count)
-        {
-            model.CorrectOptionIndex = 0;
-        }
+        var chosenIndex = model.CorrectOptionIndex;
+        var selectedOpt = (chosenIndex >= 0 && chosenIndex < model.Options.Count) 
+            ? model.Options[chosenIndex] 
+            : null;
 
         var entityOptions = validOptions.Select((o, idx) => new QuestionOption
         {
             Id = o.Id,
             QuestionId = model.Id,
             Text = o.Text.Trim(),
-            IsCorrect = (idx == model.CorrectOptionIndex)
+            IsCorrect = (selectedOpt != null ? o == selectedOpt : idx == 0)
         }).ToList();
+
+        if (!entityOptions.Any(o => o.IsCorrect))
+        {
+            entityOptions[0].IsCorrect = true;
+        }
 
         existing.Content = model.Content.Trim();
         existing.Difficulty = model.Difficulty;
@@ -317,14 +327,21 @@ public class QuestionBankController : Controller
             return RedirectToAction("Dashboard", "Instructor");
         }
 
-        var success = await _questionService.DeleteQuestionAsync(id);
-        if (success)
+        try
         {
-            TempData["SuccessMessage"] = "Đã xóa câu hỏi khỏi ngân hàng câu hỏi thành công.";
+            var success = await _questionService.DeleteQuestionAsync(id);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Đã xóa câu hỏi khỏi ngân hàng câu hỏi thành công.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Không thể xóa câu hỏi này.";
+            }
         }
-        else
+        catch (Exception)
         {
-            TempData["ErrorMessage"] = "Không thể xóa câu hỏi này.";
+            TempData["ErrorMessage"] = "Không thể xóa câu hỏi do có dữ liệu bài làm thi liên quan.";
         }
 
         return RedirectToAction(nameof(Index), new { courseId = question.CourseId });

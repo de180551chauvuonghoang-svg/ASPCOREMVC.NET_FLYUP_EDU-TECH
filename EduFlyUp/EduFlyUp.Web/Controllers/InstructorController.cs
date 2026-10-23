@@ -331,8 +331,16 @@ public class InstructorController : Controller
             return RedirectToAction(nameof(Dashboard));
         }
 
-        await _lessonService.DeleteLessonAsync(id);
-        TempData["SuccessMessage"] = "Đã xóa bài giảng thành công.";
+        try
+        {
+            await _lessonService.DeleteLessonAsync(id);
+            TempData["SuccessMessage"] = "Đã xóa bài giảng thành công.";
+        }
+        catch (Exception)
+        {
+            TempData["ErrorMessage"] = "Không thể xóa bài giảng này do có dữ liệu tiến độ học tập hoặc ràng buộc liên quan.";
+        }
+
         return RedirectToAction(nameof(Curriculum), new { id = courseId });
     }
 }

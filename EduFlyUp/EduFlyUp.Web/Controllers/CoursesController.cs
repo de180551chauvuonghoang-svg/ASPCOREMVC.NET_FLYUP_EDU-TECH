@@ -1,4 +1,4 @@
-﻿using EduFlyUp.BusinessObjects;
+using EduFlyUp.BusinessObjects;
 using EduFlyUp.Services;
 using EduFlyUp.Web.Models.Courses;
 using Microsoft.AspNetCore.Authorization;
@@ -196,9 +196,17 @@ public class CoursesController : Controller
 
         if (!_courseAccess.CanManageCourse(course, User)) return Forbid();
 
-        await _courseService.DeleteCourseAsync(id);
+        try
+        {
+            await _courseService.DeleteCourseAsync(id);
+            TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã bị xóa.";
+        }
+        catch (Exception)
+        {
+            TempData["ErrorMessage"] = "Không thể xóa khóa học do đã có dữ liệu liên quan (học viên đăng ký, bài giảng hoặc bài thi). Bạn có thể chọn Lưu trữ khóa học thay thế.";
+        }
 
-        TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã bị xóa.";
+        if (!User.IsInRole("Admin")) return RedirectToAction("Dashboard", "Instructor");
         return RedirectToAction(nameof(Index));
     }
 }
