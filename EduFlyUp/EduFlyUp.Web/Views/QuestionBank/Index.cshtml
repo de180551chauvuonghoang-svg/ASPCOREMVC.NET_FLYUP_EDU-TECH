@@ -1,0 +1,340 @@
+@model EduFlyUp.Web.Models.QuestionBank.QuestionBankIndexViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Ngân hàng câu hỏi - " + Model.Course.Title;
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a asp-controller="Instructor" asp-action="Dashboard" class="text-decoration-none">
+                <i class="bi bi-mortarboard-fill me-1"></i>Studio Giảng Viên
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Instructor" asp-action="Curriculum" asp-route-id="@Model.Course.Id" class="text-decoration-none">
+                Giáo trình
+            </a>
+        </li>
+        <li class="breadcrumb-item active text-truncate" style="max-width: 350px;" aria-current="page">
+            Ngân hàng câu hỏi: @Model.Course.Title
+        </li>
+    </ol>
+</nav>
+
+<!-- Hero Header Banner -->
+<div class="card card-modern p-4 p-md-5 mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%);">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <div class="d-inline-flex align-items-center gap-2 mb-3 flex-wrap">
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold">
+                    <i class="bi bi-patch-question-fill me-1"></i>Question Bank (UC-31)
+                </span>
+                <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-tag-fill text-muted me-1"></i>@(string.IsNullOrEmpty(Model.Course.Category) ? "Chung" : Model.Course.Category)
+                </span>
+                <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-bar-chart-fill text-muted me-1"></i>@Model.Course.Level
+                </span>
+            </div>
+
+            <h1 class="h3 fw-bold mb-2 text-dark">Ngân Hàng Câu Hỏi Trắc Nghiệm</h1>
+            <p class="text-secondary mb-0 fs-6" style="max-width: 720px;">
+                Quản lý kho câu hỏi đánh giá cho khóa học <strong>@Model.Course.Title</strong>. Các câu hỏi tại đây sẽ được dùng để tạo các đề thi trắc nghiệm (Quizzes) và bài thi thích ứng (CAT).
+            </p>
+        </div>
+
+        <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 d-flex flex-wrap gap-2 justify-content-lg-end">
+            <a asp-action="Create" asp-route-courseId="@Model.Course.Id" class="btn btn-brand rounded-pill px-4 py-3 shadow-glow d-inline-flex align-items-center gap-2 fw-bold">
+                <i class="bi bi-plus-circle-fill fs-5"></i>
+                <span>Tạo câu hỏi mới</span>
+            </a>
+            <a asp-controller="Instructor" asp-action="Curriculum" asp-route-id="@Model.Course.Id" class="btn btn-outline-brand rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2">
+                <i class="bi bi-collection-play"></i>
+                <span>Xem giáo trình</span>
+            </a>
+            <a asp-controller="Quiz" asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-purple rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" style="color: #6f42c1; border-color: #6f42c1;" title="Quản lý Đề thi & Khảo thí CAT (UC-32)">
+                <i class="bi bi-journal-check"></i>
+                <span>Đề thi & CAT</span>
+            </a>
+            <a asp-controller="Instructor" asp-action="Dashboard" class="btn btn-outline-secondary rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left"></i>
+                <span>Studio</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 4 Key Question Bank Metric Cards -->
+<div class="row g-3 g-md-4 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-3 p-md-4 border-start border-primary border-4 shadow-sm h-100">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider">Tổng số câu hỏi</span>
+            <div class="d-flex align-items-baseline gap-2 mt-1">
+                <h2 class="fw-bold text-primary mb-0">@Model.TotalQuestions</h2>
+                <span class="text-muted small">câu hỏi</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-3 p-md-4 border-start border-success border-4 shadow-sm h-100">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider">Mức Dễ (Easy)</span>
+            <div class="d-flex align-items-baseline gap-2 mt-1">
+                <h2 class="fw-bold text-success mb-0">@Model.EasyCount</h2>
+                <span class="text-muted small">câu hỏi</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-3 p-md-4 border-start border-warning border-4 shadow-sm h-100">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider">Mức Trung Bình</span>
+            <div class="d-flex align-items-baseline gap-2 mt-1">
+                <h2 class="fw-bold text-warning-emphasis mb-0">@Model.MediumCount</h2>
+                <span class="text-muted small">câu hỏi</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-3 p-md-4 border-start border-danger border-4 shadow-sm h-100">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider">Mức Khó (Hard)</span>
+            <div class="d-flex align-items-baseline gap-2 mt-1">
+                <h2 class="fw-bold text-danger mb-0">@Model.HardCount</h2>
+                <span class="text-muted small">câu hỏi</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter Controls -->
+<div class="card card-modern p-3 mb-4 shadow-sm border-0 rounded-4">
+    <form method="get" asp-action="Index" class="row g-2 align-items-center">
+        <input type="hidden" name="courseId" value="@Model.Course.Id" />
+
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted rounded-start-pill">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="questionSearchInput" name="search" value="@Model.CurrentSearch" class="form-control border-start-0 rounded-end-pill" placeholder="Tìm theo nội dung câu hỏi hoặc lời giải thích..." autocomplete="off" />
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <select name="difficulty" class="form-select rounded-pill" onchange="this.form.submit()">
+                <option value="">Tất cả độ khó</option>
+                <option value="Easy" selected="@(Model.CurrentDifficulty == "Easy")">Dễ (Easy)</option>
+                <option value="Medium" selected="@(Model.CurrentDifficulty == "Medium")">Trung bình (Medium)</option>
+                <option value="Hard" selected="@(Model.CurrentDifficulty == "Hard")">Khó (Hard)</option>
+            </select>
+        </div>
+
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-brand rounded-pill w-100 py-2">
+                <i class="bi bi-funnel-fill me-1"></i>Lọc
+            </button>
+            <a asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-secondary rounded-pill px-3 py-2" title="Đặt lại bộ lọc">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Questions Table -->
+<div class="card card-modern shadow-sm overflow-hidden border-0 rounded-4 mb-5">
+    <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+        <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+            <i class="bi bi-patch-question text-primary"></i>
+            <span>Kho Câu Hỏi Trắc Nghiệm</span>
+        </h5>
+        <span id="questionCountBadge" class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold">
+            @Model.TotalQuestions câu hỏi
+        </span>
+    </div>
+
+    @if (!Model.Questions.Any())
+    {
+        <div class="text-center py-5 px-3">
+            <div class="py-5" style="max-width: 500px; margin: 0 auto;">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                    <i class="bi bi-question-diamond-fill fs-1"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-2">Chưa có câu hỏi nào trong ngân hàng</h4>
+                <p class="text-secondary mb-4">
+                    Ngân hàng câu hỏi là nguồn tài nguyên dùng để tạo các bài thi trắc nghiệm (Quizzes) và khảo thí năng lực học viên. Hãy tạo các câu hỏi đầu tiên ngay bây giờ!
+                </p>
+                <a asp-action="Create" asp-route-courseId="@Model.Course.Id" class="btn btn-brand rounded-pill px-4 py-3 shadow-glow fw-bold d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-plus-lg fs-5"></i>
+                    <span>Tạo câu hỏi đầu tiên</span>
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary small text-uppercase">
+                    <tr>
+                        <th scope="col" class="ps-4 py-3" style="width: 60px;">STT</th>
+                        <th scope="col" class="py-3" style="min-width: 280px;">Câu hỏi</th>
+                        <th scope="col" class="py-3" style="width: 130px;">Độ khó</th>
+                        <th scope="col" class="py-3" style="width: 90px;">Điểm</th>
+                        <th scope="col" class="py-3" style="min-width: 320px;">Phương án đáp án (Đáp án đúng màu xanh)</th>
+                        <th scope="col" class="text-end pe-4 py-3" style="width: 120px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="questionTableBody">
+                    @{
+                        int index = 0;
+                    }
+                    @foreach (var q in Model.Questions)
+                    {
+                        index++;
+                        var optionsList = q.Options.OrderBy(o => o.Id).ToList();
+
+                        <tr class="question-row" data-content="@q.Content" data-explanation="@q.Explanation">
+                            <td class="ps-4">
+                                <span class="badge bg-light text-dark border rounded-circle d-inline-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">
+                                    @index
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark mb-1" style="white-space: pre-line;">@q.Content</div>
+                                @if (!string.IsNullOrWhiteSpace(q.Explanation))
+                                {
+                                    <div class="small text-muted mt-1 bg-light p-2 rounded-3 border-start border-primary border-3" style="max-width: 450px; white-space: pre-line;">
+                                        <i class="bi bi-info-circle text-primary me-1"></i><strong>Giải thích:</strong> @q.Explanation
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                @switch (q.Difficulty)
+                                {
+                                    case EduFlyUp.BusinessObjects.QuestionDifficulty.Easy:
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold">
+                                            <i class="bi bi-circle-fill fs-xs me-1 text-success"></i>Dễ (Easy)
+                                        </span>
+                                        break;
+                                    case EduFlyUp.BusinessObjects.QuestionDifficulty.Medium:
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-semibold">
+                                            <i class="bi bi-circle-fill fs-xs me-1 text-warning"></i>Trung bình
+                                        </span>
+                                        break;
+                                    case EduFlyUp.BusinessObjects.QuestionDifficulty.Hard:
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-semibold">
+                                            <i class="bi bi-circle-fill fs-xs me-1 text-danger"></i>Khó (Hard)
+                                        </span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 fw-bold">
+                                    @q.Points đ
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    @{
+                                        char optChar = 'A';
+                                    }
+                                    @foreach (var opt in optionsList)
+                                    {
+                                        if (opt.IsCorrect)
+                                        {
+                                            <div class="d-inline-flex align-items-center gap-2 px-2 py-1 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-25 text-success small fw-bold">
+                                                <i class="bi bi-check-circle-fill text-success"></i>
+                                                <span>@optChar. @opt.Text</span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="d-inline-flex align-items-center gap-2 px-2 py-1 text-secondary small">
+                                                <span class="badge bg-light text-muted border rounded-circle" style="width: 20px; height: 20px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;">
+                                                    @optChar
+                                                </span>
+                                                <span>@opt.Text</span>
+                                            </div>
+                                        }
+                                        optChar++;
+                                    }
+                                </div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-inline-flex gap-1 align-items-center">
+                                    <!-- Chỉnh sửa câu hỏi -->
+                                    <a asp-action="Edit" asp-route-id="@q.Id" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1" title="Chỉnh sửa câu hỏi (UC-31.2)">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    <!-- Xóa câu hỏi -->
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa câu hỏi này khỏi ngân hàng câu hỏi?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@q.Id" />
+                                        <input type="hidden" name="courseId" value="@Model.Course.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" title="Xóa câu hỏi (UC-31.3)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    <tr id="noResultRow" style="display: none;">
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-search fs-2 d-block mb-2 text-secondary"></i>
+                            <span>Không tìm thấy câu hỏi nào phù hợp với từ khóa của bạn.</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById("questionSearchInput");
+            if (!searchInput) return;
+
+            if (searchInput.value) {
+                searchInput.focus();
+                const valLen = searchInput.value.length;
+                searchInput.setSelectionRange(valLen, valLen);
+            }
+
+            let debounceTimer;
+
+            searchInput.addEventListener("input", function () {
+                const query = this.value.trim().toLowerCase();
+                const rows = document.querySelectorAll(".question-row");
+                let matchCount = 0;
+
+                rows.forEach(function (row) {
+                    const content = (row.getAttribute("data-content") || "").toLowerCase();
+                    const explanation = (row.getAttribute("data-explanation") || "").toLowerCase();
+                    const isMatch = !query || content.includes(query) || explanation.includes(query);
+                    row.style.display = isMatch ? "" : "none";
+                    if (isMatch) matchCount++;
+                });
+
+                const badge = document.getElementById("questionCountBadge");
+                if (badge) {
+                    badge.textContent = matchCount + " câu hỏi";
+                }
+
+                const noResultRow = document.getElementById("noResultRow");
+                if (noResultRow) {
+                    noResultRow.style.display = (rows.length > 0 && matchCount === 0) ? "" : "none";
+                }
+
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () {
+                    searchInput.form.submit();
+                }, 600);
+            });
+        });
+    </script>
+}

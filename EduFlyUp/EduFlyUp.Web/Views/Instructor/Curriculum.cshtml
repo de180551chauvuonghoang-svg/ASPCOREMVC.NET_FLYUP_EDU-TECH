@@ -1,0 +1,550 @@
+@model EduFlyUp.Web.Models.Instructor.CurriculumViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Giáo trình - " + Model.Course.Title;
+}
+
+<!-- Breadcrumb & Back button -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a asp-action="Dashboard" class="text-decoration-none">
+                <i class="bi bi-mortarboard-fill me-1"></i>Studio Giảng Viên
+            </a>
+        </li>
+        <li class="breadcrumb-item active text-truncate" style="max-width: 400px;" aria-current="page">
+            Giáo trình: @Model.Course.Title
+        </li>
+    </ol>
+</nav>
+
+<!-- Course Header Banner -->
+<div class="card card-modern p-4 p-md-5 mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <div class="d-inline-flex align-items-center gap-2 mb-3 flex-wrap">
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold">
+                    <i class="bi bi-journal-code me-1"></i>Curriculum Builder (UC-21)
+                </span>
+
+                @switch (Model.Course.Status)
+                {
+                    case EduFlyUp.BusinessObjects.CourseStatus.Approved:
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2">
+                            <i class="bi bi-check-circle me-1"></i>Đã duyệt (Mở bán)
+                        </span>
+                        break;
+                    case EduFlyUp.BusinessObjects.CourseStatus.PendingApproval:
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2">
+                            <i class="bi bi-hourglass-split me-1"></i>Chờ Admin duyệt
+                        </span>
+                        break;
+                    case EduFlyUp.BusinessObjects.CourseStatus.Rejected:
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2">
+                            <i class="bi bi-x-circle me-1"></i>Bị từ chối
+                        </span>
+                        break;
+                    case EduFlyUp.BusinessObjects.CourseStatus.Archived:
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-2">
+                            <i class="bi bi-archive me-1"></i>Đã lưu trữ
+                        </span>
+                        break;
+                    default:
+                        <span class="badge bg-light text-secondary border rounded-pill px-3 py-2">
+                            <i class="bi bi-file-earmark-lock me-1"></i>Bản nháp
+                        </span>
+                        break;
+                }
+
+                <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-tag-fill text-muted me-1"></i>@(string.IsNullOrEmpty(Model.Course.Category) ? "Chung" : Model.Course.Category)
+                </span>
+                <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs">
+                    <i class="bi bi-bar-chart-fill text-muted me-1"></i>@Model.Course.Level
+                </span>
+            </div>
+
+            <h1 class="h3 fw-bold mb-2 text-dark">@Model.Course.Title</h1>
+            <p class="text-secondary mb-0 fs-6" style="max-width: 700px;">
+                @(string.IsNullOrWhiteSpace(Model.Course.Description) ? "Khóa học chưa có mô tả tóm tắt." : Model.Course.Description)
+            </p>
+        </div>
+
+        <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 d-flex flex-wrap gap-2 justify-content-lg-end">
+            <button type="button" class="btn btn-brand rounded-pill px-4 py-3 shadow-glow d-inline-flex align-items-center gap-2 fw-bold" onclick="openAddLessonModal('')">
+                <i class="bi bi-plus-circle-fill fs-5"></i>
+                <span>Thêm bài giảng mới</span>
+            </button>
+            <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-info rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" title="Ngân hàng câu hỏi trắc nghiệm (UC-31)">
+                <i class="bi bi-patch-question-fill"></i>
+                <span>Ngân hàng câu hỏi</span>
+            </a>
+            <a asp-controller="Quiz" asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-purple rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" style="color: #6f42c1; border-color: #6f42c1;" title="Quản lý Đề thi & Khảo thí CAT (UC-32)">
+                <i class="bi bi-journal-check"></i>
+                <span>Đề thi & CAT</span>
+            </a>
+            <a asp-action="Dashboard" class="btn btn-outline-secondary rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left"></i>
+                <span>Về Studio</span>
+            </a>
+            <a asp-controller="Courses" asp-action="Details" asp-route-id="@Model.Course.Id" target="_blank" class="btn btn-outline-brand rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" title="Xem trang khóa học như học viên">
+                <i class="bi bi-eye"></i>
+                <span>Xem trước</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 4 Key Curriculum Stats Cards -->
+<div class="row g-3 g-md-4 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-3 p-md-4 border-start border-primary border-4 shadow-sm h-100">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider">Tổng số chương</span>
+            <div class="d-flex align-items-baseline gap-2 mt-1">
+                <h2 class="fw-bold text-primary mb-0">@Model.TotalSections</h2>
+                <span class="text-muted small">chương</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-3 p-md-4 border-start border-success border-4 shadow-sm h-100">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider">Tổng bài giảng</span>
+            <div class="d-flex align-items-baseline gap-2 mt-1">
+                <h2 class="fw-bold text-success mb-0">@Model.TotalLessons</h2>
+                <span class="text-muted small">bài học</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-3 p-md-4 border-start border-warning border-4 shadow-sm h-100">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider">Thời lượng toàn khóa</span>
+            <div class="d-flex align-items-baseline gap-2 mt-1">
+                <h3 class="fw-bold text-warning-emphasis mb-0">@Model.FormattedTotalDuration</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card card-modern p-3 p-md-4 border-start border-info border-4 shadow-sm h-100">
+            <span class="text-muted small fw-semibold text-uppercase tracking-wider">Học thử miễn phí</span>
+            <div class="d-flex align-items-baseline gap-2 mt-1">
+                <h2 class="fw-bold text-info mb-0">@Model.PreviewLessonsCount</h2>
+                <span class="text-muted small">bài xem thử</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Curriculum Content Sections -->
+@if (!Model.Lessons.Any())
+{
+    <!-- Empty State -->
+    <div class="card card-modern text-center py-5 px-3 border-0 shadow-sm rounded-4 mb-5">
+        <div class="py-5" style="max-width: 520px; margin: 0 auto;">
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                <i class="bi bi-collection-play-fill fs-1"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-2">Chưa có bài giảng nào trong giáo trình</h4>
+            <p class="text-secondary mb-4">
+                Khóa học cần có ít nhất 1 bài giảng để Admin có thể tiến hành kiểm duyệt xuất bản. Hãy phân bổ cấu trúc khóa học theo từng Chương và thêm các bài học video/tài liệu ngay bây giờ!
+            </p>
+            <button type="button" class="btn btn-brand rounded-pill px-4 py-3 shadow-glow fw-bold d-inline-flex align-items-center gap-2" onclick="openAddLessonModal('Chương 1: Tổng quan')">
+                <i class="bi bi-plus-lg fs-5"></i>
+                <span>Thêm bài giảng đầu tiên</span>
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Accordion Group by SectionName -->
+    <div class="accordion curriculum-accordion d-flex flex-column gap-3 mb-5" id="curriculumAccordion">
+        @{
+            int sectionIndex = 0;
+        }
+        @foreach (var (sectionName, sectionLessons) in Model.Sections)
+        {
+            sectionIndex++;
+            var sectionId = $"sectionCollapse_{sectionIndex}";
+            var totalSectionMinutes = sectionLessons.Sum(l => l.DurationMinutes);
+
+            <div class="accordion-item card card-modern border-0 shadow-sm rounded-4 overflow-hidden">
+                <h2 class="accordion-header bg-white" id="heading_@sectionIndex">
+                    <div class="d-flex align-items-center justify-content-between p-3 px-md-4 w-100 flex-wrap gap-2">
+                        <button class="accordion-button collapsed shadow-none p-0 bg-transparent flex-grow-1 text-dark fw-bold fs-6 d-flex align-items-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#@sectionId" aria-expanded="true" aria-controls="@sectionId" style="width: auto;">
+                            <i class="bi bi-folder2-open text-primary fs-5"></i>
+                            <span>@sectionName</span>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 ms-2 font-monospace small">
+                                @sectionLessons.Count bài giảng
+                            </span>
+                            <span class="badge bg-light text-secondary border rounded-pill px-3 py-1 small">
+                                <i class="bi bi-clock me-1"></i>@totalSectionMinutes phút
+                            </span>
+                        </button>
+                        
+                        <div class="d-inline-flex align-items-center gap-2 ms-auto">
+                            <button type="button" class="btn btn-sm btn-outline-brand rounded-pill px-3 py-1" onclick="openAddLessonModal('@Html.Raw(JavaScriptEncoder.Default.Encode(sectionName))')">
+                                <i class="bi bi-plus-lg me-1"></i>Thêm bài vào chương
+                            </button>
+                        </div>
+                    </div>
+                </h2>
+
+                <div id="@sectionId" class="accordion-collapse collapse show" aria-labelledby="heading_@sectionIndex">
+                    <div class="accordion-body p-0 border-top">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-secondary small text-uppercase">
+                                    <tr>
+                                        <th scope="col" class="ps-4 py-2" style="width: 70px;">Thứ tự</th>
+                                        <th scope="col" class="py-2">Bài giảng</th>
+                                        <th scope="col" class="py-2">Thời lượng</th>
+                                        <th scope="col" class="py-2">Học thử</th>
+                                        <th scope="col" class="py-2">Học liệu / Video</th>
+                                        <th scope="col" class="text-end pe-4 py-2">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lesson in sectionLessons)
+                                    {
+                                        <tr>
+                                            <td class="ps-4">
+                                                <span class="badge bg-light text-dark border rounded-circle d-inline-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">
+                                                    @lesson.Order
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold text-dark mb-0">@lesson.Title</div>
+                                                @if (!string.IsNullOrWhiteSpace(lesson.Content))
+                                                {
+                                                    <div class="text-muted small text-truncate" style="max-width: 350px;">
+                                                        @lesson.Content
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-light text-secondary border rounded-pill px-2 py-1">
+                                                    <i class="bi bi-clock me-1"></i>@lesson.DurationMinutes phút
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (lesson.IsPreview)
+                                                {
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">
+                                                        <i class="bi bi-gift-fill me-1"></i>Học thử miễn phí
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-light text-muted border rounded-pill px-2 py-1">
+                                                        <i class="bi bi-lock-fill me-1"></i>Khóa học viên
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    @if (!string.IsNullOrWhiteSpace(lesson.VideoUrl))
+                                                    {
+                                                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" onclick="openVideoPreview('@Html.Raw(JavaScriptEncoder.Default.Encode(lesson.VideoUrl))', '@Html.Raw(JavaScriptEncoder.Default.Encode(lesson.Title))')" title="Xem thử video bài giảng">
+                                                            <i class="bi bi-youtube me-1"></i>Xem video
+                                                        </button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted small fst-italic">Chưa có video</span>
+                                                    }
+
+                                                    @if (!string.IsNullOrWhiteSpace(lesson.MaterialUrl))
+                                                    {
+                                                        <a href="@lesson.MaterialUrl" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" title="Tải học liệu đính kèm (UC-24)">
+                                                            <i class="bi bi-file-earmark-arrow-down me-1"></i>@(string.IsNullOrWhiteSpace(lesson.AttachmentName) ? "Tài liệu" : lesson.AttachmentName)
+                                                        </a>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <div class="d-inline-flex gap-1 align-items-center">
+                                                    <!-- Sửa bài giảng -->
+                                                    <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1" title="Chỉnh sửa bài giảng" onclick='openEditLessonModal({
+                                                        id: @lesson.Id,
+                                                        courseId: @lesson.CourseId,
+                                                        title: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(lesson.Title)),
+                                                        sectionName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(lesson.SectionName)),
+                                                        videoUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(lesson.VideoUrl)),
+                                                        durationMinutes: @lesson.DurationMinutes,
+                                                        order: @lesson.Order,
+                                                        isPreview: @(lesson.IsPreview ? "true" : "false"),
+                                                        materialUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(lesson.MaterialUrl)),
+                                                        attachmentName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(lesson.AttachmentName)),
+                                                        content: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(lesson.Content))
+                                                    })'>
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+
+                                                    <!-- Xóa bài giảng -->
+                                                    <form asp-action="DeleteLesson" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài giảng &quot;@Html.Raw(JavaScriptEncoder.Default.Encode(lesson.Title))&quot; không?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@lesson.Id" />
+                                                        <input type="hidden" name="courseId" value="@Model.Course.Id" />
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" title="Xóa bài giảng">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- MODAL 1: THÊM / CHỈNH SỬA BÀI GIẢNG -->
+<div class="modal fade" id="lessonModal" tabindex="-1" aria-labelledby="lessonModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-light py-3 px-4 border-bottom">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="lessonModalTitle">
+                    <i class="bi bi-plus-circle-fill text-primary"></i>
+                    <span id="lessonModalHeading">Thêm bài giảng mới</span>
+                </h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form id="lessonForm" method="post" asp-action="CreateLesson">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="lessonId" name="Id" value="0" />
+                <input type="hidden" id="lessonCourseId" name="CourseId" value="@Model.Course.Id" />
+
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <!-- Tên bài giảng -->
+                        <div class="col-12">
+                            <label for="lessonTitle" class="form-label fw-bold small text-secondary">
+                                Tiêu đề bài giảng <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="lessonTitle" name="Title" class="form-control rounded-3" placeholder="Ví dụ: Giới thiệu cấu trúc ứng dụng ASP.NET Core" required maxlength="200" />
+                        </div>
+
+                        <!-- Tên chương (SectionName) -->
+                        <div class="col-md-8">
+                            <label for="lessonSectionName" class="form-label fw-bold small text-secondary">
+                                Tên chương (Section) <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="lessonSectionName" name="SectionName" list="existingSectionsList" class="form-control rounded-3" placeholder="Ví dụ: Chương 1: Căn bản" required maxlength="150" />
+                            <datalist id="existingSectionsList">
+                                @foreach (var sec in Model.Sections.Keys)
+                                {
+                                    <option value="@sec"></option>
+                                }
+                            </datalist>
+                            <div class="form-text small">Chọn chương có sẵn hoặc nhập tên chương mới để tự động tạo chương.</div>
+                        </div>
+
+                        <!-- Thứ tự bài (Order) -->
+                        <div class="col-md-4">
+                            <label for="lessonOrder" class="form-label fw-bold small text-secondary">Thứ tự bài</label>
+                            <input type="number" id="lessonOrder" name="Order" class="form-control rounded-3" min="1" max="9999" value="@(Model.TotalLessons + 1)" />
+                        </div>
+
+                        <!-- Video URL -->
+                        <div class="col-md-8">
+                            <label for="lessonVideoUrl" class="form-label fw-bold small text-secondary">
+                                Đường dẫn Video bài giảng
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0">
+                                    <i class="bi bi-youtube text-danger"></i>
+                                </span>
+                                <input type="url" id="lessonVideoUrl" name="VideoUrl" class="form-control border-start-0" placeholder="https://www.youtube.com/watch?v=... hoặc link mp4" />
+                            </div>
+                            <div class="form-text small">Hỗ trợ link video YouTube hoặc link file MP4 trực tiếp.</div>
+                        </div>
+
+                        <!-- Thời lượng bài học -->
+                        <div class="col-md-4">
+                            <label for="lessonDurationMinutes" class="form-label fw-bold small text-secondary">
+                                Thời lượng (phút)
+                            </label>
+                            <div class="input-group">
+                                <input type="number" id="lessonDurationMinutes" name="DurationMinutes" class="form-control" min="0" max="1440" value="15" />
+                                <span class="input-group-text bg-light text-muted">phút</span>
+                            </div>
+                        </div>
+
+                        <!-- Cờ cho phép học thử miễn phí (IsPreview) -->
+                        <div class="col-12">
+                            <div class="card p-3 border-0 bg-success bg-opacity-10 rounded-3">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="lessonIsPreview" name="IsPreview" value="true" />
+                                    <label class="form-check-label fw-bold text-success" for="lessonIsPreview">
+                                        <i class="bi bi-gift-fill me-1"></i>Cho phép học viên xem thử bài giảng miễn phí (Free Preview)
+                                    </label>
+                                    <div class="small text-muted mt-1">
+                                        Học viên vãng lai có thể xem bài này mà không cần đăng ký mua toàn bộ khóa học.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Học liệu đính kèm (UC-24) -->
+                        <div class="col-md-6">
+                            <label for="lessonMaterialUrl" class="form-label fw-bold small text-secondary">
+                                Link tài liệu đính kèm (Slide / PDF / Source Code)
+                            </label>
+                            <input type="url" id="lessonMaterialUrl" name="MaterialUrl" class="form-control rounded-3" placeholder="https://... hoặc link Google Drive, OneDrive" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lessonAttachmentName" class="form-label fw-bold small text-secondary">
+                                Tên hiển thị của tài liệu
+                            </label>
+                            <input type="text" id="lessonAttachmentName" name="AttachmentName" class="form-control rounded-3" placeholder="Ví dụ: Slide_Bai_1_Overview.pdf" maxlength="150" />
+                        </div>
+
+                        <!-- Ghi chú / Tóm tắt bài giảng -->
+                        <div class="col-12">
+                            <label for="lessonContent" class="form-label fw-bold small text-secondary">
+                                Ghi chú / Tóm tắt nội dung bài giảng
+                            </label>
+                            <textarea id="lessonContent" name="Content" class="form-control rounded-3" rows="3" placeholder="Mô tả ngắn gọn mục tiêu kiến thức học viên sẽ đạt được sau bài học này..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light px-4 py-3">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" id="btnSubmitLesson" class="btn btn-brand rounded-pill px-4 fw-bold">
+                        <i class="bi bi-save me-1"></i>Lưu bài giảng
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 2: XEM THỬ VIDEO BÀI GIẢNG (VIDEO PREVIEW) -->
+<div class="modal fade" id="videoPreviewModal" tabindex="-1" aria-labelledby="videoPreviewModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden bg-dark text-white">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-truncate text-white" id="videoPreviewModalTitle" style="max-width: 90%;">
+                    Xem thử video bài giảng
+                </h5>
+                <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="ratio ratio-16x9 rounded-3 overflow-hidden bg-black" id="videoContainer">
+                    <!-- Dynamic Video / Iframe will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @using System.Text.Encodings.Web
+    <script>
+        let lessonModalInstance = null;
+        let videoPreviewModalInstance = null;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const lessonModalEl = document.getElementById("lessonModal");
+            if (lessonModalEl) {
+                lessonModalInstance = new bootstrap.Modal(lessonModalEl);
+            }
+
+            const videoModalEl = document.getElementById("videoPreviewModal");
+            if (videoModalEl) {
+                videoPreviewModalInstance = new bootstrap.Modal(videoModalEl);
+                videoModalEl.addEventListener("hidden.bs.modal", function () {
+                    // Dừng video khi đóng modal
+                    const container = document.getElementById("videoContainer");
+                    if (container) container.innerHTML = "";
+                });
+            }
+        });
+
+        // 1. Mở modal thêm bài giảng mới
+        function openAddLessonModal(defaultSection) {
+            const form = document.getElementById("lessonForm");
+            if (!form) return;
+
+            form.action = '@Url.Action("CreateLesson", "Instructor")';
+            document.getElementById("lessonId").value = "0";
+            document.getElementById("lessonTitle").value = "";
+            document.getElementById("lessonSectionName").value = defaultSection || "Chương 1: Tổng quan";
+            document.getElementById("lessonVideoUrl").value = "";
+            document.getElementById("lessonDurationMinutes").value = "15";
+            document.getElementById("lessonOrder").value = "@(Model.TotalLessons + 1)";
+            document.getElementById("lessonIsPreview").checked = false;
+            document.getElementById("lessonMaterialUrl").value = "";
+            document.getElementById("lessonAttachmentName").value = "";
+            document.getElementById("lessonContent").value = "";
+
+            document.getElementById("lessonModalHeading").textContent = "Thêm bài giảng mới";
+            document.getElementById("btnSubmitLesson").innerHTML = '<i class="bi bi-plus-lg me-1"></i>Thêm bài giảng';
+
+            if (lessonModalInstance) {
+                lessonModalInstance.show();
+            }
+        }
+
+        // 2. Mở modal chỉnh sửa bài giảng
+        function openEditLessonModal(lesson) {
+            const form = document.getElementById("lessonForm");
+            if (!form) return;
+
+            form.action = '@Url.Action("EditLesson", "Instructor")';
+            document.getElementById("lessonId").value = lesson.id;
+            document.getElementById("lessonTitle").value = lesson.title || "";
+            document.getElementById("lessonSectionName").value = lesson.sectionName || "Chương 1: Tổng quan";
+            document.getElementById("lessonVideoUrl").value = lesson.videoUrl || "";
+            document.getElementById("lessonDurationMinutes").value = lesson.durationMinutes || 0;
+            document.getElementById("lessonOrder").value = lesson.order || 1;
+            document.getElementById("lessonIsPreview").checked = !!lesson.isPreview;
+            document.getElementById("lessonMaterialUrl").value = lesson.materialUrl || "";
+            document.getElementById("lessonAttachmentName").value = lesson.attachmentName || "";
+            document.getElementById("lessonContent").value = lesson.content || "";
+
+            document.getElementById("lessonModalHeading").textContent = "Chỉnh sửa: " + lesson.title;
+            document.getElementById("btnSubmitLesson").innerHTML = '<i class="bi bi-save me-1"></i>Lưu thay đổi';
+
+            if (lessonModalInstance) {
+                lessonModalInstance.show();
+            }
+        }
+
+        // 3. Mở xem thử video
+        function openVideoPreview(url, title) {
+            if (!url) {
+                alert("Bài giảng này chưa có link video!");
+                return;
+            }
+
+            document.getElementById("videoPreviewModalTitle").textContent = title || "Xem thử video bài giảng";
+            const container = document.getElementById("videoContainer");
+            container.innerHTML = "";
+
+            // Kiểm tra xem có phải link YouTube không (hỗ trợ watch, embed, shorts, youtu.be)
+            const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+            const match = url.match(youtubeRegex);
+
+            if (match && match[1]) {
+                const embedUrl = `https://www.youtube.com/embed/${match[1]}?autoplay=1`;
+                container.innerHTML = `<iframe src="${embedUrl}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-100 h-100"></iframe>`;
+            } else {
+                // Video MP4 thông thường hoặc link trực tiếp
+                container.innerHTML = `<video controls autoplay class="w-100 h-100 object-fit-contain"><source src="${url}">Trình duyệt của bạn không hỗ trợ thẻ video.</video>`;
+            }
+
+            if (videoPreviewModalInstance) {
+                videoPreviewModalInstance.show();
+            }
+        }
+    </script>
+}

@@ -1,4 +1,4 @@
-﻿@model EduFlyUp.Web.Models.Courses.DetailCourseModel
+@model EduFlyUp.Web.Models.Courses.DetailCourseModel
 
 @{
     ViewData["Title"] = $"{Model.Title} - EduFlyUp";
@@ -177,7 +177,11 @@
             {
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning w-100 py-2 rounded-pill small mb-2 d-flex align-items-center justify-content-center gap-2 text-dark fw-semibold">
                     <i class="bi bi-pencil-square"></i>
-                    <span>Chỉnh sửa khóa học</span>
+                    <span>Chỉnh sửa thông tin</span>
+                </a>
+                <a asp-controller="Instructor" asp-action="Curriculum" asp-route-id="@Model.Id" class="btn btn-outline-success w-100 py-2 rounded-pill small mb-2 d-flex align-items-center justify-content-center gap-2 fw-semibold">
+                    <i class="bi bi-collection-play-fill"></i>
+                    <span>Quản lý giáo trình bài giảng</span>
                 </a>
             }
 

@@ -26,7 +26,7 @@ namespace EduFlyUp.DataAccess
                 query = query.Where(q => q.Content.Contains(keyword) || q.Explanation.Contains(keyword));
             }
 
-            return await query.OrderByDescending(q => q.CreatedAt).ToListAsync();
+            return await query.OrderBy(q => q.CreatedAt).ThenBy(q => q.Id).ToListAsync();
         }
 
         public async Task<Question?> GetByIdAsync(int id)

@@ -1,0 +1,300 @@
+@model EduFlyUp.Web.Models.QuestionBank.QuestionCreateEditViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Tạo câu hỏi mới - " + Model.Course?.Title;
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a asp-controller="Instructor" asp-action="Dashboard" class="text-decoration-none">
+                <i class="bi bi-mortarboard-fill me-1"></i>Studio Giảng Viên
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-action="Index" asp-route-courseId="@Model.CourseId" class="text-decoration-none">
+                Ngân hàng câu hỏi
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            Tạo câu hỏi mới
+        </li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-10">
+        <!-- Header Card -->
+        <div class="card card-modern p-4 border-0 shadow-sm mb-4 rounded-4" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1 rounded-pill fw-bold mb-2">
+                        <i class="bi bi-plus-circle-fill me-1"></i>Tạo câu hỏi (UC-31.1)
+                    </span>
+                    <h2 class="h4 fw-bold text-dark mb-1">Thêm Câu Hỏi Trắc Nghiệm Mới</h2>
+                    <div class="text-secondary small">
+                        Khóa học: <strong>@Model.Course?.Title</strong> (ID: #@Model.CourseId)
+                    </div>
+                </div>
+                <a asp-action="Index" asp-route-courseId="@Model.CourseId" class="btn btn-outline-secondary rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Quay lại ngân hàng</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Form Card -->
+        <div class="card card-modern p-4 p-md-5 border-0 shadow-sm rounded-4">
+            <form asp-action="Create" method="post" id="questionForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="CourseId" />
+
+                <!-- 1. Nội dung câu hỏi -->
+                <div class="mb-4">
+                    <label asp-for="Content" class="form-label fw-bold text-dark">
+                        Nội dung câu hỏi <span class="text-danger">*</span>
+                    </label>
+                    <textarea asp-for="Content" class="form-control rounded-3 fs-6" rows="4" placeholder="Nhập nội dung câu hỏi trắc nghiệm của bạn ở đây..." required maxlength="1000"></textarea>
+                    <span asp-validation-for="Content" class="text-danger small"></span>
+                </div>
+
+                <!-- 2. Cấu hình độ khó & Điểm số -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="Difficulty" class="form-label fw-bold text-dark">
+                            Mức độ khó của câu hỏi <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Difficulty" class="form-select rounded-pill">
+                            <option value="Easy">Dễ (Easy) — Kiến thức nhận biết</option>
+                            <option value="Medium">Trung bình (Medium) — Vận dụng thông hiểu</option>
+                            <option value="Hard">Khó (Hard) — Vận dụng cao / Nâng cao</option>
+                        </select>
+                        <span asp-validation-for="Difficulty" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Points" class="form-label fw-bold text-dark">
+                            Điểm số cho câu hỏi <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input asp-for="Points" class="form-control rounded-start-pill" type="number" min="1" max="100" value="1" required />
+                            <span class="input-group-text rounded-end-pill bg-light text-muted">điểm</span>
+                        </div>
+                        <span asp-validation-for="Points" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <hr class="my-4 text-muted opacity-25" />
+
+                <!-- 3. Danh sách phương án đáp án -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                                <i class="bi bi-list-check text-primary"></i>
+                                <span>Các Phương Án Lựa Chọn (Đáp Án)</span>
+                            </h5>
+                            <div class="text-muted small">
+                                Tích chọn vào hình tròn <i class="bi bi-check-circle-fill text-success"></i> bên cạnh phương án để chỉ định đó là <strong>Đáp án đúng</strong>.
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-brand rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1" onclick="addOptionRow()">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Thêm phương án</span>
+                        </button>
+                    </div>
+
+                    <div id="optionsContainer" class="d-flex flex-column gap-3">
+                        @for (int i = 0; i < Model.Options.Count; i++)
+                        {
+                            char label = (char)('A' + i);
+                            bool isCorrect = (i == Model.CorrectOptionIndex);
+
+                            <div class="card p-3 border rounded-3 option-row @(isCorrect ? "border-success bg-success bg-opacity-10" : "bg-light")" data-index="@i">
+                                <div class="d-flex align-items-center gap-3">
+                                    <!-- Radio chọn đáp án đúng -->
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input correct-radio" type="radio" name="CorrectOptionIndex" id="optRadio_@i" value="@i" @(isCorrect ? "checked" : "") onchange="updateCorrectStyle()" />
+                                        <label class="form-check-label fw-bold option-label ms-1" for="optRadio_@i">
+                                            @label
+                                        </label>
+                                    </div>
+
+                                    <!-- Ô nhập text -->
+                                    <div class="flex-grow-1">
+                                        <input type="text" name="Options[@i].Text" value="@Model.Options[i].Text" class="form-control rounded-3 option-text" placeholder="Nhập nội dung phương án @label..." required />
+                                        <input type="hidden" name="Options[@i].IsCorrect" value="@(isCorrect ? "true" : "false")" class="option-iscorrect-hidden" />
+                                    </div>
+
+                                    <!-- Nút xóa phương án -->
+                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-circle p-2 d-flex align-items-center justify-content-center btn-remove-option" style="width: 34px; height: 34px;" onclick="removeOptionRow(this)" title="Xóa phương án này">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <hr class="my-4 text-muted opacity-25" />
+
+                <!-- 4. Lời giải thích / Đáp án chi tiết -->
+                <div class="mb-4">
+                    <label asp-for="Explanation" class="form-label fw-bold text-dark">
+                        Lời giải thích / Ghi chú đáp án <span class="text-muted fw-normal small">(Tùy chọn)</span>
+                    </label>
+                    <textarea asp-for="Explanation" class="form-control rounded-3" rows="3" placeholder="Giải thích lý do vì sao phương án trên là đáp án chính xác để học viên tham khảo sau khi thi..."></textarea>
+                    <span asp-validation-for="Explanation" class="text-danger small"></span>
+                </div>
+
+                <!-- Footer buttons -->
+                <div class="d-flex align-items-center justify-content-end gap-2 pt-3 border-top">
+                    <a asp-action="Index" asp-route-courseId="@Model.CourseId" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+                        Hủy bỏ
+                    </a>
+                    <button type="submit" class="btn btn-brand rounded-pill px-5 py-2 fw-bold shadow-glow">
+                        <i class="bi bi-check-lg me-1"></i>Tạo câu hỏi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Cập nhật giao diện khi chọn đáp án đúng
+        function updateCorrectStyle() {
+            const rows = document.querySelectorAll(".option-row");
+            rows.forEach(function (row) {
+                const radio = row.querySelector(".correct-radio");
+                const hiddenIsCorrect = row.querySelector(".option-iscorrect-hidden");
+                if (radio && radio.checked) {
+                    row.classList.remove("bg-light");
+                    row.classList.add("border-success", "bg-success", "bg-opacity-10");
+                    if (hiddenIsCorrect) hiddenIsCorrect.value = "true";
+                } else {
+                    row.classList.remove("border-success", "bg-success", "bg-opacity-10");
+                    row.classList.add("bg-light");
+                    if (hiddenIsCorrect) hiddenIsCorrect.value = "false";
+                }
+            });
+        }
+
+        // Đánh lại nhãn A, B, C, D và re-index các thuộc tính form
+        function reindexOptions() {
+            const rows = document.querySelectorAll(".option-row");
+            rows.forEach(function (row, idx) {
+                const char = String.fromCharCode(65 + idx); // A = 65
+                row.setAttribute("data-index", idx);
+
+                const label = row.querySelector(".option-label");
+                if (label) label.textContent = char;
+
+                const radio = row.querySelector(".correct-radio");
+                if (radio) {
+                    radio.id = "optRadio_" + idx;
+                    radio.value = idx;
+                }
+                if (label) label.setAttribute("for", "optRadio_" + idx);
+
+                const textInput = row.querySelector(".option-text");
+                if (textInput) {
+                    textInput.name = `Options[${idx}].Text`;
+                    textInput.placeholder = `Nhập nội dung phương án ${char}...`;
+                }
+
+                const hiddenIsCorrect = row.querySelector(".option-iscorrect-hidden");
+                if (hiddenIsCorrect) {
+                    hiddenIsCorrect.name = `Options[${idx}].IsCorrect`;
+                }
+            });
+
+            // Nếu chỉ còn <= 2 phương án, vô hiệu hóa nút xóa
+            const removeButtons = document.querySelectorAll(".btn-remove-option");
+            removeButtons.forEach(btn => btn.disabled = (rows.length <= 2));
+
+            updateCorrectStyle();
+        }
+
+        // Thêm phương án mới
+        function addOptionRow() {
+            const container = document.getElementById("optionsContainer");
+            const currentCount = container.querySelectorAll(".option-row").length;
+
+            if (currentCount >= 6) {
+                alert("Câu hỏi trắc nghiệm tối đa 6 phương án đáp án!");
+                return;
+            }
+
+            const char = String.fromCharCode(65 + currentCount);
+            const rowDiv = document.createElement("div");
+            rowDiv.className = "card p-3 border rounded-3 option-row bg-light";
+            rowDiv.setAttribute("data-index", currentCount);
+
+            rowDiv.innerHTML = `
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input correct-radio" type="radio" name="CorrectOptionIndex" id="optRadio_${currentCount}" value="${currentCount}" onchange="updateCorrectStyle()" />
+                        <label class="form-check-label fw-bold option-label ms-1" for="optRadio_${currentCount}">
+                            ${char}
+                        </label>
+                    </div>
+                    <div class="flex-grow-1">
+                        <input type="text" name="Options[${currentCount}].Text" class="form-control rounded-3 option-text" placeholder="Nhập nội dung phương án ${char}..." required />
+                        <input type="hidden" name="Options[${currentCount}].IsCorrect" value="false" class="option-iscorrect-hidden" />
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm rounded-circle p-2 d-flex align-items-center justify-content-center btn-remove-option" style="width: 34px; height: 34px;" onclick="removeOptionRow(this)" title="Xóa phương án này">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(rowDiv);
+            reindexOptions();
+        }
+
+        // Xóa một phương án
+        function removeOptionRow(btn) {
+            const container = document.getElementById("optionsContainer");
+            const rows = container.querySelectorAll(".option-row");
+
+            if (rows.length <= 2) {
+                alert("Câu hỏi trắc nghiệm phải có ít nhất 2 phương án!");
+                return;
+            }
+
+            const row = btn.closest(".option-row");
+            const radioWasChecked = row.querySelector(".correct-radio")?.checked;
+            row.remove();
+
+            // Nếu xóa trúng đáp án đúng, tự động chọn lại phương án đầu tiên
+            if (radioWasChecked) {
+                const firstRadio = document.querySelector(".correct-radio");
+                if (firstRadio) firstRadio.checked = true;
+            }
+
+            reindexOptions();
+        }
+
+        // Validate form trước khi submit
+        document.getElementById("questionForm").addEventListener("submit", function (e) {
+            const radios = document.querySelectorAll(".correct-radio");
+            let hasChecked = false;
+            radios.forEach(r => { if (r.checked) hasChecked = true; });
+
+            if (!hasChecked && radios.length > 0) {
+                radios[0].checked = true;
+            }
+
+            updateCorrectStyle();
+        });
+
+        // Khởi tạo
+        document.addEventListener("DOMContentLoaded", function () {
+            reindexOptions();
+        });
+    </script>
+}

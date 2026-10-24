@@ -52,6 +52,28 @@ internal sealed class TestCourseRepository : ICourseRepository
     public Task DeleteAsync(int id) { Courses.RemoveAll(c => c.Id == id); return Task.CompletedTask; }
     public Task<int> CountAsync() => Task.FromResult(Courses.Count);
     public Task<int> CountPublishedAsync() => Task.FromResult(Courses.Count(c => c.IsPublished));
+
+    public Task<IEnumerable<Course>> GetByInstructorIdAsync(string instructorId, CourseStatus? status = null, string? search = null, string? category = null)
+    {
+        var query = Courses.Where(c => c.InstructorId == instructorId);
+        if (status.HasValue) query = query.Where(c => c.Status == status.Value);
+        if (!string.IsNullOrWhiteSpace(search)) query = query.Where(c => c.Title.Contains(search, StringComparison.OrdinalIgnoreCase) || c.Description.Contains(search, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(category)) query = query.Where(c => c.Category == category);
+        return Task.FromResult<IEnumerable<Course>>(query.ToList());
+    }
+
+    public Task<bool> UpdateStatusAsync(int id, CourseStatus newStatus, string? rejectionReason = null)
+    {
+        var c = Courses.Find(c => c.Id == id);
+        if (c is null) return Task.FromResult(false);
+        c.Status = newStatus;
+        c.IsPublished = (newStatus == CourseStatus.Approved);
+        if (rejectionReason != null) c.RejectionReason = rejectionReason;
+        return Task.FromResult(true);
+    }
+
+    public Task<IEnumerable<string>> GetCategoriesAsync() =>
+        Task.FromResult<IEnumerable<string>>(Courses.Select(c => c.Category).Where(cat => !string.IsNullOrEmpty(cat)).Distinct().ToList());
 }
 
 internal sealed class TestEnrollmentRepository : IEnrollmentRepository

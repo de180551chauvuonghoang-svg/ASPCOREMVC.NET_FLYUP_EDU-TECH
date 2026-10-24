@@ -14,15 +14,31 @@ public interface ICourseAccessService
 public sealed class CourseAccessService(IEnrollmentRepository enrollments) : ICourseAccessService
 {
     public bool CanManageCourse(Course course, ClaimsPrincipal user)
-        => user.Identity?.IsAuthenticated == true &&
-           (user.IsInRole("Admin") ||
-            (user.IsInRole("Instructor") &&
-             !string.IsNullOrWhiteSpace(user.Identity.Name) &&
-             !string.IsNullOrWhiteSpace(course.InstructorId) &&
-             string.Equals(course.InstructorId, user.Identity.Name, StringComparison.OrdinalIgnoreCase)));
+    {
+        if (user.Identity?.IsAuthenticated != true) return false;
+        if (user.IsInRole("Admin")) return true;
+
+        if (user.IsInRole("Instructor") && !string.IsNullOrWhiteSpace(course.InstructorId))
+        {
+            if (!string.IsNullOrWhiteSpace(user.Identity.Name) &&
+                string.Equals(course.InstructorId, user.Identity.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(userId) &&
+                string.Equals(course.InstructorId, userId, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public async Task<bool> CanViewCourseAsync(Course course, ClaimsPrincipal user)
-        => course.IsPublished || await CanLearnCourseAsync(course, user);
+        => course.IsPublished || course.Status == CourseStatus.Approved || await CanLearnCourseAsync(course, user);
 
     // Learning endpoints must use this method, not the public metadata rule above.
     public async Task<bool> CanLearnCourseAsync(Course course, ClaimsPrincipal user)
