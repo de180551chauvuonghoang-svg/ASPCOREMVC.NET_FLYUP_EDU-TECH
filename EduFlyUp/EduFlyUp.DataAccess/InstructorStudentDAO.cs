@@ -37,4 +37,32 @@ public sealed class InstructorStudentDAO : SingletonBase<InstructorStudentDAO>
             .Select(e => new InstructorStudentRow(e.EnrollmentId, e.UserId, e.FullName, e.Email, e.EnrolledAt, e.Status, e.CompletedAt)).ToListAsync();
         return new(course.Id, course.Title, items, page, total, search, status);
     }
+
+    public async Task<InstructorStudentDetail?> DetailAsync(AppDbContext db, InstructorIdentity instructor, int courseId, int enrollmentId, int page)
+    {
+        var enrollment = await (from e in db.Enrollments.AsNoTracking()
+                                join course in Owned(db, instructor) on e.CourseId equals course.Id
+                                where e.Id == enrollmentId && course.Id == courseId
+                                select new { e.Id, e.UserId, e.EnrolledAt, e.Status, e.CompletedAt, CourseTitle = course.Title }).SingleOrDefaultAsync();
+        if (enrollment is null) return null;
+        var user = await db.Users.AsNoTracking().Where(u => u.Id == enrollment.UserId).Select(u => new { u.FullName, u.Email }).SingleOrDefaultAsync();
+        var student = new InstructorStudentRow(enrollment.Id, enrollment.UserId,
+            user is null ? "Tài khoản không còn tồn tại" : string.IsNullOrWhiteSpace(user.FullName) ? "Chưa cập nhật họ tên" : user.FullName,
+            user?.Email, enrollment.EnrolledAt, enrollment.Status, enrollment.CompletedAt);
+        var attempts = db.QuizAttempts.AsNoTracking().Where(a => a.UserId == enrollment.UserId && a.Quiz.CourseId == courseId);
+        var summary = await attempts.GroupBy(_ => 1).Select(g => new
+        {
+            Total = g.Count(), Submitted = g.Count(a => a.CompletedAt != null),
+            Passed = g.Count(a => a.CompletedAt != null && a.Passed), Last = g.Max(a => a.CompletedAt)
+        }).SingleOrDefaultAsync();
+        var count = summary?.Total ?? 0;
+        page = Math.Clamp(page, 1, Math.Max(1, (count + InstructorStudentDetail.PageSize - 1) / InstructorStudentDetail.PageSize));
+        var items = await attempts.OrderByDescending(a => a.StartedAt).ThenByDescending(a => a.Id)
+            .Skip((page - 1) * InstructorStudentDetail.PageSize).Take(InstructorStudentDetail.PageSize)
+            .Select(a => new InstructorQuizAttemptRow(a.Id, a.Quiz.Title, a.Quiz.IsCAT,
+                a.CompletedAt != null ? (decimal?)a.Score : null, a.CompletedAt != null ? (bool?)a.Passed : null,
+                a.StartedAt, a.CompletedAt)).ToListAsync();
+        return new(courseId, enrollment.CourseTitle, student, items, page, count,
+            summary?.Submitted ?? 0, summary?.Passed ?? 0, summary?.Last);
+    }
 }

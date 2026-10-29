@@ -298,6 +298,12 @@
                                         <i class="bi bi-collection-play"></i>
                                     </a>
 
+                                    <!-- Học viên và kết quả học tập (UC-35) -->
+                                    @if (!isAdmin)
+                                    {
+                                        <a asp-controller="InstructorStudents" asp-action="Index" asp-route-courseId="@c.Id" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" title="Học viên và kết quả học tập"><i class="bi bi-people"></i></a>
+                                    }
+
                                     <!-- Ngân hàng câu hỏi trắc nghiệm (UC-31) -->
                                     <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@c.Id" class="btn btn-outline-info btn-sm rounded-pill px-2 py-1" title="Ngân hàng câu hỏi trắc nghiệm (UC-31)">
                                         <i class="bi bi-patch-question"></i>

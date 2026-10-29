@@ -10,3 +10,12 @@ public sealed record InstructorStudentRoster(int CourseId, string CourseTitle, I
     public const int PageSize = 10;
     public int TotalPages => Math.Max(1, (TotalCount + PageSize - 1) / PageSize);
 }
+
+public sealed record InstructorQuizAttemptRow(int Id, string QuizTitle, bool IsCAT, decimal? Score, bool? Passed,
+    DateTime StartedAt, DateTime? CompletedAt);
+public sealed record InstructorStudentDetail(int CourseId, string CourseTitle, InstructorStudentRow Student,
+    IReadOnlyList<InstructorQuizAttemptRow> Attempts, int Page, int TotalCount, int SubmittedCount, int PassedCount, DateTime? LastSubmittedAt)
+{
+    public const int PageSize = 10;
+    public int TotalPages => Math.Max(1, (TotalCount + PageSize - 1) / PageSize);
+}

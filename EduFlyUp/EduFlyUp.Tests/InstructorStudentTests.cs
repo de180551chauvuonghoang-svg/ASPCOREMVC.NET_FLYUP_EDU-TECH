@@ -22,6 +22,7 @@ public sealed class InstructorStudentTests
         Assert.Equal(expected, (await browser.Client.GetAsync("/InstructorStudents/Courses")).StatusCode);
         using var guest = app.CreateBrowser();
         Assert.Equal(HttpStatusCode.Redirect, (await guest.Client.GetAsync("/InstructorStudents/Courses")).StatusCode);
+        if (role != "Instructor") Assert.Equal(HttpStatusCode.Redirect, (await browser.Client.GetAsync("/InstructorStudents/Details/1?courseId=1")).StatusCode);
     }
 
     [Fact]
@@ -105,5 +106,73 @@ public sealed class InstructorStudentTests
         await app.CreateUserAsync("owner@example.test", "Instructor");
         using var browser = app.CreateBrowser(); await TestApplication.LoginAsync(browser, "owner@example.test");
         Assert.Equal(HttpStatusCode.BadRequest, (await browser.Client.GetAsync("/InstructorStudents?courseId=1&" + query)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Detail_only_shows_matching_student_and_course_and_hides_unsubmitted_scores()
+    {
+        using var app = new TestApplication();
+        var owner = await app.CreateUserAsync("owner@example.test", "Instructor");
+        var student = await app.CreateUserAsync("student@example.test", "Student");
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Courses.AddRange(new Course { Id = 1, Title = "Mine", InstructorId = owner },
+                new Course { Id = 2, Title = "Other owned", InstructorId = owner }, new Course { Id = 3, Title = "Foreign", InstructorId = "foreign" });
+            db.Enrollments.AddRange(new Enrollment { Id = 1, CourseId = 1, UserId = student },
+                new Enrollment { Id = 2, CourseId = 2, UserId = student }, new Enrollment { Id = 3, CourseId = 3, UserId = student });
+            db.Quizzes.AddRange(new Quiz { Id = 1, CourseId = 1, Title = "VISIBLE_QUIZ" },
+                new Quiz { Id = 2, CourseId = 2, Title = "HIDDEN_COURSE_QUIZ" });
+            db.QuizAttempts.AddRange(new QuizAttempt { QuizId = 1, UserId = student, Score = 85.5m, Passed = true, CompletedAt = DateTime.UtcNow },
+                new QuizAttempt { QuizId = 1, UserId = student, Score = 999.99m, Passed = true },
+                new QuizAttempt { QuizId = 2, UserId = student, Score = 643.21m, CompletedAt = DateTime.UtcNow },
+                new QuizAttempt { QuizId = 1, UserId = "different-user", Score = 123.45m, CompletedAt = DateTime.UtcNow });
+            await db.SaveChangesAsync();
+        }
+        using var browser = app.CreateBrowser(); await TestApplication.LoginAsync(browser, "owner@example.test");
+        var response = await browser.Client.GetAsync("/InstructorStudents/Details/1?courseId=1");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("VISIBLE_QUIZ", html); Assert.Contains("85,5", html);
+        Assert.DoesNotContain("HIDDEN_COURSE_QUIZ", html); Assert.DoesNotContain("999,99", html); Assert.DoesNotContain("123,45", html);
+        Assert.Contains("Chưa có dữ liệu", WebUtility.HtmlDecode(html));
+        Assert.True(response.Headers.CacheControl?.NoStore);
+        foreach (var path in new[] { "1?courseId=2", "2?courseId=1", "3?courseId=3", "999?courseId=1" })
+            Assert.Equal(HttpStatusCode.NotFound, (await browser.Client.GetAsync("/InstructorStudents/Details/" + path)).StatusCode);
+    }
+
+    [SqlServerFact]
+    public async Task Sql_detail_counts_only_submitted_attempts_and_scopes_and_pages_history()
+    {
+        await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync();
+        using var scope = database.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var mine = new Course { Title = "Mine", InstructorId = "owner-id" };
+        var other = new Course { Title = "Other", InstructorId = "another" };
+        var quiz = new Quiz { Title = "Quiz", Course = mine };
+        var otherQuiz = new Quiz { Title = "Private quiz", Course = other };
+        var enrollment = new Enrollment { UserId = "student", Course = mine };
+        db.Enrollments.Add(enrollment); db.Quizzes.AddRange(quiz, otherQuiz);
+        var started = DateTime.UtcNow.AddDays(-1);
+        for (var i = 0; i < 12; i++) db.QuizAttempts.Add(new QuizAttempt
+        {
+            Quiz = quiz, UserId = "student", StartedAt = started.AddMinutes(i),
+            CompletedAt = i == 0 ? null : started.AddMinutes(i + 10), Score = i == 0 ? 999.99m : 50 + i * 5,
+            Passed = i % 2 == 0
+        });
+        db.QuizAttempts.Add(new QuizAttempt { Quiz = otherQuiz, UserId = "student", Score = 909 });
+        db.QuizAttempts.Add(new QuizAttempt { Quiz = quiz, UserId = "someone-else", Score = 908 });
+        await db.SaveChangesAsync();
+        var repository = new InstructorStudentRepository(db);
+        var actor = new InstructorIdentity("owner-id", "owner@example.test");
+        var first = await repository.DetailAsync(actor, mine.Id, enrollment.Id, 1);
+        Assert.NotNull(first); Assert.Equal(12, first.TotalCount); Assert.Equal(11, first.SubmittedCount); Assert.Equal(5, first.PassedCount);
+        Assert.Equal(started.AddMinutes(21), first.LastSubmittedAt); Assert.Equal(10, first.Attempts.Count);
+        var last = await repository.DetailAsync(actor, mine.Id, enrollment.Id, int.MaxValue);
+        Assert.NotNull(last); Assert.Equal(2, last.Page); Assert.Equal(2, last.Attempts.Count);
+        var pending = Assert.Single(first.Attempts.Concat(last.Attempts).Where(a => a.CompletedAt is null));
+        Assert.Null(pending.Score); Assert.Null(pending.Passed);
+        Assert.Null(await repository.DetailAsync(actor, other.Id, enrollment.Id, 1));
+        Assert.Equal("Tài khoản không còn tồn tại", first.Student.FullName);
     }
 }
