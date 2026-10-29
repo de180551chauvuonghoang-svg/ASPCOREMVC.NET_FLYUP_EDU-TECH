@@ -37,3 +37,7 @@ Kiểm thử mới dùng HTTP TestServer với cookie/anti-forgery thật và st
 Bước thay/xóa có kiểm thử HTTP cho Instructor sở hữu và Admin, chặn Instructor khác/học viên/thiếu anti-forgery, giữ tài liệu cũ khi lỗi lưu hoặc form cũ, dọn file mới khi cập nhật có điều kiện thất bại, thu hồi download ngay cả khi dọn file cũ bị lỗi và gỡ link ngoài. Kiểm thử SQL translation chặn mở kết nối và thực thi lệnh, chỉ xác nhận EF dịch đúng câu lệnh production, không xác nhận thực thi trên server.
 
 `LessonMaterialSqlServerTests.Conditional_material_updates_preserve_content_and_reject_stale_requests` cần `FLYUP_TEST_SQLSERVER` như các test SQL hiện có: fixture tạo database GUID riêng rồi xóa đúng database đó sau test. Test chạy hai cập nhật cạnh tranh từ hai context độc lập, xác nhận chỉ một thao tác đạt và bản sửa bài giảng cũ không phục hồi metadata. Không có biến môi trường thì test báo skip; chưa được coi là đã xác minh đồng thời trên SQL Server thật.
+
+## Kết quả xác minh ngày 29/10/2026
+
+Đã chạy toàn bộ EduFlyUp.Tests với SQL Server cục bộ tại `.\MSSQLSERVER01`, Windows Authentication, TrustServerCertificate=True và thời gian chờ kết nối 10 giây: **123 đạt, 0 lỗi, 0 bỏ qua**. Bốn test SQL đã thực thi, gồm test cập nhật tài liệu có điều kiện từ hai context độc lập. Fixture chỉ tạo/xóa database GUID riêng, không cập nhật database ứng dụng. Kết quả này thay thế giới hạn chưa chạy SQL ở các bước trước; kiểm tra giao diện qua trình duyệt vẫn cần thực hiện.
