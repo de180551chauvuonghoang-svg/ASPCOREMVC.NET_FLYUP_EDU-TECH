@@ -8,6 +8,10 @@ Repository dùng AppDbContext scoped, DAO singleton và service riêng. Ownershi
 
 Count, sort và Skip/Take chạy tại SQL Server. Sắp xếp theo thời gian ghi danh rồi ID để phân trang ổn định. Thời gian hiển thị theo UTC+7. Không có migration hoặc endpoint chỉnh sửa tài khoản/ghi danh trong module báo cáo.
 
+Danh sách hỗ trợ tìm theo họ tên/email (trim, không phân biệt hoa/thường) và lọc Active/Completed/Cancelled. Điều kiện lọc áp dụng trước Count/Skip/Take tại database. Giữ courseId/search/status khi chuyển trang; trang vượt phạm vi được giới hạn. Query filter sai kiểu hoặc enum ngoài phạm vi trả 400. Có trạng thái rỗng khi chưa ghi danh hoặc không khớp bộ lọc.
+
+Hai mốc đầu đã kiểm tra với SQL Server thật: 168/168 test sau danh sách và 171/171 sau bộ lọc, không có test bị bỏ qua. Test HTTP kiểm tra role, ownership, HTML encode, no-store và không lộ PasswordHash; test SQL kiểm tra join hồ sơ, tài khoản bị thiếu, phân trang và phối hợp bộ lọc.
+
 ## Phạm vi dữ liệu
 
 Repo đã có Enrollment và QuizAttempt (Score, Passed, StartedAt, CompletedAt). Chưa có bảng hoàn thành từng bài học và đáp án từng câu của lần thi. Không suy diễn tỷ lệ tiến độ từ trạng thái Enrollment, không tạo đáp án hoặc dữ liệu thi giả. Các phần thiếu sẽ được hiển thị rõ khi nối màn hình kết quả.

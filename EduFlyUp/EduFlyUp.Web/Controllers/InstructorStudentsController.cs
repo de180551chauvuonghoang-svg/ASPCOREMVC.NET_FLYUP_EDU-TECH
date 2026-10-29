@@ -15,11 +15,11 @@ public sealed class InstructorStudentsController(IInstructorStudentService stude
     public async Task<IActionResult> Courses() => View(await students.CoursesAsync(Instructor));
 
     [HttpGet]
-    public async Task<IActionResult> Index(int? courseId, int page = 1)
+    public async Task<IActionResult> Index(int? courseId, int page = 1, string? search = null, EnrollmentStatus? status = null)
     {
-        if (!ModelState.IsValid) return BadRequest();
+        if (!ModelState.IsValid || search?.Length > 100 || (status.HasValue && !Enum.IsDefined(status.Value))) return BadRequest();
         if (!courseId.HasValue) return RedirectToAction(nameof(Courses));
-        var roster = await students.RosterAsync(Instructor, courseId.Value, page);
+        var roster = await students.RosterAsync(Instructor, courseId.Value, page, search, status);
         return roster is null ? NotFound() : View(roster);
     }
 }

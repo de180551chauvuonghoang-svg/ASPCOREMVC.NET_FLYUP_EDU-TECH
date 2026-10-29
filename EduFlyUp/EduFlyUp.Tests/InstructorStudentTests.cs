@@ -88,5 +88,22 @@ public sealed class InstructorStudentTests
         Assert.Null(await repository.RosterAsync(actor, other.Id, 1));
         var noStudents = await repository.RosterAsync(actor, empty.Id, 1);
         Assert.NotNull(noStudents); Assert.Empty(noStudents.Students);
+        var searched = await repository.RosterAsync(actor, mine.Id, 1, "STUDENT-1");
+        Assert.NotNull(searched); Assert.Equal(3, searched.TotalCount);
+        var filtered = await repository.RosterAsync(actor, mine.Id, int.MaxValue, "STUDENT", EnrollmentStatus.Cancelled);
+        Assert.NotNull(filtered); Assert.Equal(4, filtered.TotalCount); Assert.Equal(1, filtered.Page);
+        Assert.All(filtered.Students, s => Assert.Equal(EnrollmentStatus.Cancelled, s.Status));
+    }
+
+    [Theory]
+    [InlineData("status=999")]
+    [InlineData("status=wrong")]
+    [InlineData("page=wrong")]
+    public async Task Invalid_filter_values_are_rejected(string query)
+    {
+        using var app = new TestApplication();
+        await app.CreateUserAsync("owner@example.test", "Instructor");
+        using var browser = app.CreateBrowser(); await TestApplication.LoginAsync(browser, "owner@example.test");
+        Assert.Equal(HttpStatusCode.BadRequest, (await browser.Client.GetAsync("/InstructorStudents?courseId=1&" + query)).StatusCode);
     }
 }

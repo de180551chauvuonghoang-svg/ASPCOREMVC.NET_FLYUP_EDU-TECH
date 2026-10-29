@@ -12,7 +12,8 @@ public sealed class InstructorStudentDAO : SingletonBase<InstructorStudentDAO>
         => Owned(db, instructor).OrderBy(c => c.Title).ThenBy(c => c.Id)
             .Select(c => new InstructorStudentCourse(c.Id, c.Title, c.Enrollments.Count)).ToListAsync();
 
-    public async Task<InstructorStudentRoster?> RosterAsync(AppDbContext db, InstructorIdentity instructor, int courseId, int page)
+    public async Task<InstructorStudentRoster?> RosterAsync(AppDbContext db, InstructorIdentity instructor, int courseId, int page,
+        string? search = null, EnrollmentStatus? status = null)
     {
         var course = await Owned(db, instructor).Where(c => c.Id == courseId).Select(c => new { c.Id, c.Title }).SingleOrDefaultAsync();
         if (course is null) return null;
@@ -23,11 +24,17 @@ public sealed class InstructorStudentDAO : SingletonBase<InstructorStudentDAO>
                     select new { EnrollmentId = enrollment.Id, enrollment.UserId,
                         FullName = user == null ? "Tài khoản không còn tồn tại" : user.FullName != "" ? user.FullName : "Chưa cập nhật họ tên",
                         Email = user == null ? null : user.Email, enrollment.EnrolledAt, enrollment.Status, enrollment.CompletedAt };
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var keyword = search.ToUpperInvariant();
+            query = query.Where(e => e.FullName.ToUpper().Contains(keyword) || (e.Email != null && e.Email.ToUpper().Contains(keyword)));
+        }
+        if (status.HasValue) query = query.Where(e => e.Status == status);
         var total = await query.CountAsync();
         page = Math.Clamp(page, 1, Math.Max(1, (total + InstructorStudentRoster.PageSize - 1) / InstructorStudentRoster.PageSize));
         var items = await query.OrderByDescending(e => e.EnrolledAt).ThenByDescending(e => e.EnrollmentId)
             .Skip((page - 1) * InstructorStudentRoster.PageSize).Take(InstructorStudentRoster.PageSize)
             .Select(e => new InstructorStudentRow(e.EnrollmentId, e.UserId, e.FullName, e.Email, e.EnrolledAt, e.Status, e.CompletedAt)).ToListAsync();
-        return new(course.Id, course.Title, items, page, total);
+        return new(course.Id, course.Title, items, page, total, search, status);
     }
 }
