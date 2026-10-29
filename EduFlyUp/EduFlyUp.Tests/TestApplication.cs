@@ -57,6 +57,8 @@ internal sealed class TestApplication : IDisposable
                 services.AddSingleton(TimeProvider.System);
                 services.AddSingleton<ICouponRepository>(Coupons);
                 services.AddScoped<ICouponService, CouponService>();
+                services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();
+                services.AddScoped<IInstructorStudentService, InstructorStudentService>();
                 services.AddScoped<ICourseAccessService, CourseAccessService>();
                 services.AddScoped<IAdminCourseRepository, AdminCourseRepository>();
                 services.AddScoped<IAdminCourseService, AdminCourseService>();
