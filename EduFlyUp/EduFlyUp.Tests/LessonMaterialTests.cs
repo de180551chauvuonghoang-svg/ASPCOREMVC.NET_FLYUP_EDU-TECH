@@ -121,4 +121,132 @@ public sealed class LessonMaterialTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => browser.Client.PostAsync("/LessonMaterials/Upload", form));
         Assert.Empty(storage.Files);
     }
+
+    private static string SeedMaterial(TestApplication app, TestMaterialStorage storage)
+    {
+        var name = new string('b', 32) + ".pdf";
+        storage.Files[name] = "%PDF-1.7 old"u8.ToArray();
+        var lesson = app.Lessons.Lessons.Single();
+        lesson.MaterialUrl = $"/LessonMaterials/Download/1/{name}";
+        lesson.AttachmentName = "old.pdf";
+        return lesson.MaterialUrl;
+    }
+
+    [Theory]
+    [InlineData("Instructor")]
+    [InlineData("Admin")]
+    public async Task Owner_or_admin_replaces_then_removes_material_without_deleting_lesson(string role)
+    {
+        var storage = new TestMaterialStorage();
+        using var app = new TestApplication(storage);
+        Seed(app);
+        var oldUrl = SeedMaterial(app, storage);
+        var email = role == "Admin" ? "admin@example.test" : "owner@example.test";
+        await app.CreateUserAsync(email, role);
+        using var browser = app.CreateBrowser();
+        await TestApplication.LoginAsync(browser, email);
+        var token = await TestApplication.AntiForgeryTokenAsync(browser, "/Instructor/Curriculum/1");
+        using var form = Upload(token);
+        form.Add(new StringContent(oldUrl), "expectedUrl");
+        Assert.Equal(HttpStatusCode.Redirect, (await browser.Client.PostAsync("/LessonMaterials/Replace", form)).StatusCode);
+        var lesson = app.Lessons.Lessons.Single();
+        Assert.NotEqual(oldUrl, lesson.MaterialUrl);
+        Assert.Equal("bai-giang.pdf", lesson.AttachmentName);
+        Assert.Single(storage.Files);
+        Assert.Equal(HttpStatusCode.NotFound, (await browser.Client.GetAsync(oldUrl)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await browser.Client.GetAsync(lesson.MaterialUrl)).StatusCode);
+        var html = await browser.Client.GetStringAsync("/Instructor/Curriculum/1");
+        Assert.Contains("/LessonMaterials/Replace", html);
+        Assert.Contains("/LessonMaterials/Remove", html);
+        var newUrl = lesson.MaterialUrl;
+        Assert.Equal(HttpStatusCode.Redirect, (await browser.Client.PostAsync("/LessonMaterials/Remove", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["id"] = "1", ["expectedUrl"] = newUrl, ["__RequestVerificationToken"] = token
+        }))).StatusCode);
+        Assert.Empty(lesson.MaterialUrl);
+        Assert.Empty(lesson.AttachmentName);
+        Assert.Equal("Bài 1", lesson.Title);
+        Assert.Empty(storage.Files);
+        Assert.Equal(HttpStatusCode.NotFound, (await browser.Client.GetAsync(newUrl)).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("Replace", "Instructor", true, HttpStatusCode.NotFound)]
+    [InlineData("Remove", "Instructor", true, HttpStatusCode.NotFound)]
+    [InlineData("Replace", "Student", true, HttpStatusCode.Redirect)]
+    [InlineData("Remove", "Student", true, HttpStatusCode.Redirect)]
+    [InlineData("Replace", "Instructor", false, HttpStatusCode.BadRequest)]
+    [InlineData("Remove", "Instructor", false, HttpStatusCode.BadRequest)]
+    public async Task Mutations_enforce_owner_role_and_antiforgery(string action, string role, bool withToken, HttpStatusCode expected)
+    {
+        var storage = new TestMaterialStorage();
+        using var app = new TestApplication(storage);
+        Seed(app);
+        var oldUrl = SeedMaterial(app, storage);
+        await app.CreateUserAsync("other@example.test", role);
+        using var browser = app.CreateBrowser();
+        await TestApplication.LoginAsync(browser, "other@example.test");
+        var token = await TestApplication.AntiForgeryTokenAsync(browser, "/Account/Login");
+        using var form = Upload(withToken ? token : null);
+        form.Add(new StringContent(oldUrl), "expectedUrl");
+        Assert.Equal(expected, (await browser.Client.PostAsync("/LessonMaterials/" + action, form)).StatusCode);
+        Assert.Equal(oldUrl, app.Lessons.Lessons.Single().MaterialUrl);
+        Assert.Single(storage.Files);
+    }
+
+    [Theory]
+    [InlineData("Replace", "stale")]
+    [InlineData("Replace", "conflict")]
+    [InlineData("Replace", "database")]
+    [InlineData("Replace", "invalid")]
+    [InlineData("Remove", "stale")]
+    [InlineData("Remove", "conflict")]
+    [InlineData("Remove", "database")]
+    public async Task Failed_or_stale_mutation_keeps_old_material(string action, string failure)
+    {
+        var storage = new TestMaterialStorage();
+        using var app = new TestApplication(storage);
+        Seed(app);
+        var oldUrl = SeedMaterial(app, storage);
+        await app.CreateUserAsync("owner@example.test", "Instructor");
+        using var browser = app.CreateBrowser();
+        await TestApplication.LoginAsync(browser, "owner@example.test");
+        var token = await TestApplication.AntiForgeryTokenAsync(browser, "/Instructor/Curriculum/1");
+        app.Lessons.FailUpdates = failure == "database";
+        app.Lessons.RejectNextMaterialUpdate = failure == "conflict";
+        storage.RejectFile = failure == "invalid";
+        using var form = Upload(token);
+        form.Add(new StringContent(failure == "stale" ? "https://example.test/old.pdf" : oldUrl), "expectedUrl");
+        if (failure == "database")
+            await Assert.ThrowsAsync<InvalidOperationException>(() => browser.Client.PostAsync("/LessonMaterials/" + action, form));
+        else
+            Assert.Equal(HttpStatusCode.Redirect, (await browser.Client.PostAsync("/LessonMaterials/" + action, form)).StatusCode);
+        Assert.Equal(oldUrl, app.Lessons.Lessons.Single().MaterialUrl);
+        Assert.Single(storage.Files);
+        Assert.Equal(HttpStatusCode.OK, (await browser.Client.GetAsync(oldUrl)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Cleanup_failure_revokes_old_download_and_external_link_removal_never_deletes_storage()
+    {
+        var storage = new TestMaterialStorage { FailDelete = true };
+        using var app = new TestApplication(storage);
+        Seed(app);
+        var oldUrl = SeedMaterial(app, storage);
+        await app.CreateUserAsync("owner@example.test", "Instructor");
+        using var browser = app.CreateBrowser();
+        await TestApplication.LoginAsync(browser, "owner@example.test");
+        var token = await TestApplication.AntiForgeryTokenAsync(browser, "/Instructor/Curriculum/1");
+        var form = new Dictionary<string, string> { ["id"] = "1", ["expectedUrl"] = oldUrl, ["__RequestVerificationToken"] = token };
+        Assert.Equal(HttpStatusCode.Redirect, (await browser.Client.PostAsync("/LessonMaterials/Remove", new FormUrlEncodedContent(form))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await browser.Client.GetAsync(oldUrl)).StatusCode);
+        Assert.Single(storage.Files); // Logged orphan; the revoked URL cannot be used to retrieve it.
+        var lesson = app.Lessons.Lessons.Single();
+        lesson.MaterialUrl = "https://example.test/slide.pdf";
+        lesson.AttachmentName = "External";
+        form["expectedUrl"] = lesson.MaterialUrl;
+        Assert.Equal(HttpStatusCode.Redirect, (await browser.Client.PostAsync("/LessonMaterials/Remove", new FormUrlEncodedContent(form))).StatusCode);
+        Assert.Empty(lesson.MaterialUrl);
+        Assert.Single(storage.Files);
+    }
 }

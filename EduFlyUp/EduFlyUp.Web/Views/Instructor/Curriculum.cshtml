@@ -269,6 +269,19 @@ else
                                                         <a href="@lesson.MaterialUrl" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" title="Tải học liệu đính kèm (UC-24)">
                                                             <i class="bi bi-file-earmark-arrow-down me-1"></i>@(string.IsNullOrWhiteSpace(lesson.AttachmentName) ? "Tài liệu" : lesson.AttachmentName)
                                                         </a>
+                                                        <form asp-controller="LessonMaterials" asp-action="Replace" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center" onsubmit="return confirm('Thay thế tài liệu hiện tại bằng file đã chọn?');">
+                                                            <input type="hidden" name="id" value="@lesson.Id" />
+                                                            <input type="hidden" name="expectedUrl" value="@lesson.MaterialUrl" />
+                                                            <label class="small" for="replaceMaterial-@lesson.Id">Tài liệu thay thế</label>
+                                                            <input type="file" id="replaceMaterial-@lesson.Id" name="materialFile" class="form-control form-control-sm" style="max-width: 240px" accept=".pdf,.doc,.docx,.ppt,.pptx" required aria-describedby="replaceHelp-@lesson.Id" />
+                                                            <button type="submit" class="btn btn-outline-primary btn-sm">Thay tài liệu</button>
+                                                            <small id="replaceHelp-@lesson.Id" class="text-muted">PDF, Word, PowerPoint · Tối đa 10 MB</small>
+                                                        </form>
+                                                        <form asp-controller="LessonMaterials" asp-action="Remove" method="post" onsubmit="return confirm('Xóa tài liệu đính kèm của bài giảng này?');">
+                                                            <input type="hidden" name="id" value="@lesson.Id" />
+                                                            <input type="hidden" name="expectedUrl" value="@lesson.MaterialUrl" />
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm">Xóa tài liệu</button>
+                                                        </form>
                                                     }
                                                 </div>
                                             </td>

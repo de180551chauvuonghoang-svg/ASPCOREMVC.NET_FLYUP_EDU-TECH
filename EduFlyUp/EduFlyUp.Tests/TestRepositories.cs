@@ -98,10 +98,21 @@ internal sealed class TestLessonRepository : ILessonRepository
 {
     public List<Lesson> Lessons { get; } = [];
     public bool FailUpdates { get; set; }
+    public bool RejectNextMaterialUpdate { get; set; }
     public Task<IEnumerable<Lesson>> GetByCourseIdAsync(int id) => Task.FromResult<IEnumerable<Lesson>>(Lessons.Where(l => l.CourseId == id).ToList());
     public Task<Lesson?> GetByIdAsync(int id) => Task.FromResult(Lessons.Find(l => l.Id == id));
     public Task<Lesson> AddAsync(Lesson lesson) { Lessons.Add(lesson); return Task.FromResult(lesson); }
     public Task UpdateAsync(Lesson lesson) => FailUpdates ? Task.FromException(new InvalidOperationException("Test save failure")) : Task.CompletedTask;
+    public Task<bool> TryUpdateMaterialAsync(int id, string expectedUrl, string materialUrl, string attachmentName)
+    {
+        if (FailUpdates) throw new InvalidOperationException("Test save failure");
+        if (RejectNextMaterialUpdate) { RejectNextMaterialUpdate = false; return Task.FromResult(false); }
+        var lesson = Lessons.Find(l => l.Id == id && l.MaterialUrl == expectedUrl);
+        if (lesson is null) return Task.FromResult(false);
+        lesson.MaterialUrl = materialUrl;
+        lesson.AttachmentName = attachmentName;
+        return Task.FromResult(true);
+    }
     public Task DeleteAsync(int id) { Lessons.RemoveAll(l => l.Id == id); return Task.CompletedTask; }
     public Task<int> CountAsync() => Task.FromResult(Lessons.Count);
 }
@@ -109,8 +120,11 @@ internal sealed class TestLessonRepository : ILessonRepository
 internal sealed class TestMaterialStorage : EduFlyUp.Web.Storage.ILessonMaterialStorage
 {
     public Dictionary<string, byte[]> Files { get; } = [];
+    public bool FailDelete { get; set; }
+    public bool RejectFile { get; set; }
     public async Task<string> SaveAsync(Microsoft.AspNetCore.Http.IFormFile file, CancellationToken cancellationToken)
     {
+        if (RejectFile) throw new InvalidDataException("Tài liệu không hợp lệ.");
         var name = Guid.NewGuid().ToString("N") + ".pdf";
         using var content = new MemoryStream();
         await file.CopyToAsync(content, cancellationToken);
@@ -118,5 +132,9 @@ internal sealed class TestMaterialStorage : EduFlyUp.Web.Storage.ILessonMaterial
         return name;
     }
     public Stream? OpenRead(string fileName) => Files.TryGetValue(fileName, out var bytes) ? new MemoryStream(bytes) : null;
-    public void Delete(string fileName) => Files.Remove(fileName);
+    public void Delete(string fileName)
+    {
+        if (FailDelete) throw new IOException("Test delete failure");
+        Files.Remove(fileName);
+    }
 }
