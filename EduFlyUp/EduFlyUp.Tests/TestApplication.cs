@@ -49,6 +49,7 @@ internal sealed class TestApplication : IDisposable
                 services.AddSingleton<IEnrollmentRepository>(Enrollments);
                 services.AddSingleton<ILessonRepository>(Lessons);
                 services.AddSingleton<EduFlyUp.Web.Storage.ILessonMaterialStorage>(materialStorage ?? new TestMaterialStorage());
+                services.AddScoped<EduFlyUp.Web.Storage.LessonFileCleanup>();
                 services.AddScoped<ICourseService, CourseService>();
                 services.AddScoped<ILessonService, LessonService>();
                 services.AddScoped<ICourseAccessService, CourseAccessService>();

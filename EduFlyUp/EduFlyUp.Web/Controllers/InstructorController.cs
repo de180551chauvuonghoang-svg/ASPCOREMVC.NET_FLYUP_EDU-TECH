@@ -12,12 +12,14 @@ public class InstructorController : Controller
     private readonly ICourseService _courseService;
     private readonly ICourseAccessService _courseAccess;
     private readonly ILessonService _lessonService;
+    private readonly EduFlyUp.Web.Storage.LessonFileCleanup _fileCleanup;
 
-    public InstructorController(ICourseService courseService, ICourseAccessService courseAccess, ILessonService lessonService)
+    public InstructorController(ICourseService courseService, ICourseAccessService courseAccess, ILessonService lessonService, EduFlyUp.Web.Storage.LessonFileCleanup fileCleanup)
     {
         _courseService = courseService;
         _courseAccess = courseAccess;
         _lessonService = lessonService;
+        _fileCleanup = fileCleanup;
     }
 
     // GET: /Instructor/Dashboard or /Instructor
@@ -337,7 +339,8 @@ public class InstructorController : Controller
 
         try
         {
-            await _lessonService.DeleteLessonAsync(id);
+            var deleted = await _lessonService.DeleteLessonAsync(id);
+            if (deleted is not null) _fileCleanup.DeleteFiles(deleted);
             TempData["SuccessMessage"] = "Đã xóa bài giảng thành công.";
         }
         catch (Exception)

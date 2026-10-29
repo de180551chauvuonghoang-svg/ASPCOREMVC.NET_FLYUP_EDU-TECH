@@ -49,7 +49,14 @@ internal sealed class TestCourseRepository : ICourseRepository
         stored.Level = course.Level;
         stored.ThumbnailUrl = course.ThumbnailUrl;
     }
-    public Task DeleteAsync(int id) { Courses.RemoveAll(c => c.Id == id); return Task.CompletedTask; }
+    public bool FailDeletes { get; set; }
+    public Task<IReadOnlyList<Lesson>> DeleteAsync(int id)
+    {
+        if (FailDeletes) throw new InvalidOperationException("Test course delete failure");
+        IReadOnlyList<Lesson> lessons = Courses.Find(c => c.Id == id)?.Lessons.ToList() ?? [];
+        Courses.RemoveAll(c => c.Id == id);
+        return Task.FromResult(lessons);
+    }
     public Task<int> CountAsync() => Task.FromResult(Courses.Count);
     public Task<int> CountPublishedAsync() => Task.FromResult(Courses.Count(c => c.IsPublished));
 
@@ -113,7 +120,13 @@ internal sealed class TestLessonRepository : ILessonRepository
         lesson.AttachmentName = attachmentName;
         return Task.FromResult(true);
     }
-    public Task DeleteAsync(int id) { Lessons.RemoveAll(l => l.Id == id); return Task.CompletedTask; }
+    public Task<Lesson?> DeleteAsync(int id)
+    {
+        if (FailUpdates) throw new InvalidOperationException("Test lesson delete failure");
+        var lesson = Lessons.Find(l => l.Id == id);
+        Lessons.RemoveAll(l => l.Id == id);
+        return Task.FromResult(lesson);
+    }
     public Task<int> CountAsync() => Task.FromResult(Lessons.Count);
 }
 

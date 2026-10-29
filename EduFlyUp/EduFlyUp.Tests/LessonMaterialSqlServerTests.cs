@@ -46,6 +46,27 @@ public sealed class LessonMaterialSqlServerTests
     }
 
     [SqlServerFact]
+    public async Task Delete_returns_committed_material_snapshots_and_keeps_other_courses()
+    {
+        await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync();
+        using var scope = database.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var course = new Course { Title = "Delete", InstructorId = "owner" };
+        var lessons = new[] { new Lesson { Title = "First", Course = course, MaterialUrl = "first" }, new Lesson { Title = "Second", Course = course, MaterialUrl = "second" } };
+        db.Lessons.AddRange(lessons);
+        db.Courses.Add(new Course { Title = "Keep", InstructorId = "other" });
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+        var deleted = await LessonDAO.DeleteAsync(db, lessons[0].Id);
+        Assert.Equal("first", deleted?.MaterialUrl);
+        db.ChangeTracker.Clear();
+        var deletedWithCourse = await CourseDAO.DeleteAsync(db, course.Id);
+        Assert.Equal("second", Assert.Single(deletedWithCourse).MaterialUrl);
+        Assert.Empty(await db.Lessons.ToListAsync());
+        Assert.Equal("Keep", (await db.Courses.SingleAsync()).Title);
+    }
+
+    [SqlServerFact]
     public async Task Conditional_material_updates_preserve_content_and_reject_stale_requests()
     {
         await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync();

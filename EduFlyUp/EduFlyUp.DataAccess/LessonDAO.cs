@@ -67,15 +67,23 @@ namespace EduFlyUp.DataAccess
                     .SetProperty(l => l.UpdatedAt, DateTime.UtcNow)) == 1;
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<Lesson?> DeleteAsync(int id)
         {
             using var context = new AppDbContext();
+            return await DeleteAsync(context, id);
+        }
+
+        internal static async Task<Lesson?> DeleteAsync(AppDbContext context, int id)
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var lesson = await context.Lessons.FindAsync(id);
             if (lesson != null)
             {
                 context.Lessons.Remove(lesson);
                 await context.SaveChangesAsync();
             }
+            await transaction.CommitAsync();
+            return lesson;
         }
 
         public async Task<int> CountAsync()

@@ -133,6 +133,33 @@ public sealed class LessonMaterialTests
     }
 
     [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task Deleting_lesson_or_course_cleans_files_only_after_database_success(bool wholeCourse, bool fail)
+    {
+        var storage = new TestMaterialStorage();
+        using var app = new TestApplication(storage);
+        Seed(app);
+        SeedMaterial(app, storage);
+        app.Courses.Courses.Single().Lessons.Add(app.Lessons.Lessons.Single());
+        app.Lessons.FailUpdates = fail;
+        app.Courses.FailDeletes = fail;
+        await app.CreateUserAsync("owner@example.test", "Instructor");
+        using var browser = app.CreateBrowser();
+        await TestApplication.LoginAsync(browser, "owner@example.test");
+        var token = await TestApplication.AntiForgeryTokenAsync(browser, "/Instructor/Curriculum/1");
+        var response = await browser.Client.PostAsync(wholeCourse ? "/Courses/Delete/1" : "/Instructor/DeleteLesson", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["id"] = "1", ["courseId"] = "1", ["__RequestVerificationToken"] = token
+        }));
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal(fail ? 1 : 0, storage.Files.Count);
+        Assert.Equal(fail ? 1 : 0, wholeCourse ? app.Courses.Courses.Count : app.Lessons.Lessons.Count);
+    }
+
+    [Theory]
     [InlineData("Instructor")]
     [InlineData("Admin")]
     public async Task Owner_or_admin_replaces_then_removes_material_without_deleting_lesson(string role)

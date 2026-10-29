@@ -22,7 +22,9 @@ Tài liệu được lưu trong `EduFlyUp.Web/App_Data/materials` bằng tên GU
 
 ## Phạm vi hiện tại
 
-Đã hỗ trợ thêm, thay thế, gỡ đính kèm và tải tài liệu. Dọn file khi xóa toàn bộ bài giảng/khóa học và upload video là các bước sau. Việc thay tài liệu dùng SQL cập nhật có điều kiện, không giữ transaction chung giữa SQL Server và filesystem. Cần giữ thư mục học liệu trên ổ lưu trữ bền vững; file còn dư do lỗi dọn được ghi log và không có tác vụ dọn nền tự động ở bước này.
+Đã hỗ trợ thêm, thay thế, gỡ đính kèm và tải tài liệu, dọn file khi xóa toàn bộ bài giảng/khóa học. Upload video là bước sau. Việc thay tài liệu dùng SQL cập nhật có điều kiện, không giữ transaction chung giữa SQL Server và filesystem. Cần giữ thư mục học liệu trên ổ lưu trữ bền vững; file còn dư do lỗi dọn được ghi log và không có tác vụ dọn nền tự động ở bước này.
+
+Khi xóa bài giảng hoặc khóa học, DAO lấy snapshot học liệu và xóa dữ liệu trong transaction Serializable, trả snapshot sau commit. Controller mới dọn file từ snapshot đó. Lỗi database không được dọn file; lỗi dọn file được ghi log và không làm giao diện báo sai rằng bản ghi chưa xóa. Chỉ xóa đường dẫn upload đúng ID bài giảng và tên file hợp lệ; không chạm link ngoài. Thay đổi kiểu trả về DeleteAsync/DeleteCourseAsync/DeleteLessonAsync để truyền snapshot qua các tầng. Kết quả kiểm tra bước này: 128/128 test ứng dụng trên SQL Server thật và 11/11 test AdminDemo đạt.
 
 ## Kiểm tra
 

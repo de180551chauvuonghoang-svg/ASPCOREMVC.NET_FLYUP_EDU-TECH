@@ -10,11 +10,13 @@ public class CoursesController : Controller
 {
     private readonly ICourseService _courseService;
     private readonly ICourseAccessService _courseAccess;
+    private readonly EduFlyUp.Web.Storage.LessonFileCleanup _fileCleanup;
 
-    public CoursesController(ICourseService courseService, ICourseAccessService courseAccess)
+    public CoursesController(ICourseService courseService, ICourseAccessService courseAccess, EduFlyUp.Web.Storage.LessonFileCleanup fileCleanup)
     {
         _courseService = courseService;
         _courseAccess = courseAccess;
+        _fileCleanup = fileCleanup;
     }
 
     // GET: /Courses
@@ -198,7 +200,8 @@ public class CoursesController : Controller
 
         try
         {
-            await _courseService.DeleteCourseAsync(id);
+            var deletedLessons = await _courseService.DeleteCourseAsync(id);
+            foreach (var deleted in deletedLessons) _fileCleanup.DeleteFiles(deleted);
             TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã bị xóa.";
         }
         catch (Exception)
