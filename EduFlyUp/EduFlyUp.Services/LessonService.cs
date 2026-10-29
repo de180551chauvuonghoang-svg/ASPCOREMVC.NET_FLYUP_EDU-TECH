@@ -10,6 +10,7 @@ namespace EduFlyUp.Services
         Task<Lesson> CreateLessonAsync(Lesson lesson);
         Task UpdateLessonAsync(Lesson lesson);
         Task<bool> TryUpdateMaterialAsync(int id, string expectedUrl, string materialUrl, string attachmentName);
+        Task<bool> TryUpdateVideoAsync(int id, string expectedUrl, string videoUrl);
         Task<Lesson?> DeleteLessonAsync(int id);
         Task<int> GetTotalLessonsCountAsync();
     }
@@ -33,6 +34,9 @@ namespace EduFlyUp.Services
 
         public Task<bool> TryUpdateMaterialAsync(int id, string expectedUrl, string materialUrl, string attachmentName)
             => _lessonRepository.TryUpdateMaterialAsync(id, expectedUrl, materialUrl, attachmentName);
+
+        public Task<bool> TryUpdateVideoAsync(int id, string expectedUrl, string videoUrl)
+            => _lessonRepository.TryUpdateVideoAsync(id, expectedUrl, videoUrl);
 
         public Task<Lesson?> DeleteLessonAsync(int id) => _lessonRepository.DeleteAsync(id);
 

@@ -38,11 +38,12 @@ namespace EduFlyUp.DataAccess
         {
             // Update content without restoring a stale upload after replacement/removal.
             var preserveMaterial = lesson.MaterialUrl.StartsWith("/LessonMaterials/Download/", StringComparison.Ordinal);
+            var preserveVideo = lesson.VideoUrl.StartsWith("/LessonVideos/Stream/", StringComparison.Ordinal);
             var query = context.Lessons.Where(l => l.Id == lesson.Id);
             await query.ExecuteUpdateAsync(setters => setters
                 .SetProperty(l => l.Title, lesson.Title)
                 .SetProperty(l => l.Content, lesson.Content)
-                .SetProperty(l => l.VideoUrl, lesson.VideoUrl)
+                .SetProperty(l => l.VideoUrl, l => preserveVideo || l.VideoUrl.StartsWith("/LessonVideos/Stream/") ? l.VideoUrl : lesson.VideoUrl)
                 .SetProperty(l => l.SectionName, lesson.SectionName)
                 .SetProperty(l => l.DurationMinutes, lesson.DurationMinutes)
                 .SetProperty(l => l.Order, lesson.Order)
@@ -66,6 +67,17 @@ namespace EduFlyUp.DataAccess
                     .SetProperty(l => l.AttachmentName, attachmentName)
                     .SetProperty(l => l.UpdatedAt, DateTime.UtcNow)) == 1;
         }
+
+        public async Task<bool> TryUpdateVideoAsync(int id, string expectedUrl, string videoUrl)
+        {
+            using var context = new AppDbContext();
+            return await TryUpdateVideoAsync(context, id, expectedUrl, videoUrl);
+        }
+
+        internal static async Task<bool> TryUpdateVideoAsync(AppDbContext context, int id, string expectedUrl, string videoUrl)
+            => await context.Lessons.Where(l => l.Id == id && l.VideoUrl == expectedUrl)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(l => l.VideoUrl, videoUrl)
+                    .SetProperty(l => l.UpdatedAt, DateTime.UtcNow)) == 1;
 
         public async Task<Lesson?> DeleteAsync(int id)
         {

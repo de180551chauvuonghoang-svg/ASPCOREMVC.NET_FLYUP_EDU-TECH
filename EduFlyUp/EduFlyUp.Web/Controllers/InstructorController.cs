@@ -300,7 +300,8 @@ public class InstructorController : Controller
 
         lesson.Title = model.Title.Trim();
         lesson.SectionName = string.IsNullOrWhiteSpace(model.SectionName) ? "Chương 1: Tổng quan" : model.SectionName.Trim();
-        lesson.VideoUrl = model.VideoUrl?.Trim() ?? string.Empty;
+        if (!lesson.VideoUrl.StartsWith("/LessonVideos/Stream/", StringComparison.Ordinal))
+            lesson.VideoUrl = model.VideoUrl?.Trim() ?? string.Empty;
         lesson.Content = model.Content?.Trim() ?? string.Empty;
         lesson.DurationMinutes = model.DurationMinutes;
         lesson.Order = model.Order;

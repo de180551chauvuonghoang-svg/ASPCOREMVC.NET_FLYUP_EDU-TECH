@@ -127,7 +127,31 @@ internal sealed class TestLessonRepository : ILessonRepository
         Lessons.RemoveAll(l => l.Id == id);
         return Task.FromResult(lesson);
     }
+    public Task<bool> TryUpdateVideoAsync(int id, string expectedUrl, string videoUrl)
+    {
+        if (FailUpdates) throw new InvalidOperationException("Test save failure");
+        if (RejectNextMaterialUpdate) { RejectNextMaterialUpdate = false; return Task.FromResult(false); }
+        var lesson = Lessons.Find(l => l.Id == id && l.VideoUrl == expectedUrl);
+        if (lesson is null) return Task.FromResult(false);
+        lesson.VideoUrl = videoUrl;
+        return Task.FromResult(true);
+    }
     public Task<int> CountAsync() => Task.FromResult(Lessons.Count);
+}
+
+internal sealed class TestVideoStorage : EduFlyUp.Web.Storage.ILessonVideoStorage
+{
+    public Dictionary<string, byte[]> Files { get; } = [];
+    public async Task<string> SaveAsync(Microsoft.AspNetCore.Http.IFormFile file, CancellationToken cancellationToken)
+    {
+        var name = Guid.NewGuid().ToString("N") + ".mp4";
+        using var data = new MemoryStream();
+        await file.CopyToAsync(data, cancellationToken);
+        Files[name] = data.ToArray();
+        return name;
+    }
+    public Stream? OpenRead(string name) => Files.TryGetValue(name, out var bytes) ? new MemoryStream(bytes) : null;
+    public void Delete(string name) => Files.Remove(name);
 }
 
 internal sealed class TestMaterialStorage : EduFlyUp.Web.Storage.ILessonMaterialStorage

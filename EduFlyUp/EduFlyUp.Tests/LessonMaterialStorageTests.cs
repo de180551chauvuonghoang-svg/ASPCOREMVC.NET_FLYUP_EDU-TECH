@@ -84,7 +84,7 @@ public sealed class LessonMaterialStorageTests : IDisposable
         if (Directory.Exists(_root)) Directory.Delete(_root, true);
     }
 
-    private sealed class TestEnvironment : IWebHostEnvironment
+    internal sealed class TestEnvironment : IWebHostEnvironment
     {
         public string ApplicationName { get; set; } = "Test";
         public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();

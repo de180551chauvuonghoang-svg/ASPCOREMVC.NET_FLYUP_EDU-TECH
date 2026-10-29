@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<EduFlyUp.Web.Storage.ILessonMaterialStorage, EduFlyUp.Web.Storage.LessonMaterialStorage>();
 builder.Services.AddScoped<EduFlyUp.Web.Storage.LessonFileCleanup>();
+builder.Services.AddScoped<EduFlyUp.Web.Storage.ILessonVideoStorage, EduFlyUp.Web.Storage.LessonVideoStorage>();
 
 // 1. Cấu hình DbContext kết nối SQL Server
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")

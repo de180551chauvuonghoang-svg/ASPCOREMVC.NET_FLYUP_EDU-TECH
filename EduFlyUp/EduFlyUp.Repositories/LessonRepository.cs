@@ -16,6 +16,9 @@ namespace EduFlyUp.Repositories
         public Task<bool> TryUpdateMaterialAsync(int id, string expectedUrl, string materialUrl, string attachmentName)
             => LessonDAO.Instance.TryUpdateMaterialAsync(id, expectedUrl, materialUrl, attachmentName);
 
+        public Task<bool> TryUpdateVideoAsync(int id, string expectedUrl, string videoUrl)
+            => LessonDAO.Instance.TryUpdateVideoAsync(id, expectedUrl, videoUrl);
+
         public Task<Lesson?> DeleteAsync(int id) => LessonDAO.Instance.DeleteAsync(id);
 
         public async Task<int> CountAsync() => await LessonDAO.Instance.CountAsync();

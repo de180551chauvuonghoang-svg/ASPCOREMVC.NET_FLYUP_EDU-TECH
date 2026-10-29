@@ -22,7 +22,7 @@ Tài liệu được lưu trong `EduFlyUp.Web/App_Data/materials` bằng tên GU
 
 ## Phạm vi hiện tại
 
-Đã hỗ trợ thêm, thay thế, gỡ đính kèm và tải tài liệu, dọn file khi xóa toàn bộ bài giảng/khóa học. Upload video là bước sau. Việc thay tài liệu dùng SQL cập nhật có điều kiện, không giữ transaction chung giữa SQL Server và filesystem. Cần giữ thư mục học liệu trên ổ lưu trữ bền vững; file còn dư do lỗi dọn được ghi log và không có tác vụ dọn nền tự động ở bước này.
+Đã hỗ trợ thêm, thay thế, gỡ đính kèm và tải tài liệu, dọn file khi xóa toàn bộ bài giảng/khóa học, upload/thay/gỡ/phát video MP4. Việc thay học liệu dùng SQL cập nhật có điều kiện, không giữ transaction chung giữa SQL Server và filesystem. Cần giữ thư mục học liệu trên ổ lưu trữ bền vững; file còn dư do lỗi dọn được ghi log và không có tác vụ dọn nền tự động ở bước này.
 
 Khi xóa bài giảng hoặc khóa học, DAO lấy snapshot học liệu và xóa dữ liệu trong transaction Serializable, trả snapshot sau commit. Controller mới dọn file từ snapshot đó. Lỗi database không được dọn file; lỗi dọn file được ghi log và không làm giao diện báo sai rằng bản ghi chưa xóa. Chỉ xóa đường dẫn upload đúng ID bài giảng và tên file hợp lệ; không chạm link ngoài. Thay đổi kiểu trả về DeleteAsync/DeleteCourseAsync/DeleteLessonAsync để truyền snapshot qua các tầng. Kết quả kiểm tra bước này: 128/128 test ứng dụng trên SQL Server thật và 11/11 test AdminDemo đạt.
 
@@ -43,3 +43,21 @@ Bước thay/xóa có kiểm thử HTTP cho Instructor sở hữu và Admin, ch�
 ## Kết quả xác minh ngày 29/10/2026
 
 Đã chạy toàn bộ EduFlyUp.Tests với SQL Server cục bộ tại `.\MSSQLSERVER01`, Windows Authentication, TrustServerCertificate=True và thời gian chờ kết nối 10 giây: **123 đạt, 0 lỗi, 0 bỏ qua**. Bốn test SQL đã thực thi, gồm test cập nhật tài liệu có điều kiện từ hai context độc lập. Fixture chỉ tạo/xóa database GUID riêng, không cập nhật database ứng dụng. Kết quả này thay thế giới hạn chưa chạy SQL ở các bước trước; kiểm tra giao diện qua trình duyệt vẫn cần thực hiện.
+
+## Video MP4
+
+Tại mỗi bài giảng đã lưu, chọn MP4 rồi bấm **Tải video lên** hoặc **Thay video**; xác nhận trong hộp thoại của trang. Video upload có nút **Gỡ video**. Link YouTube/MP4 ngoài vẫn dùng được theo luồng sửa bài giảng; có thể thay link ngoài bằng file upload. Các trường link trong modal sửa bị vô hiệu hóa khi đã có file upload, tránh mất liên kết khi sửa nội dung.
+
+Video tối đa 100 MiB (giao diện ghi 100 MB), đuôi MP4, MIME video/mp4 hoặc application/octet-stream và kiểm tra box ftyp/major brand cơ bản. Server sao chép qua buffer có giới hạn số byte thật, không tải toàn bộ video vào RAM. Đây là kiểm tra container cơ bản, không phải xác minh codec hoặc chuyển mã. Khả năng phát phụ thuộc codec/trình duyệt; đã kiểm tra mẫu MP4 từ MDN.
+
+File lưu tại `App_Data/videos` với tên GUID. POST `/LessonVideos/Save` và `/LessonVideos/Remove` yêu cầu đúng quyền quản lý khóa học, anti-forgery và expectedUrl; cập nhật riêng VideoUrl/timestamp có điều kiện. Lỗi lưu giữ video cũ và dọn file mới; dọn file cũ sau khi metadata được cập nhật. Sửa bài giảng cũ không khôi phục video đã gỡ/thay. Xóa bài giảng/khóa học dọn cả tài liệu và video sau commit.
+
+GET `/LessonVideos/Stream/{id}/{fileName}` kiểm tra đúng metadata và quyền học như tài liệu, trả video/mp4 và hỗ trợ HTTP Range để tua video. Bài học preview chưa tự mở endpoint này cho Guest. App_Data cần được giữ và sao lưu cùng database. Không thêm migration.
+
+## Kiểm tra tích hợp giao diện
+
+Đã chạy AdminDemo trên database GUID mới bằng SQL Server thật: cả 8 nhóm HTTP tích hợp đạt. Qua trình duyệt, đăng nhập Instructor demo, kiểm tra upload → thay → tải PDF → xóa tài liệu; upload → xem thử MP4 phát hết 5,055 giây (readyState=4, không có lỗi media) → thay → gỡ video. Hộp thoại xác nhận dùng Bootstrap; form upload và thông báo kết quả hoạt động. Không ghi nhận console warning/error trong luồng đã kiểm tra. Ảnh bằng chứng và dữ liệu demo chỉ lưu cục bộ trong `.admin-demo/`, không commit.
+
+Mẫu video kiểm tra: https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4. Kiểm thử HTTP bổ sung xác nhận response 206 và đúng byte khi yêu cầu Range, quyền học viên Active/Completed/Cancelled, quyền Instructor, lỗi lưu/xung đột và dọn video khi xóa khóa học. Test SQL xác nhận cập nhật VideoUrl có điều kiện và giữ trạng thái đã gỡ khi có bản sửa bài giảng cũ. Không thay đổi database ứng dụng của nhóm.
+
+Kết quả cuối bước video: Release build 0 lỗi/0 cảnh báo; **139/139 test ứng dụng đạt trên SQL Server thật (0 bỏ qua)**; **11/11 test AdminDemo đạt**; report demo có Passed=true, BrowserVerified=true và đủ 8 nhóm tích hợp đạt.

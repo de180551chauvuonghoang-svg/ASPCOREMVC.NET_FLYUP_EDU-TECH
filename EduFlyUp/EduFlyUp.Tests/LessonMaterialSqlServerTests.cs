@@ -21,6 +21,8 @@ public sealed class LessonMaterialSqlServerTests
         Assert.Contains("[MaterialUrl] =", recorder.Sql);
         Assert.Contains("[AttachmentName] =", recorder.Sql);
         Assert.Contains("AND", recorder.Sql);
+        Assert.True(await LessonDAO.TryUpdateVideoAsync(db, 1, "old", "new"));
+        Assert.Contains("[VideoUrl] =", recorder.Sql);
         await LessonDAO.UpdateContentAsync(db, new Lesson { Id = 1, Title = "Updated" });
         Assert.Contains("CASE", recorder.Sql);
         Assert.Contains("[Title] =", recorder.Sql);
@@ -103,5 +105,12 @@ public sealed class LessonMaterialSqlServerTests
         Assert.Equal("Updated content", current.Title);
         Assert.Equal("Keep content", current.Content);
         Assert.False(await LessonDAO.TryUpdateMaterialAsync(a, id, oldUrl, "", ""));
+        var videoUrl = $"/LessonVideos/Stream/{id}/{new string('c', 32)}.mp4";
+        Assert.True(await LessonDAO.TryUpdateVideoAsync(a, id, "", videoUrl));
+        var staleVideo = await a.Lessons.AsNoTracking().SingleAsync(l => l.Id == id);
+        Assert.True(await LessonDAO.TryUpdateVideoAsync(b, id, videoUrl, ""));
+        await LessonDAO.UpdateContentAsync(a, staleVideo);
+        Assert.Empty((await b.Lessons.AsNoTracking().SingleAsync(l => l.Id == id)).VideoUrl);
+        Assert.False(await LessonDAO.TryUpdateVideoAsync(a, id, videoUrl, "forged"));
     }
 }
