@@ -45,7 +45,7 @@ public sealed class CouponService(ICouponRepository repository, TimeProvider tim
         CouponChange.Stale => "Mã giảm giá đã thay đổi. Vui lòng tải lại trang trước khi sửa.",
         CouponChange.UsageConflict => "Giới hạn sử dụng không được thấp hơn số lượt đã dùng.",
         CouponChange.UsedTermsLocked => "Mã đã có lượt dùng: không thể đổi mã, mức giảm hoặc khóa học áp dụng. Bạn có thể tắt mã và tạo mã mới.",
-        CouponChange.CannotActivate => "Không thể bật mã đã hết hạn hoặc hết lượt. Hãy sửa thời hạn hoặc giới hạn trước.",
+        CouponChange.CannotActivate => "Không thể bật mã đã hết hạn, hết lượt hoặc có điều kiện không hợp lệ. Hãy kiểm tra thời hạn, mức giảm và giới hạn trước.",
         _ => "Không thể lưu mã giảm giá."
     }, change);
 }

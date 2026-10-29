@@ -53,7 +53,7 @@ public sealed class CouponDAO : SingletonBase<CouponDAO>
             if (stored is null) return CouponChange.NotFound;
             if (CouponPresentation.Version(stored) != version) return CouponChange.Stale;
             if (input.MaxUsage < stored.UsedCount) return CouponChange.UsageConflict;
-            if (stored.UsedCount > 0 && (stored.Code != input.Code || stored.DiscountPercent != input.DiscountPercent || stored.CourseId != input.CourseId))
+            if (stored.UsedCount > 0 && (!string.Equals(stored.Code.Trim(), input.Code, StringComparison.OrdinalIgnoreCase) || stored.DiscountPercent != input.DiscountPercent || stored.CourseId != input.CourseId))
                 return CouponChange.UsedTermsLocked;
         }
         if (input.CourseId.HasValue && !await db.Courses.AnyAsync(c => c.Id == input.CourseId &&
@@ -82,7 +82,10 @@ public sealed class CouponDAO : SingletonBase<CouponDAO>
         var stored = await Owned(db, owner).FirstOrDefaultAsync(c => c.Id == id);
         if (stored is null) return CouponChange.NotFound;
         if (CouponPresentation.Version(stored) != version) return CouponChange.Stale;
-        if (active && (stored.EndDate <= utcNow || stored.MaxUsage <= stored.UsedCount)) return CouponChange.CannotActivate;
+        if (active && (stored.EndDate <= utcNow || stored.EndDate <= stored.StartDate || stored.MaxUsage <= stored.UsedCount ||
+            stored.DiscountPercent is < 1 or > 90)) return CouponChange.CannotActivate;
+        if (active && stored.CourseId.HasValue && !await db.Courses.AnyAsync(c => c.Id == stored.CourseId &&
+            (c.InstructorId == owner.UserId || c.InstructorId == owner.UserName))) return CouponChange.InvalidCourse;
         if (stored.IsActive != active)
         {
             stored.IsActive = active;

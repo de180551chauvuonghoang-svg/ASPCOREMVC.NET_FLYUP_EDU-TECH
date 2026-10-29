@@ -43,7 +43,7 @@ public sealed class CouponSqlServerTests
         Assert.Equal(Owner.UserId, stored.InstructorId);
         Assert.Equal(0, stored.UsedCount);
         Assert.Equal(CouponChange.NotFound, (await service.SetActiveAsync(new("x", "x@test"), stored.Id, false, CouponPresentation.Version(stored))).Change);
-        await db.Coupons.Where(c => c.Id == stored.Id).ExecuteUpdateAsync(s => s.SetProperty(c => c.UsedCount, 2));
+        await db.Coupons.Where(c => c.Id == stored.Id).ExecuteUpdateAsync(s => s.SetProperty(c => c.UsedCount, 2).SetProperty(c => c.Code, " test50 "));
         var version = CouponPresentation.Version(stored);
         Assert.Equal(CouponChange.UsageConflict, (await service.SaveAsync(Owner, Input(courseId: mine.Id) with { MaxUsage = 1 }, stored.Id, version)).Change);
         Assert.Equal(CouponChange.UsedTermsLocked, (await service.SaveAsync(Owner, Input(courseId: mine.Id) with { DiscountPercent = 20 }, stored.Id, version)).Change);
@@ -54,6 +54,10 @@ public sealed class CouponSqlServerTests
         stored = (await service.GetAsync(Owner, stored.Id))!;
         Assert.False(stored.IsActive); Assert.Equal(2, stored.UsedCount); Assert.Equal(20, stored.MaxUsage);
         await db.Coupons.Where(c => c.Id == stored.Id).ExecuteUpdateAsync(s => s.SetProperty(c => c.EndDate, DateTime.UtcNow.AddMinutes(-1)));
+        Assert.Equal(CouponChange.CannotActivate, (await service.SetActiveAsync(Owner, stored.Id, true, CouponPresentation.Version(stored))).Change);
+        await db.Coupons.Where(c => c.Id == stored.Id).ExecuteUpdateAsync(s => s.SetProperty(c => c.EndDate, DateTime.UtcNow.AddDays(1)).SetProperty(c => c.MaxUsage, 2));
+        Assert.Equal(CouponChange.CannotActivate, (await service.SetActiveAsync(Owner, stored.Id, true, CouponPresentation.Version(stored))).Change);
+        await db.Coupons.Where(c => c.Id == stored.Id).ExecuteUpdateAsync(s => s.SetProperty(c => c.MaxUsage, 20).SetProperty(c => c.DiscountPercent, 91));
         Assert.Equal(CouponChange.CannotActivate, (await service.SetActiveAsync(Owner, stored.Id, true, CouponPresentation.Version(stored))).Change);
     }
 
