@@ -2,7 +2,7 @@
 
 - Ngày kiểm tra: 29/10/2026 (Asia/Saigon).
 - Người phụ trách: Dương Thái Duy.
-- Nhánh: `codex/duong-thai-duy-instructor-b`.
+- Nhánh: `Duy-instructor-B`.
 - Mã nguồn gốc: `origin/main`, commit `07e17e4ede03c730830ea5a20e2a5c68198912e9`.
 - Phạm vi tiếp theo: UC-24, UC-35, UC-36, UC-37, UC-40 và phần giảng viên của UC-38.
 
