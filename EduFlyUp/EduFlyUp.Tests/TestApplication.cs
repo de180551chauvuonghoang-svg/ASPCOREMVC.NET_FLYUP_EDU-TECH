@@ -23,9 +23,10 @@ internal sealed class TestApplication : IDisposable
     private readonly TestServer _server;
     public TestCourseRepository Courses { get; } = new();
     public TestEnrollmentRepository Enrollments { get; } = new();
+    public TestLessonRepository Lessons { get; } = new();
     public IServiceProvider Services => _server.Services;
 
-    public TestApplication()
+    public TestApplication(EduFlyUp.Web.Storage.ILessonMaterialStorage? materialStorage = null)
     {
         var database = Guid.NewGuid().ToString();
         _server = new TestServer(new WebHostBuilder()
@@ -46,7 +47,8 @@ internal sealed class TestApplication : IDisposable
                 });
                 services.AddSingleton<ICourseRepository>(Courses);
                 services.AddSingleton<IEnrollmentRepository>(Enrollments);
-                services.AddSingleton<ILessonRepository, TestLessonRepository>();
+                services.AddSingleton<ILessonRepository>(Lessons);
+                services.AddSingleton<EduFlyUp.Web.Storage.ILessonMaterialStorage>(materialStorage ?? new TestMaterialStorage());
                 services.AddScoped<ICourseService, CourseService>();
                 services.AddScoped<ILessonService, LessonService>();
                 services.AddScoped<ICourseAccessService, CourseAccessService>();

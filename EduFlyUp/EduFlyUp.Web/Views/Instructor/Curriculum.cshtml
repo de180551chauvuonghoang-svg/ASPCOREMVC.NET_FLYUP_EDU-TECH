@@ -254,6 +254,16 @@ else
                                                         <span class="text-muted small fst-italic">Chưa có video</span>
                                                     }
 
+                                                    @if (string.IsNullOrWhiteSpace(lesson.MaterialUrl))
+                                                    {
+                                                        <form asp-controller="LessonMaterials" asp-action="Upload" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
+                                                            <input type="hidden" name="id" value="@lesson.Id" />
+                                                            <label class="small" for="materialFile-@lesson.Id">Tài liệu bài giảng</label>
+                                                            <input type="file" id="materialFile-@lesson.Id" name="materialFile" class="form-control form-control-sm" style="max-width: 240px" accept=".pdf,.doc,.docx,.ppt,.pptx" required aria-describedby="materialHelp-@lesson.Id" />
+                                                            <button type="submit" class="btn btn-outline-primary btn-sm">Tải lên</button>
+                                                            <small id="materialHelp-@lesson.Id" class="text-muted">PDF, Word, PowerPoint · Tối đa 10 MB</small>
+                                                        </form>
+                                                    }
                                                     @if (!string.IsNullOrWhiteSpace(lesson.MaterialUrl))
                                                     {
                                                         <a href="@lesson.MaterialUrl" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" title="Tải học liệu đính kèm (UC-24)">
@@ -404,6 +414,7 @@ else
                                 Tên hiển thị của tài liệu
                             </label>
                             <input type="text" id="lessonAttachmentName" name="AttachmentName" class="form-control rounded-3" placeholder="Ví dụ: Slide_Bai_1_Overview.pdf" maxlength="150" />
+                            <div class="form-text small">Tài liệu tải trực tiếp được giữ nguyên khi sửa bài giảng. Để tải tài liệu mới, lưu bài giảng rồi chọn file trong danh sách giáo trình.</div>
                         </div>
 
                         <!-- Ghi chú / Tóm tắt bài giảng -->
@@ -483,6 +494,8 @@ else
             document.getElementById("lessonOrder").value = "@(Model.TotalLessons + 1)";
             document.getElementById("lessonIsPreview").checked = false;
             document.getElementById("lessonMaterialUrl").value = "";
+            document.getElementById("lessonMaterialUrl").disabled = false;
+            document.getElementById("lessonAttachmentName").disabled = false;
             document.getElementById("lessonAttachmentName").value = "";
             document.getElementById("lessonContent").value = "";
 
@@ -507,7 +520,10 @@ else
             document.getElementById("lessonDurationMinutes").value = lesson.durationMinutes || 0;
             document.getElementById("lessonOrder").value = lesson.order || 1;
             document.getElementById("lessonIsPreview").checked = !!lesson.isPreview;
-            document.getElementById("lessonMaterialUrl").value = lesson.materialUrl || "";
+            const hasUploadedMaterial = (lesson.materialUrl || "").startsWith("/LessonMaterials/Download/");
+            document.getElementById("lessonMaterialUrl").value = hasUploadedMaterial ? "" : (lesson.materialUrl || "");
+            document.getElementById("lessonMaterialUrl").disabled = hasUploadedMaterial;
+            document.getElementById("lessonAttachmentName").disabled = hasUploadedMaterial;
             document.getElementById("lessonAttachmentName").value = lesson.attachmentName || "";
             document.getElementById("lessonContent").value = lesson.content || "";
 

@@ -303,8 +303,12 @@ public class InstructorController : Controller
         lesson.DurationMinutes = model.DurationMinutes;
         lesson.Order = model.Order;
         lesson.IsPreview = model.IsPreview;
-        lesson.MaterialUrl = model.MaterialUrl?.Trim() ?? string.Empty;
-        lesson.AttachmentName = model.AttachmentName?.Trim() ?? string.Empty;
+        // Uploaded files are managed separately from external links.
+        if (!lesson.MaterialUrl.StartsWith("/LessonMaterials/Download/", StringComparison.Ordinal))
+        {
+            lesson.MaterialUrl = model.MaterialUrl?.Trim() ?? string.Empty;
+            lesson.AttachmentName = model.AttachmentName?.Trim() ?? string.Empty;
+        }
         lesson.UpdatedAt = DateTime.UtcNow;
 
         await _lessonService.UpdateLessonAsync(lesson);
