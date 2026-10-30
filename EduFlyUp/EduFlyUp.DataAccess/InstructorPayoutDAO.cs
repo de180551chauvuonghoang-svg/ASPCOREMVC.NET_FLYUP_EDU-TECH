@@ -26,6 +26,9 @@ public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
     {
         if (string.IsNullOrWhiteSpace(instructor.UserId) || string.IsNullOrWhiteSpace(instructor.UserName) || !InstructorPayoutPolicy.Valid(input))
             return InstructorPayoutChange.Invalid;
+        if (input.SubmissionKey == Guid.Empty) return InstructorPayoutChange.Invalid;
+        var previous = await PreviousSubmissionAsync(db, instructor, input);
+        if (previous.HasValue) return previous.Value;
         if (!(await earnings.CreditedEarningsAsync(db, instructor)).HasValue)
             return InstructorPayoutChange.EarningsUnavailable;
         await using var transaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
@@ -36,6 +39,8 @@ public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
                 @LockMode=N'Exclusive', @LockOwner=N'Transaction', @LockTimeout=10000;
             IF @result < 0 THROW 51002, N'Không thể lấy khóa quản lý yêu cầu rút tiền.', 1;
             """);
+        previous = await PreviousSubmissionAsync(db, instructor, input);
+        if (previous.HasValue) return previous.Value;
         var balance = await BalanceAsync(db, earnings, instructor);
         if (!balance.Available.HasValue) return InstructorPayoutChange.EarningsUnavailable;
         if (balance.PendingCount > 0) return InstructorPayoutChange.PendingExists;
@@ -44,11 +49,23 @@ public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
         {
             InstructorId = instructor.UserId, Amount = input.Amount, BankName = input.BankName,
             AccountNumber = input.AccountNumber, AccountHolderName = input.AccountHolderName,
-            Status = PayoutStatus.Pending, CreatedAt = DateTime.UtcNow, ProcessedAt = null, AdminNote = null
+            Status = PayoutStatus.Pending, CreatedAt = DateTime.UtcNow, ProcessedAt = null, AdminNote = null,
+            SubmissionKey = input.SubmissionKey
         });
         await db.SaveChangesAsync();
         await transaction.CommitAsync();
         return InstructorPayoutChange.Created;
+    }
+
+    private static async Task<InstructorPayoutChange?> PreviousSubmissionAsync(AppDbContext db, InstructorIdentity instructor, InstructorPayoutInput input)
+    {
+        if (!input.SubmissionKey.HasValue) return null;
+        var previous = await db.PayoutRequests.AsNoTracking().SingleOrDefaultAsync(p => p.SubmissionKey == input.SubmissionKey);
+        if (previous is null) return null;
+        var owned = previous.InstructorId == instructor.UserId || previous.InstructorId == instructor.UserName;
+        return owned && previous.Amount == input.Amount && previous.BankName == input.BankName
+            && previous.AccountNumber == input.AccountNumber && previous.AccountHolderName == input.AccountHolderName
+            ? InstructorPayoutChange.AlreadySubmitted : InstructorPayoutChange.SubmissionConflict;
     }
 
     public async Task<InstructorPayoutHistory> HistoryAsync(AppDbContext db, InstructorIdentity instructor, int page, PayoutStatus? status = null)

@@ -23,6 +23,8 @@ public sealed class InstructorPayoutService(IInstructorPayoutRepository reposito
         return new(change, change switch
         {
             InstructorPayoutChange.Created => "Đã gửi yêu cầu rút tiền. Vui lòng chờ Admin xử lý.",
+            InstructorPayoutChange.AlreadySubmitted => "Yêu cầu này đã được gửi trước đó. Vui lòng xem lịch sử xử lý.",
+            InstructorPayoutChange.SubmissionConflict => "Thông tin lần gửi không khớp. Vui lòng mở lại trang yêu cầu rút tiền.",
             InstructorPayoutChange.EarningsUnavailable => "Chưa xác minh được số dư từ doanh thu đã đối soát. Hiện chưa thể gửi yêu cầu rút tiền.",
             InstructorPayoutChange.PendingExists => "Bạn đang có yêu cầu chờ xử lý. Vui lòng chờ kết quả trước khi gửi yêu cầu mới.",
             InstructorPayoutChange.InsufficientBalance => "Số tiền yêu cầu vượt số dư khả dụng. Vui lòng kiểm tra lại.",

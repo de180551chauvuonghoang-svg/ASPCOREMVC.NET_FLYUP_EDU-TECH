@@ -9,6 +9,44 @@ namespace EduFlyUp.Tests;
 
 public sealed class InstructorPayoutCreationTests
 {
+    [SqlServerFact]
+    public async Task Replaying_a_processed_submission_does_not_create_again_even_when_earnings_source_is_unavailable()
+    {
+        await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync();
+        using var scope = database.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var service = new InstructorPayoutService(new InstructorPayoutRepository(db, new VerifiedTestEarnings(700000)));
+        var input = Input with { SubmissionKey = Guid.NewGuid() };
+        Assert.Equal(InstructorPayoutChange.Created, (await service.CreateAsync(Owner, input)).Change);
+        var stored = await db.PayoutRequests.SingleAsync();
+        stored.Status = PayoutStatus.Approved; stored.ProcessedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        var offline = new InstructorPayoutService(new InstructorPayoutRepository(db));
+        Assert.Equal(InstructorPayoutChange.AlreadySubmitted, (await offline.CreateAsync(Owner, input)).Change);
+        Assert.Equal(InstructorPayoutChange.SubmissionConflict, (await service.CreateAsync(Owner, input with { Amount = 1 })).Change);
+        Assert.Equal(InstructorPayoutChange.SubmissionConflict, (await service.CreateAsync(new("foreign", "foreign@example.test"), input)).Change);
+        Assert.Equal(1, await db.PayoutRequests.CountAsync());
+        Assert.Equal(InstructorPayoutChange.Created, (await service.CreateAsync(Owner, input with { SubmissionKey = Guid.NewGuid() })).Change);
+    }
+
+    [SqlServerFact]
+    public async Task Concurrent_replays_of_one_submission_return_created_and_already_submitted()
+    {
+        await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync();
+        var input = Input with { SubmissionKey = Guid.NewGuid() };
+        async Task<InstructorPayoutChange> Send()
+        {
+            using var scope = database.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            return (await new InstructorPayoutService(new InstructorPayoutRepository(db, new VerifiedTestEarnings(700000))).CreateAsync(Owner, input)).Change;
+        }
+        var changes = await Task.WhenAll(Send(), Send());
+        Assert.Single(changes.Where(c => c == InstructorPayoutChange.Created));
+        Assert.Single(changes.Where(c => c == InstructorPayoutChange.AlreadySubmitted));
+        using var verify = database.Services.CreateScope();
+        Assert.Equal(1, await verify.ServiceProvider.GetRequiredService<AppDbContext>().PayoutRequests.CountAsync());
+    }
+
     private static readonly InstructorIdentity Owner = new("owner-id", "owner@example.test");
     private static readonly InstructorPayoutInput Input = new(100000, "Demo Bank", "0012345678", "DUONG THAI DUY");
     private sealed class VerifiedTestEarnings(decimal? value) : IInstructorEarningsSource

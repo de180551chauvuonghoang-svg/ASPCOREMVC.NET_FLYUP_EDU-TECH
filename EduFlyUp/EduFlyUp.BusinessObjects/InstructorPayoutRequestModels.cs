@@ -1,12 +1,12 @@
 namespace EduFlyUp.BusinessObjects;
 
-public sealed record InstructorPayoutInput(decimal Amount, string BankName, string AccountNumber, string AccountHolderName);
+public sealed record InstructorPayoutInput(decimal Amount, string BankName, string AccountNumber, string AccountHolderName, Guid? SubmissionKey = null);
 public sealed record InstructorPayoutBalance(decimal? CreditedEarnings, decimal PendingAmount, decimal ApprovedAmount, int PendingCount)
 {
     public decimal? Available => CreditedEarnings.HasValue ? Math.Max(0, CreditedEarnings.Value - PendingAmount - ApprovedAmount) : null;
     public bool CanRequest => Available > 0 && PendingCount == 0;
 }
-public enum InstructorPayoutChange { Created, Invalid, EarningsUnavailable, PendingExists, InsufficientBalance }
+public enum InstructorPayoutChange { Created, Invalid, EarningsUnavailable, PendingExists, InsufficientBalance, AlreadySubmitted, SubmissionConflict }
 public sealed record InstructorPayoutResult(InstructorPayoutChange Change, string Message);
 
 public static class InstructorPayoutPolicy
