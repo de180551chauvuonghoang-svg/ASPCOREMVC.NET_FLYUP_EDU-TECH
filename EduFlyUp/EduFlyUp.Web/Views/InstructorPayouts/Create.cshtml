@@ -1,0 +1,38 @@
+@using System.Globalization
+@model EduFlyUp.Web.Models.Instructor.InstructorPayoutForm
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Yêu cầu rút tiền"; var vi = CultureInfo.GetCultureInfo("vi-VN"); }
+<a asp-action="Index" class="text-decoration-none">← Lịch sử rút tiền</a>
+<h1 class="h3 fw-bold mt-3 mb-4">Yêu cầu rút tiền</h1>
+<div class="card card-modern p-4 mb-4">
+    <h2 class="h5">Số dư rút tiền</h2>
+    <dl class="row mb-0">
+        <dt class="col-sm-7">Thu nhập đã đối soát của bạn</dt><dd class="col-sm-5">@(Model.Balance.CreditedEarnings.HasValue ? Model.Balance.CreditedEarnings.Value.ToString("N2", vi) + " VNĐ" : "Chưa xác minh")</dd>
+        <dt class="col-sm-7">Số tiền trong yêu cầu đã duyệt</dt><dd class="col-sm-5">@Model.Balance.ApprovedAmount.ToString("N2", vi) VNĐ</dd>
+        <dt class="col-sm-7">Số tiền đang chờ xử lý</dt><dd class="col-sm-5">@Model.Balance.PendingAmount.ToString("N2", vi) VNĐ</dd>
+        <dt class="col-sm-7">Khả dụng để rút</dt><dd class="col-sm-5 fw-bold">@(Model.Balance.Available.HasValue ? Model.Balance.Available.Value.ToString("N2", vi) + " VNĐ" : "Chưa xác minh")</dd>
+    </dl>
+</div>
+<form asp-action="Create" method="post" class="card card-modern p-4">
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    @if (!Model.Balance.CreditedEarnings.HasValue)
+    {
+        <p class="mb-0">Chưa xác minh được số dư từ doanh thu đã đối soát. Hiện chưa thể gửi yêu cầu rút tiền; bạn vẫn có thể xem lịch sử yêu cầu.</p>
+    }
+    else if (Model.Balance.PendingCount > 0)
+    {
+        <p class="mb-0">Bạn đang có yêu cầu chờ xử lý. Vui lòng chờ kết quả từ Admin trước khi gửi yêu cầu mới.</p>
+    }
+    else if (!Model.Balance.CanRequest)
+    {
+        <p class="mb-0">Bạn chưa có số dư khả dụng để rút.</p>
+    }
+    else
+    {
+        <div class="mb-3"><label asp-for="Amount" class="form-label">Số tiền muốn rút (VNĐ)</label><input asp-for="Amount" type="number" step="0.01" min="0.01" class="form-control" required /></div>
+        <div class="mb-3"><label asp-for="BankName" class="form-label">Tên ngân hàng</label><input asp-for="BankName" class="form-control" maxlength="100" required /></div>
+        <div class="mb-3"><label asp-for="AccountNumber" class="form-label">Số tài khoản</label><input asp-for="AccountNumber" class="form-control" minlength="4" maxlength="34" required /><div class="form-text">Giữ nguyên số 0 ở đầu. Chỉ dùng chữ cái và chữ số, không có khoảng trắng.</div></div>
+        <div class="mb-3"><label asp-for="AccountHolderName" class="form-label">Tên chủ tài khoản</label><input asp-for="AccountHolderName" class="form-control" maxlength="100" required /></div>
+        <p class="small text-muted">Kiểm tra kỹ thông tin trước khi gửi. Bạn có thể có một yêu cầu chờ xử lý tại một thời điểm.</p>
+        <button type="submit" class="btn btn-primary align-self-start">Gửi yêu cầu rút tiền</button>
+    }
+</form>

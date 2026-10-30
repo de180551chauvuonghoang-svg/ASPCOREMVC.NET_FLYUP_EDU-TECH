@@ -19,6 +19,7 @@ public sealed class InstructorPayoutTests
         await app.CreateUserAsync("reader@example.test", role);
         using var browser = app.CreateBrowser(); await TestApplication.LoginAsync(browser, "reader@example.test");
         Assert.Equal(HttpStatusCode.Redirect, (await browser.Client.GetAsync("/InstructorPayouts")).StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, (await browser.Client.GetAsync("/InstructorPayouts/Create")).StatusCode);
         using var guest = app.CreateBrowser();
         Assert.Equal(HttpStatusCode.Redirect, (await guest.Client.GetAsync("/InstructorPayouts")).StatusCode);
     }
