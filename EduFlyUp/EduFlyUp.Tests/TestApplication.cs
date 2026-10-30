@@ -60,6 +60,7 @@ internal sealed class TestApplication : IDisposable
                 services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();
                 services.AddScoped<IInstructorStudentService, InstructorStudentService>();
                 services.AddScoped<IInstructorPayoutRepository, InstructorPayoutRepository>();
+                services.AddScoped<IInstructorEarningsSource, UnavailableInstructorEarningsSource>();
                 services.AddScoped<IInstructorPayoutService, InstructorPayoutService>();
                 services.AddScoped<ICourseAccessService, CourseAccessService>();
                 services.AddScoped<IAdminCourseRepository, AdminCourseRepository>();
