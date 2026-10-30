@@ -3,6 +3,7 @@ using EduFlyUp.Services;
 using EduFlyUp.Web.Models.Instructor;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EduFlyUp.Web.Controllers;
 
@@ -13,17 +14,20 @@ public class InstructorController : Controller
     private readonly ICourseAccessService _courseAccess;
     private readonly ILessonService _lessonService;
     private readonly EduFlyUp.Web.Storage.LessonFileCleanup _fileCleanup;
+    private readonly IInstructorStudentService _students;
 
-    public InstructorController(ICourseService courseService, ICourseAccessService courseAccess, ILessonService lessonService, EduFlyUp.Web.Storage.LessonFileCleanup fileCleanup)
+    public InstructorController(ICourseService courseService, ICourseAccessService courseAccess, ILessonService lessonService, EduFlyUp.Web.Storage.LessonFileCleanup fileCleanup, IInstructorStudentService students)
     {
         _courseService = courseService;
         _courseAccess = courseAccess;
         _lessonService = lessonService;
         _fileCleanup = fileCleanup;
+        _students = students;
     }
 
     // GET: /Instructor/Dashboard or /Instructor
     [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Dashboard(string? search, string? level, string? status, string? category)
     {
         var isAdmin = User.IsInRole("Admin");
@@ -77,6 +81,11 @@ public class InstructorController : Controller
         ViewBag.RejectedCourses = instructorCourses.Count(c => c.Status == CourseStatus.Rejected);
         ViewBag.ArchivedCourses = instructorCourses.Count(c => c.Status == CourseStatus.Archived);
         ViewBag.TotalLessons = instructorCourses.Sum(c => c.Lessons?.Count ?? 0);
+        if (!isAdmin)
+        {
+            ViewData["EnrollmentSummary"] = await _students.SummaryAsync(new InstructorIdentity(
+                User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", User.Identity?.Name ?? ""));
+        }
 
         ViewBag.Categories = (await _courseService.GetCategoriesAsync()).ToList();
 
