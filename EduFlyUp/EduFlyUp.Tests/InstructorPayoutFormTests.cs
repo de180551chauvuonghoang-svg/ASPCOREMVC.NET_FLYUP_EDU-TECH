@@ -94,6 +94,7 @@ public sealed class InstructorPayoutFormTests
 
     private sealed class ReadyPayoutService(InstructorPayoutChange outcome = InstructorPayoutChange.Created) : IInstructorPayoutService
     {
+        public Task<InstructorPayoutDetail?> DetailAsync(InstructorIdentity instructor, int id) => Task.FromResult<InstructorPayoutDetail?>(null);
         public InstructorIdentity? Actor { get; private set; }
         public InstructorPayoutInput? Input { get; private set; }
         public Task<InstructorPayoutBalance> BalanceAsync(InstructorIdentity instructor) => Task.FromResult(new InstructorPayoutBalance(700000, 0, 0, 0));

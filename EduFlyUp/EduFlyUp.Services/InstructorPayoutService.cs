@@ -5,6 +5,7 @@ namespace EduFlyUp.Services;
 
 public interface IInstructorPayoutService
 {
+    Task<InstructorPayoutDetail?> DetailAsync(InstructorIdentity instructor, int id);
     Task<InstructorPayoutBalance> BalanceAsync(InstructorIdentity instructor);
     Task<InstructorPayoutResult> CreateAsync(InstructorIdentity instructor, InstructorPayoutInput input);
     Task<InstructorPayoutHistory> HistoryAsync(InstructorIdentity instructor, int page, PayoutStatus? status = null);
@@ -12,6 +13,8 @@ public interface IInstructorPayoutService
 
 public sealed class InstructorPayoutService(IInstructorPayoutRepository repository) : IInstructorPayoutService
 {
+    public Task<InstructorPayoutDetail?> DetailAsync(InstructorIdentity instructor, int id)
+        => ValidIdentity(instructor) && id > 0 ? repository.DetailAsync(instructor, id) : Task.FromResult<InstructorPayoutDetail?>(null);
     private static bool ValidIdentity(InstructorIdentity instructor) => !string.IsNullOrWhiteSpace(instructor.UserId) && !string.IsNullOrWhiteSpace(instructor.UserName);
     public Task<InstructorPayoutBalance> BalanceAsync(InstructorIdentity instructor)
         => ValidIdentity(instructor) ? repository.BalanceAsync(instructor) : Task.FromResult(new InstructorPayoutBalance(null, 0, 0, 0));

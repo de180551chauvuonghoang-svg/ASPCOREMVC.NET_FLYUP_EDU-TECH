@@ -5,6 +5,19 @@ namespace EduFlyUp.DataAccess;
 
 public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
 {
+    public async Task<InstructorPayoutDetail?> DetailAsync(AppDbContext db, InstructorIdentity instructor, int id)
+    {
+        var payout = await db.PayoutRequests.AsNoTracking().Where(p => p.Id == id &&
+            (p.InstructorId == instructor.UserId || p.InstructorId == instructor.UserName))
+            .Select(p => new { p.Id, p.Amount, p.Status, p.CreatedAt, p.ProcessedAt, p.AdminNote, p.BankName, p.AccountNumber, p.AccountHolderName })
+            .SingleOrDefaultAsync();
+        if (payout is null) return null;
+        var account = payout.AccountNumber.Trim();
+        var masked = account.Length > 4 ? "•••• " + account[^4..] : account.Length == 0 ? "Chưa có thông tin" : "••••";
+        return new(new(payout.Id, payout.Amount, payout.Status, payout.CreatedAt, payout.ProcessedAt, payout.AdminNote),
+            payout.BankName, masked, payout.AccountHolderName);
+    }
+
     public async Task<InstructorPayoutBalance> BalanceAsync(AppDbContext db, IInstructorEarningsSource earnings, InstructorIdentity instructor)
     {
         var credited = await earnings.CreditedEarningsAsync(db, instructor);

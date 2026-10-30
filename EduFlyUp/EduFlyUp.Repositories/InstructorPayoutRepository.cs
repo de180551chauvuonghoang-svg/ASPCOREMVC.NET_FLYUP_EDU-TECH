@@ -5,6 +5,7 @@ namespace EduFlyUp.Repositories;
 
 public interface IInstructorPayoutRepository
 {
+    Task<InstructorPayoutDetail?> DetailAsync(InstructorIdentity instructor, int id);
     Task<InstructorPayoutBalance> BalanceAsync(InstructorIdentity instructor);
     Task<InstructorPayoutChange> CreateAsync(InstructorIdentity instructor, InstructorPayoutInput input);
     Task<InstructorPayoutHistory> HistoryAsync(InstructorIdentity instructor, int page, PayoutStatus? status = null);
@@ -12,6 +13,8 @@ public interface IInstructorPayoutRepository
 
 public sealed class InstructorPayoutRepository(AppDbContext db, IInstructorEarningsSource? earnings = null) : IInstructorPayoutRepository
 {
+    public Task<InstructorPayoutDetail?> DetailAsync(InstructorIdentity instructor, int id)
+        => InstructorPayoutDAO.Instance.DetailAsync(db, instructor, id);
     private readonly IInstructorEarningsSource _earnings = earnings ?? new UnavailableInstructorEarningsSource();
     public Task<InstructorPayoutBalance> BalanceAsync(InstructorIdentity instructor)
         => InstructorPayoutDAO.Instance.BalanceAsync(db, _earnings, instructor);
