@@ -59,6 +59,8 @@ internal sealed class TestApplication : IDisposable
                 services.AddScoped<ICouponService, CouponService>();
                 services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();
                 services.AddScoped<IInstructorStudentService, InstructorStudentService>();
+                services.AddScoped<IInstructorPayoutRepository, InstructorPayoutRepository>();
+                services.AddScoped<IInstructorPayoutService, InstructorPayoutService>();
                 services.AddScoped<ICourseAccessService, CourseAccessService>();
                 services.AddScoped<IAdminCourseRepository, AdminCourseRepository>();
                 services.AddScoped<IAdminCourseService, AdminCourseService>();
