@@ -1,5 +1,10 @@
 namespace EduFlyUp.BusinessObjects;
 
+public sealed class StudentExportLimitException : Exception { }
+public sealed record InstructorStudentExport(InstructorStudentRoster Roster, IReadOnlyList<InstructorStudentAttemptExport> Attempts);
+public sealed record InstructorStudentAttemptExport(int EnrollmentId, string UserId, string FullName, string? Email,
+    int QuizId, InstructorQuizAttemptRow Attempt);
+
 public sealed record InstructorIdentity(string UserId, string UserName);
 public sealed record InstructorStudentCourse(int Id, string Title, int EnrollmentCount);
 public sealed record InstructorStudentRow(int EnrollmentId, string UserId, string FullName, string? Email,

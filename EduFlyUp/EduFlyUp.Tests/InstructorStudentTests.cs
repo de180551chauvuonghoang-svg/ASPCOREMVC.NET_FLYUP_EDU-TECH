@@ -94,6 +94,12 @@ public sealed class InstructorStudentTests
         var filtered = await repository.RosterAsync(actor, mine.Id, int.MaxValue, "STUDENT", EnrollmentStatus.Cancelled);
         Assert.NotNull(filtered); Assert.Equal(4, filtered.TotalCount); Assert.Equal(1, filtered.Page);
         Assert.All(filtered.Students, s => Assert.Equal(EnrollmentStatus.Cancelled, s.Status));
+        var export = await repository.ExportAsync(actor, mine.Id, null, null);
+        Assert.NotNull(export); Assert.Equal(13, export.Roster.Students.Count);
+        Assert.Null(await repository.ExportAsync(actor, other.Id, null, null));
+        var filteredExport = await repository.ExportAsync(actor, mine.Id, "STUDENT", EnrollmentStatus.Cancelled);
+        Assert.NotNull(filteredExport); Assert.Equal(4, filteredExport.Roster.Students.Count);
+        Assert.Empty((await repository.ExportAsync(actor, empty.Id, null, null))!.Roster.Students);
     }
 
     [Theory]
@@ -174,5 +180,10 @@ public sealed class InstructorStudentTests
         Assert.Null(pending.Score); Assert.Null(pending.Passed);
         Assert.Null(await repository.DetailAsync(actor, other.Id, enrollment.Id, 1));
         Assert.Equal("Tài khoản không còn tồn tại", first.Student.FullName);
+        var export = await repository.ExportAsync(actor, mine.Id, null, null);
+        Assert.NotNull(export); Assert.Equal(12, export.Attempts.Count);
+        Assert.All(export.Attempts, a => Assert.Equal(quiz.Id, a.QuizId));
+        var pendingExport = Assert.Single(export.Attempts.Where(a => a.Attempt.CompletedAt is null));
+        Assert.Null(pendingExport.Attempt.Score); Assert.Null(pendingExport.Attempt.Passed);
     }
 }

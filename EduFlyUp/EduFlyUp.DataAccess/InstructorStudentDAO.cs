@@ -13,7 +13,7 @@ public sealed class InstructorStudentDAO : SingletonBase<InstructorStudentDAO>
             .Select(c => new InstructorStudentCourse(c.Id, c.Title, c.Enrollments.Count)).ToListAsync();
 
     public async Task<InstructorStudentRoster?> RosterAsync(AppDbContext db, InstructorIdentity instructor, int courseId, int page,
-        string? search = null, EnrollmentStatus? status = null)
+        string? search = null, EnrollmentStatus? status = null, bool allRows = false)
     {
         var course = await Owned(db, instructor).Where(c => c.Id == courseId).Select(c => new { c.Id, c.Title }).SingleOrDefaultAsync();
         if (course is null) return null;
@@ -33,9 +33,30 @@ public sealed class InstructorStudentDAO : SingletonBase<InstructorStudentDAO>
         var total = await query.CountAsync();
         page = Math.Clamp(page, 1, Math.Max(1, (total + InstructorStudentRoster.PageSize - 1) / InstructorStudentRoster.PageSize));
         var items = await query.OrderByDescending(e => e.EnrolledAt).ThenByDescending(e => e.EnrollmentId)
-            .Skip((page - 1) * InstructorStudentRoster.PageSize).Take(InstructorStudentRoster.PageSize)
+            .Skip(allRows ? 0 : (page - 1) * InstructorStudentRoster.PageSize).Take(allRows ? 10001 : InstructorStudentRoster.PageSize)
             .Select(e => new InstructorStudentRow(e.EnrollmentId, e.UserId, e.FullName, e.Email, e.EnrolledAt, e.Status, e.CompletedAt)).ToListAsync();
         return new(course.Id, course.Title, items, page, total, search, status);
+    }
+
+    public async Task<InstructorStudentExport?> ExportAsync(AppDbContext db, InstructorIdentity instructor, int courseId,
+        string? search, EnrollmentStatus? status)
+    {
+        var roster = await RosterAsync(db, instructor, courseId, 1, search, status, allRows: true);
+        if (roster is null) return null;
+        if (roster.TotalCount > 10000) throw new StudentExportLimitException();
+        var userIds = roster.Students.Select(s => s.UserId).Distinct().ToArray();
+        var attempts = await db.QuizAttempts.AsNoTracking()
+            .Where(a => a.Quiz.CourseId == courseId && userIds.Contains(a.UserId))
+            .OrderBy(a => a.UserId).ThenBy(a => a.QuizId).ThenBy(a => a.StartedAt).ThenBy(a => a.Id)
+            .Select(a => new { a.UserId, a.QuizId, Row = new InstructorQuizAttemptRow(a.Id, a.Quiz.Title, a.Quiz.IsCAT,
+                a.CompletedAt != null ? (decimal?)a.Score : null, a.CompletedAt != null ? (bool?)a.Passed : null,
+                a.StartedAt, a.CompletedAt) }).Take(50001).ToListAsync();
+        if (attempts.Count > 50000) throw new StudentExportLimitException();
+        var byUser = attempts.ToLookup(a => a.UserId);
+        var rows = roster.Students.SelectMany(s => byUser[s.UserId].Select(a =>
+            new InstructorStudentAttemptExport(s.EnrollmentId, s.UserId, s.FullName, s.Email, a.QuizId, a.Row))).ToList();
+        if (rows.Count > 50000) throw new StudentExportLimitException();
+        return new(roster, rows);
     }
 
     public async Task<InstructorStudentDetail?> DetailAsync(AppDbContext db, InstructorIdentity instructor, int courseId, int enrollmentId, int page)
