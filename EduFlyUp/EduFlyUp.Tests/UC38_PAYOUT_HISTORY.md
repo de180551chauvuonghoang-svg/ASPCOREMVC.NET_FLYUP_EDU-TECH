@@ -55,3 +55,15 @@ Lưu key trên bản ghi mới trong cùng transaction tạo yêu cầu. Unique 
 Kiểm tra cuối: 208/208 test ứng dụng với SQL Server thật, 0 bỏ qua; 11/11 test AdminDemo; build Release 0 lỗi/0 cảnh báo. SQL kiểm tra index không nhận key trùng nhưng chấp nhận nhiều bản ghi null cũ; nâng cấp từ migration cũ có dữ liệu vẫn giữ nguyên số tiền/chủ sở hữu/trạng thái/tài khoản và null key. Kiểm tra gửi lại sau Approved khi nguồn thu nhập unavailable, key với payload/owner khác và hai request cùng key đồng thời. HTTP kiểm tra redirect cho AlreadySubmitted, giữ key khi lỗi, GET mới cấp key khác, key thiếu/sai/rỗng bị chặn.
 
 Demo khởi động/migrate và 8 nhóm HTTP/SQL regression Admin đạt trên database GUID mới; server đã dừng. Không chạy thêm QA bằng trình duyệt cho thay đổi hidden field này. UC-38 vẫn cần adapter doanh thu/đối soát thật để mở gửi thực tế, phần xử lý Admin và lịch sử doanh thu chưa hoàn chỉnh.
+
+## Bước tiếp theo — chi tiết yêu cầu rút tiền
+
+Từ mỗi dòng lịch sử bấm **Xem chi tiết**. GET `/InstructorPayouts/Details/{id}` kiểm tra role Instructor và ownership trong SQL (Identity ID hoặc username/email cũ). Id lấy từ route, không nhận id/owner thay thế từ query. Id sai kiểu/không dương hoặc status bộ lọc sai trả 400; yêu cầu không tồn tại/ngoài quyền trả 404. Response no-store.
+
+Trang chi tiết hiển thị số tiền, trạng thái, ngày gửi/ngày xử lý, ngân hàng/chủ tài khoản và phản hồi Admin. Số tài khoản được che tại DAO trước khi tạo DTO: chỉ để tối đa bốn ký tự cuối, tài khoản cũ dài <=4 bị che toàn bộ, rỗng ghi Chưa có thông tin. Không truyền tài khoản đầy đủ hoặc SubmissionKey sang view. Razor encode ngân hàng, chủ tài khoản và AdminNote; dữ liệu thiếu có thông báo rõ. Không có chức năng sửa ngân hàng, sửa số tiền, duyệt hoặc chuyển tiền ở trang này.
+
+Giữ page/status từ lịch sử khi mở chi tiết và khi bấm quay lại, không dùng returnUrl tùy ý. Endpoint đích tự kiểm tra quyền dù người dùng sửa id trong URL. Bước này không thêm migration/package hoặc thay đổi payout của nhóm.
+
+Kiểm tra cuối: 213/213 test ứng dụng trên SQL Server thật, 0 bỏ qua; 11/11 test AdminDemo; build Release 0 lỗi/0 cảnh báo. SQL kiểm tra dual identity, ngoài quyền, dữ liệu thiếu, tài khoản ngắn và chỉ trả số đã che. HTTP kiểm tra role/guest, route id không bị query ghi đè, no-store, encode HTML, không lộ số tài khoản hoặc SubmissionKey, trạng thái/ngày/tiền, 400/404 và liên kết giữ page/status.
+
+Demo Kestrel trên database GUID riêng đạt đủ 8 nhóm regression Admin. Chỉ thêm yêu cầu kiểm thử vào database demo đã kiểm tra phạm vi. Trình duyệt xác nhận lọc Rejected → mở chi tiết → tài khoản chỉ hiện đuôi 5678 → quay về vẫn giữ bộ lọc/trang; không có console warning/error. Server đã dừng, ảnh `.admin-demo/uc38-payout-detail-proof.jpg` giữ cục bộ. Ba commit riêng: truy vấn/che số; màn hình; liên kết giữ bộ lọc.

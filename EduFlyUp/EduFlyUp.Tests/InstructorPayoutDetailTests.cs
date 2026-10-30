@@ -54,6 +54,14 @@ public sealed class InstructorPayoutDetailTests
         Assert.Contains("Chưa có phản hồi từ Admin.", legacy); Assert.Contains("Chưa có thông tin", legacy);
         foreach (var id in new[] { "2", "999" }) Assert.Equal(HttpStatusCode.NotFound, (await browser.Client.GetAsync("/InstructorPayouts/Details/" + id)).StatusCode);
         foreach (var id in new[] { "0", "-1", "wrong" }) Assert.Equal(HttpStatusCode.BadRequest, (await browser.Client.GetAsync("/InstructorPayouts/Details/" + id)).StatusCode);
+        var filteredHistory = await browser.Client.GetStringAsync("/InstructorPayouts?status=Rejected");
+        var detailUrl = WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Match(filteredHistory, "href=\"([^\"]*/InstructorPayouts/Details/1[^\"]*)\"").Groups[1].Value);
+        Assert.Contains("status=Rejected", detailUrl);
+        var filteredDetail = await browser.Client.GetStringAsync(detailUrl);
+        Assert.Contains("status=Rejected", filteredDetail);
+        var returned = WebUtility.HtmlDecode(await browser.Client.GetStringAsync("/InstructorPayouts/Details/1?page=2&status=Rejected"));
+        Assert.Contains("href=\"/InstructorPayouts?page=2&status=Rejected\"", returned);
+        Assert.Equal(HttpStatusCode.BadRequest, (await browser.Client.GetAsync("/InstructorPayouts/Details/1?status=999")).StatusCode);
     }
 
     [SqlServerFact]

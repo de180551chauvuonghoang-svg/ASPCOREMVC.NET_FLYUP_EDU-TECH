@@ -2,7 +2,7 @@
 @using EduFlyUp.Web.Models.Instructor
 @model EduFlyUp.BusinessObjects.InstructorPayoutDetail
 @{ Layout = "_AdminLayout"; ViewData["Title"] = "Chi tiết yêu cầu rút tiền"; }
-<a asp-action="Index" class="text-decoration-none">← Lịch sử rút tiền</a>
+<a asp-action="Index" asp-route-page="@ViewData["HistoryPage"]" asp-route-status="@ViewData["HistoryStatus"]" class="text-decoration-none">← Lịch sử rút tiền</a>
 <h1 class="h3 fw-bold mt-3 mb-4">Yêu cầu rút tiền #@Model.Request.Id</h1>
 <div class="row g-4">
     <div class="col-lg-6"><section class="card card-modern p-4 h-100" aria-labelledby="requestInfoTitle">

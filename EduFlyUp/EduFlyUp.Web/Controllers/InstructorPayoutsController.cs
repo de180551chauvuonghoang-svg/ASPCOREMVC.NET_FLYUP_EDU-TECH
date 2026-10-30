@@ -14,10 +14,12 @@ public sealed class InstructorPayoutsController(IInstructorPayoutService payouts
     private InstructorIdentity Instructor => new(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", User.Identity?.Name ?? "");
 
     [HttpGet]
-    public async Task<IActionResult> Details([FromRoute] int id)
+    public async Task<IActionResult> Details([FromRoute] int id, int page = 1, PayoutStatus? status = null)
     {
-        if (!ModelState.IsValid || id <= 0) return BadRequest();
+        if (!ModelState.IsValid || id <= 0 || (status.HasValue && !Enum.IsDefined(status.Value))) return BadRequest();
         var detail = await payouts.DetailAsync(Instructor, id);
+        ViewData["HistoryPage"] = Math.Max(1, page);
+        ViewData["HistoryStatus"] = status;
         return detail is null ? NotFound() : View(detail);
     }
 
