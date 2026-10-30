@@ -10,6 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ──────────────── Đăng ký Services ────────────────
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<EduFlyUp.Web.Storage.ILessonMaterialStorage, EduFlyUp.Web.Storage.LessonMaterialStorage>();
+builder.Services.AddScoped<EduFlyUp.Web.Storage.LessonFileCleanup>();
+builder.Services.AddScoped<EduFlyUp.Web.Storage.ILessonVideoStorage, EduFlyUp.Web.Storage.LessonVideoStorage>();
 
 // 1. Cấu hình DbContext kết nối SQL Server
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -41,6 +44,14 @@ builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<ICouponRepository, CouponRepository>();
+builder.Services.AddScoped<ICouponService, CouponService>();
+builder.Services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();
+builder.Services.AddScoped<IInstructorStudentService, InstructorStudentService>();
+builder.Services.AddScoped<IInstructorPayoutRepository, InstructorPayoutRepository>();
+builder.Services.AddScoped<IInstructorEarningsSource, UnavailableInstructorEarningsSource>();
+builder.Services.AddScoped<IInstructorPayoutService, InstructorPayoutService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<ICourseAccessService, CourseAccessService>();

@@ -23,9 +23,11 @@ internal sealed class TestApplication : IDisposable
     private readonly TestServer _server;
     public TestCourseRepository Courses { get; } = new();
     public TestEnrollmentRepository Enrollments { get; } = new();
+    public TestLessonRepository Lessons { get; } = new();
+    public TestCouponRepository Coupons { get; } = new();
     public IServiceProvider Services => _server.Services;
 
-    public TestApplication()
+    public TestApplication(EduFlyUp.Web.Storage.ILessonMaterialStorage? materialStorage = null, EduFlyUp.Web.Storage.ILessonVideoStorage? videoStorage = null, IInstructorPayoutService? payoutService = null)
     {
         var database = Guid.NewGuid().ToString();
         _server = new TestServer(new WebHostBuilder()
@@ -46,9 +48,21 @@ internal sealed class TestApplication : IDisposable
                 });
                 services.AddSingleton<ICourseRepository>(Courses);
                 services.AddSingleton<IEnrollmentRepository>(Enrollments);
-                services.AddSingleton<ILessonRepository, TestLessonRepository>();
+                services.AddSingleton<ILessonRepository>(Lessons);
+                services.AddSingleton<EduFlyUp.Web.Storage.ILessonMaterialStorage>(materialStorage ?? new TestMaterialStorage());
+                services.AddScoped<EduFlyUp.Web.Storage.LessonFileCleanup>();
+                services.AddSingleton<EduFlyUp.Web.Storage.ILessonVideoStorage>(videoStorage ?? new TestVideoStorage());
                 services.AddScoped<ICourseService, CourseService>();
                 services.AddScoped<ILessonService, LessonService>();
+                services.AddSingleton(TimeProvider.System);
+                services.AddSingleton<ICouponRepository>(Coupons);
+                services.AddScoped<ICouponService, CouponService>();
+                services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();
+                services.AddScoped<IInstructorStudentService, InstructorStudentService>();
+                services.AddScoped<IInstructorPayoutRepository, InstructorPayoutRepository>();
+                services.AddScoped<IInstructorEarningsSource, UnavailableInstructorEarningsSource>();
+                services.AddScoped<IInstructorPayoutService, InstructorPayoutService>();
+                if (payoutService is not null) services.AddSingleton(payoutService);
                 services.AddScoped<ICourseAccessService, CourseAccessService>();
                 services.AddScoped<IAdminCourseRepository, AdminCourseRepository>();
                 services.AddScoped<IAdminCourseService, AdminCourseService>();

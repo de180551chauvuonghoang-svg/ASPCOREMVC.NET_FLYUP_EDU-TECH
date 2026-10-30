@@ -1,0 +1,32 @@
+@model EduFlyUp.BusinessObjects.InstructorEnrollmentSummary
+<section class="mb-5" aria-labelledby="enrollmentSummaryTitle" id="enrollment-summary">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h5 fw-bold mb-0" id="enrollmentSummaryTitle">Học viên trong các khóa học của tôi</h2>
+        <a asp-controller="InstructorStudents" asp-action="Courses" class="btn btn-sm btn-outline-primary">Xem danh sách học viên</a>
+    </div>
+    <p class="text-muted small">Tất cả khóa học của bạn, gồm cả khóa lưu trữ; không thay đổi theo bộ lọc danh sách khóa học bên dưới.</p>
+    <div class="row g-3">
+        <div class="col-sm-6 col-lg-4"><div class="card card-modern p-3 h-100">
+            <span class="text-muted">Tổng lượt ghi danh</span>
+            <strong class="h3 mt-2" id="total-enrollments">@Model.TotalEnrollments</strong>
+            <span class="text-muted small">Gồm đang học, đã hoàn thành và đã hủy.</span>
+        </div></div>
+        <div class="col-sm-6 col-lg-4"><div class="card card-modern p-3 h-100">
+            <span class="text-muted">Học viên không trùng</span>
+            <strong class="h3 mt-2" id="unique-students">@Model.UniqueStudents</strong>
+            <span class="text-muted small">Theo mã học viên; một người học nhiều khóa chỉ tính một lần, gồm cả ghi danh đã hủy.</span>
+        </div></div>
+        <div class="col-sm-6 col-lg-4"><div class="card card-modern p-3 h-100">
+            <span class="text-muted">Trạng thái ghi danh</span>
+            <dl class="mb-0 mt-2">
+                <div class="d-flex justify-content-between gap-2"><dt class="fw-normal">Đang học</dt><dd class="fw-bold" id="active-enrollments">@Model.ActiveEnrollments</dd></div>
+                <div class="d-flex justify-content-between gap-2"><dt class="fw-normal">Đã hoàn thành</dt><dd class="fw-bold" id="completed-enrollments">@Model.CompletedEnrollments</dd></div>
+                <div class="d-flex justify-content-between gap-2"><dt class="fw-normal">Đã hủy</dt><dd class="fw-bold mb-0" id="cancelled-enrollments">@Model.CancelledEnrollments</dd></div>
+            </dl>
+        </div></div>
+    </div>
+    @if (Model.TotalEnrollments == 0)
+    {
+        <p class="text-muted small mt-3 mb-0">Chưa có lượt ghi danh trong các khóa học của bạn.</p>
+    }
+</section>

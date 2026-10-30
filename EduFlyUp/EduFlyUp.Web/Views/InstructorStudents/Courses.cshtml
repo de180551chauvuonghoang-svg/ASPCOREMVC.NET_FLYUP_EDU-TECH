@@ -1,0 +1,19 @@
+@model IReadOnlyList<EduFlyUp.BusinessObjects.InstructorStudentCourse>
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Học viên theo khóa học"; }
+<div class="mb-4"><h1 class="h3 fw-bold">Học viên theo khóa học</h1><p class="text-muted">Chọn khóa học của bạn để xem danh sách ghi danh, gồm cả các lượt đã hoàn thành và đã hủy.</p></div>
+@if (Model.Count == 0)
+{
+    <div class="card card-modern p-5 text-center"><h2 class="h5">Bạn chưa có khóa học</h2><p class="text-muted mb-0">Các khóa học do bạn sở hữu sẽ xuất hiện tại đây.</p></div>
+}
+else
+{
+    <div class="row g-3">
+    @foreach (var course in Model)
+    {
+        <div class="col-md-6 col-xl-4"><div class="card card-modern border-0 shadow-sm p-4 h-100">
+            <h2 class="h5 fw-bold">@course.Title</h2><p class="text-muted">@course.EnrollmentCount học viên ghi danh</p>
+            <a asp-action="Index" asp-route-courseId="@course.Id" class="btn btn-outline-primary mt-auto">Xem học viên</a>
+        </div></div>
+    }
+    </div>
+}

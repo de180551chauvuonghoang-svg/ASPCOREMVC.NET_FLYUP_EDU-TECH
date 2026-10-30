@@ -1,0 +1,31 @@
+@using System.Globalization
+@using EduFlyUp.Web.Models.Instructor
+@model EduFlyUp.BusinessObjects.InstructorPayoutDetail
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Chi tiết yêu cầu rút tiền"; }
+<a asp-action="Index" asp-route-page="@ViewData["HistoryPage"]" asp-route-status="@ViewData["HistoryStatus"]" class="text-decoration-none">← Lịch sử rút tiền</a>
+<h1 class="h3 fw-bold mt-3 mb-4">Yêu cầu rút tiền #@Model.Request.Id</h1>
+<div class="row g-4">
+    <div class="col-lg-6"><section class="card card-modern p-4 h-100" aria-labelledby="requestInfoTitle">
+        <h2 class="h5 mb-3" id="requestInfoTitle">Thông tin yêu cầu</h2>
+        <dl class="row mb-0">
+            <dt class="col-sm-5">Số tiền</dt><dd class="col-sm-7 fw-bold">@Model.Request.Amount.ToString("N2", CultureInfo.GetCultureInfo("vi-VN")) VNĐ</dd>
+            <dt class="col-sm-5">Trạng thái</dt><dd class="col-sm-7">@InstructorPayoutDisplay.Status(Model.Request.Status)</dd>
+            <dt class="col-sm-5">Ngày gửi</dt><dd class="col-sm-7">@InstructorReportDisplay.VietnamTime(Model.Request.CreatedAt)</dd>
+            <dt class="col-sm-5">Ngày xử lý</dt><dd class="col-sm-7">@(Model.Request.ProcessedAt.HasValue ? InstructorReportDisplay.VietnamTime(Model.Request.ProcessedAt.Value) : "Chưa có thời gian xử lý")</dd>
+        </dl>
+        <p class="small text-muted mb-0 mt-2">Thời gian theo giờ Việt Nam (UTC+7).</p>
+    </section></div>
+    <div class="col-lg-6"><section class="card card-modern p-4 h-100" aria-labelledby="bankInfoTitle">
+        <h2 class="h5 mb-3" id="bankInfoTitle">Ngân hàng trong yêu cầu</h2>
+        <dl class="row mb-0 text-break">
+            <dt class="col-sm-5">Ngân hàng</dt><dd class="col-sm-7">@(string.IsNullOrWhiteSpace(Model.BankName) ? "Chưa có thông tin" : Model.BankName)</dd>
+            <dt class="col-sm-5">Số tài khoản</dt><dd class="col-sm-7">@Model.MaskedAccountNumber</dd>
+            <dt class="col-sm-5">Chủ tài khoản</dt><dd class="col-sm-7">@(string.IsNullOrWhiteSpace(Model.AccountHolderName) ? "Chưa có thông tin" : Model.AccountHolderName)</dd>
+        </dl>
+        <p class="small text-muted mb-0 mt-2">Số tài khoản được che bớt để bảo vệ thông tin.</p>
+    </section></div>
+    <div class="col-12"><section class="card card-modern p-4" aria-labelledby="adminResponseTitle">
+        <h2 class="h5 mb-3" id="adminResponseTitle">Phản hồi từ Admin</h2>
+        <p class="text-break mb-0" style="white-space: pre-wrap">@(string.IsNullOrWhiteSpace(Model.Request.AdminNote) ? "Chưa có phản hồi từ Admin." : Model.Request.AdminNote)</p>
+    </section></div>
+</div>

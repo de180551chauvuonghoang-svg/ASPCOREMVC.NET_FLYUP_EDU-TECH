@@ -113,6 +113,13 @@
                     </a>
                 </div>
 
+                @if (User.IsInRole("Instructor"))
+                {
+                    <div class="admin-nav-item"><a asp-controller="Coupons" asp-action="Index" class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Coupons" ? "active" : "")"><i class="bi bi-ticket-perforated"></i><span>Mã giảm giá của tôi</span></a></div>
+                    <div class="admin-nav-item"><a asp-controller="InstructorStudents" asp-action="Courses" class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "InstructorStudents" ? "active" : "")"><i class="bi bi-people"></i><span>Học viên của tôi</span></a></div>
+                    <div class="admin-nav-item"><a asp-controller="InstructorPayouts" asp-action="Index" class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "InstructorPayouts" ? "active" : "")"><i class="bi bi-wallet2"></i><span>Lịch sử rút tiền</span></a></div>
+                }
+
                 <!-- Section 3: Navigation & System -->
                 @if (User.IsInRole("Admin"))
                 {
