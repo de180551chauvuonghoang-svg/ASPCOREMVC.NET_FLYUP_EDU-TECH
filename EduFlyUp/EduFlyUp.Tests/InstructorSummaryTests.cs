@@ -27,6 +27,10 @@ public sealed class InstructorSummaryTests
         var summary = await service.SummaryAsync(new("owner-id", "owner@example.test"));
         Assert.Equal(3, summary.TotalEnrollments);
         Assert.Equal(2, summary.UniqueStudents);
+        Assert.Equal(1, summary.ActiveEnrollments);
+        Assert.Equal(1, summary.CompletedEnrollments);
+        Assert.Equal(1, summary.CancelledEnrollments);
+        Assert.Equal(summary.TotalEnrollments, summary.ActiveEnrollments + summary.CompletedEnrollments + summary.CancelledEnrollments);
         Assert.Equal(new InstructorEnrollmentSummary(0, 0), await service.SummaryAsync(new("empty", "empty@example.test")));
         Assert.Equal(new InstructorEnrollmentSummary(0, 0), await service.SummaryAsync(new("", "owner@example.test")));
     }

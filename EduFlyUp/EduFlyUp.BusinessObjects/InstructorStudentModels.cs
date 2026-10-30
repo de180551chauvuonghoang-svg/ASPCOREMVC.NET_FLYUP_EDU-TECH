@@ -6,7 +6,8 @@ public sealed record InstructorStudentAttemptExport(int EnrollmentId, string Use
     int QuizId, InstructorQuizAttemptRow Attempt);
 
 public sealed record InstructorIdentity(string UserId, string UserName);
-public sealed record InstructorEnrollmentSummary(int TotalEnrollments, int UniqueStudents);
+public sealed record InstructorEnrollmentSummary(int TotalEnrollments, int UniqueStudents,
+    int ActiveEnrollments = 0, int CompletedEnrollments = 0, int CancelledEnrollments = 0);
 public sealed record InstructorStudentCourse(int Id, string Title, int EnrollmentCount);
 public sealed record InstructorStudentRow(int EnrollmentId, string UserId, string FullName, string? Email,
     DateTime EnrolledAt, EnrollmentStatus Status, DateTime? CompletedAt);
