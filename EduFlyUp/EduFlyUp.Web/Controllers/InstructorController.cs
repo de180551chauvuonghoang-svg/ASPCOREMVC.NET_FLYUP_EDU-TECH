@@ -83,8 +83,9 @@ public class InstructorController : Controller
         ViewBag.TotalLessons = instructorCourses.Sum(c => c.Lessons?.Count ?? 0);
         if (!isAdmin)
         {
-            ViewData["EnrollmentSummary"] = await _students.SummaryAsync(new InstructorIdentity(
-                User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", User.Identity?.Name ?? ""));
+            var instructor = new InstructorIdentity(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", User.Identity?.Name ?? "");
+            ViewData["EnrollmentSummary"] = await _students.SummaryAsync(instructor);
+            ViewData["PopularCourses"] = await _students.PopularCoursesAsync(instructor);
         }
 
         ViewBag.Categories = (await _courseService.GetCategoriesAsync()).ToList();

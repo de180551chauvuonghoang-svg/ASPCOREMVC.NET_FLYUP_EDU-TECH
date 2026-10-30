@@ -75,13 +75,20 @@ public sealed class InstructorSummaryTests
             foreach (var id in new[] { "active", "completed", "cancelled" }) Assert.Contains($"id=\"{id}-enrollments\">1<", html);
             Assert.DoesNotContain("FOREIGN_COURSE", html);
             Assert.Contains("/InstructorStudents/Courses", html);
+            Assert.Contains("id=\"popular-courses\"", html);
+            Assert.Contains("data-popular-course-id=\"1\"", html);
+            Assert.Contains("data-popular-course-id=\"2\"", html);
+            Assert.DoesNotContain("data-popular-course-id=\"3\"", html);
         }
         using var empty = app.CreateBrowser(); await TestApplication.LoginAsync(empty, "empty@example.test");
         var emptyHtml = await empty.Client.GetStringAsync("/Instructor/Dashboard");
         Assert.Contains("id=\"total-enrollments\">0<", emptyHtml);
         Assert.Contains("Chưa có lượt ghi danh", WebUtility.HtmlDecode(emptyHtml));
+        Assert.Contains("Chưa có khóa học với học viên", WebUtility.HtmlDecode(emptyHtml));
         using var admin = app.CreateBrowser(); await TestApplication.LoginAsync(admin, "admin@example.test");
-        Assert.DoesNotContain("id=\"enrollment-summary\"", await admin.Client.GetStringAsync("/Instructor/Dashboard"));
+        var adminHtml = await admin.Client.GetStringAsync("/Instructor/Dashboard");
+        Assert.DoesNotContain("id=\"enrollment-summary\"", adminHtml);
+        Assert.DoesNotContain("id=\"popular-courses\"", adminHtml);
     }
 
     [SqlServerFact]

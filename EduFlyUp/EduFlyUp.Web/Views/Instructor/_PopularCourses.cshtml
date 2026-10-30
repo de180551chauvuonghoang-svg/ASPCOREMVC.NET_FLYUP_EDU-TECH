@@ -1,0 +1,24 @@
+@model IReadOnlyList<EduFlyUp.BusinessObjects.InstructorPopularCourse>
+<section class="card card-modern border-0 shadow-sm mb-5 overflow-hidden" id="popular-courses" aria-labelledby="popularCoursesTitle">
+    <div class="p-3 p-md-4 border-bottom">
+        <h2 class="h5 fw-bold" id="popularCoursesTitle">Khóa học đông học viên</h2>
+        <p class="text-muted small mb-0">Tối đa 5 khóa học của bạn, gồm cả khóa lưu trữ. Mỗi học viên đang học hoặc đã hoàn thành chỉ tính một lần trong mỗi khóa; không tính ghi danh đã hủy. Danh sách này không đổi theo bộ lọc khóa học bên dưới.</p>
+    </div>
+    @if (Model.Count == 0)
+    {
+        <p class="text-muted p-4 mb-0">Chưa có khóa học với học viên đang học hoặc đã hoàn thành.</p>
+    }
+    else
+    {
+        <div class="table-responsive"><table class="table align-middle mb-0">
+            <thead class="table-light"><tr><th scope="col" class="ps-4">Thứ tự</th><th scope="col">Khóa học</th><th scope="col" class="text-end pe-4">Học viên</th></tr></thead>
+            <tbody>
+            @for (var i = 0; i < Model.Count; i++)
+            {
+                var course = Model[i];
+                <tr data-popular-course-id="@course.Id"><td class="ps-4">@(i + 1)</td><th scope="row" class="fw-normal">@course.Title</th><td class="text-end pe-4 fw-bold">@course.StudentCount</td></tr>
+            }
+            </tbody>
+        </table></div>
+    }
+</section>
