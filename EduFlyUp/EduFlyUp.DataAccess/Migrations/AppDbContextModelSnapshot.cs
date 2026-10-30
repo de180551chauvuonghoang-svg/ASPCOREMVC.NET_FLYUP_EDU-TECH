@@ -356,10 +356,17 @@ namespace EduFlyUp.DataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("SubmissionKey")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SubmissionKey")
+                        .IsUnique()
+                        .HasFilter("[SubmissionKey] IS NOT NULL");
 
                     b.ToTable("PayoutRequests", (string)null);
                 });

@@ -13,4 +13,5 @@ public class PayoutRequest : BaseEntity
     public PayoutStatus Status { get; set; } = PayoutStatus.Pending;
     public string? AdminNote { get; set; }
     public DateTime? ProcessedAt { get; set; }
+    public Guid? SubmissionKey { get; set; }
 }
