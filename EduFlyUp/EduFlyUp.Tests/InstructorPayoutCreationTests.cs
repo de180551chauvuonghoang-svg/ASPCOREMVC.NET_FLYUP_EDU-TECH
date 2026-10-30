@@ -48,7 +48,7 @@ public sealed class InstructorPayoutCreationTests
     }
 
     private static readonly InstructorIdentity Owner = new("owner-id", "owner@example.test");
-    private static readonly InstructorPayoutInput Input = new(100000, "Demo Bank", "0012345678", "DUONG THAI DUY");
+    private static readonly InstructorPayoutInput Input = new(100000, "Demo Bank", "0012345678", "DUONG THAI DUY", Guid.NewGuid());
     private sealed class VerifiedTestEarnings(decimal? value) : IInstructorEarningsSource
     {
         public Task<decimal?> CreditedEarningsAsync(AppDbContext db, InstructorIdentity instructor)
@@ -87,7 +87,7 @@ public sealed class InstructorPayoutCreationTests
         Assert.Equal(Input.Amount, saved.Amount); Assert.Equal(Input.AccountNumber, saved.AccountNumber); Assert.Equal("Demo Bank", saved.BankName);
         Assert.Null(saved.AdminNote); Assert.Null(saved.ProcessedAt);
         Assert.Equal(400000m, (await service.BalanceAsync(Owner)).Available);
-        Assert.Equal(InstructorPayoutChange.PendingExists, (await service.CreateAsync(Owner, Input)).Change);
+        Assert.Equal(InstructorPayoutChange.PendingExists, (await service.CreateAsync(Owner, Input with { SubmissionKey = Guid.NewGuid() })).Change);
         Assert.Equal(4, await db.PayoutRequests.CountAsync());
     }
 
@@ -99,7 +99,7 @@ public sealed class InstructorPayoutCreationTests
         {
             using var scope = database.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            return (await new InstructorPayoutService(new InstructorPayoutRepository(db, new VerifiedTestEarnings(700000))).CreateAsync(Owner, Input)).Change;
+            return (await new InstructorPayoutService(new InstructorPayoutRepository(db, new VerifiedTestEarnings(700000))).CreateAsync(Owner, Input with { SubmissionKey = Guid.NewGuid() })).Change;
         }
         var changes = await Task.WhenAll(Send(), Send());
         Assert.Single(changes.Where(c => c == InstructorPayoutChange.Created));

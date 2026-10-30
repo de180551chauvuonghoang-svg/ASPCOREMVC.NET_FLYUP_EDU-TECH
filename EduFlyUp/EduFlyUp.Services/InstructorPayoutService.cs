@@ -18,7 +18,7 @@ public sealed class InstructorPayoutService(IInstructorPayoutRepository reposito
     public async Task<InstructorPayoutResult> CreateAsync(InstructorIdentity instructor, InstructorPayoutInput input)
     {
         input = InstructorPayoutPolicy.Normalize(input);
-        var change = ValidIdentity(instructor) && InstructorPayoutPolicy.Valid(input)
+        var change = ValidIdentity(instructor) && InstructorPayoutPolicy.Valid(input) && input.SubmissionKey.HasValue && input.SubmissionKey != Guid.Empty
             ? await repository.CreateAsync(instructor, input) : InstructorPayoutChange.Invalid;
         return new(change, change switch
         {

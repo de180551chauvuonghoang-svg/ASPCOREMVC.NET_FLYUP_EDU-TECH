@@ -14,17 +14,18 @@ public sealed class InstructorPayoutsController(IInstructorPayoutService payouts
     private InstructorIdentity Instructor => new(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", User.Identity?.Name ?? "");
 
     [HttpGet]
-    public async Task<IActionResult> Create() => await Form(new());
+    public async Task<IActionResult> Create() => await Form(new() { SubmissionKey = Guid.NewGuid() });
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Amount,BankName,AccountNumber,AccountHolderName")] InstructorPayoutForm model)
+    public async Task<IActionResult> Create([Bind("Amount,BankName,AccountNumber,AccountHolderName,SubmissionKey")] InstructorPayoutForm model)
     {
+        if (model.SubmissionKey == Guid.Empty) ModelState.AddModelError(nameof(model.SubmissionKey), "Mã lần gửi không hợp lệ. Vui lòng mở lại trang yêu cầu rút tiền.");
         if (!ModelState.IsValid) { Response.StatusCode = 400; return await Form(model); }
         try
         {
-            var result = await payouts.CreateAsync(Instructor, new(model.Amount!.Value, model.BankName, model.AccountNumber, model.AccountHolderName));
-            if (result.Change == InstructorPayoutChange.Created)
+            var result = await payouts.CreateAsync(Instructor, new(model.Amount!.Value, model.BankName, model.AccountNumber, model.AccountHolderName, model.SubmissionKey));
+            if (result.Change is InstructorPayoutChange.Created or InstructorPayoutChange.AlreadySubmitted)
             {
                 TempData["SuccessMessage"] = result.Message;
                 return RedirectToAction(nameof(Index));

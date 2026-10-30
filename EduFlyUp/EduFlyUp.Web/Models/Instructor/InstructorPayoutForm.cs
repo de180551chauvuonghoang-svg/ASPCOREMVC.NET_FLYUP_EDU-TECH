@@ -5,6 +5,8 @@ namespace EduFlyUp.Web.Models.Instructor;
 
 public sealed class InstructorPayoutForm
 {
+    [Required(ErrorMessage = "Mã lần gửi không hợp lệ. Vui lòng mở lại trang yêu cầu rút tiền.")]
+    public Guid? SubmissionKey { get; set; }
     [Required(ErrorMessage = "Vui lòng nhập số tiền.")]
     [Range(typeof(decimal), "0.01", "9999999999999999.99", ErrorMessage = "Số tiền phải lớn hơn 0 và trong giới hạn cho phép.")]
     public decimal? Amount { get; set; }

@@ -32,12 +32,26 @@ GET `/InstructorPayouts/Create` hiển thị thu nhập đã đối soát, tổn
 
 POST Create yêu cầu role Instructor và anti-forgery. Chỉ bind Amount/BankName/AccountNumber/AccountHolderName; owner lấy từ phiên, không nhận status/processed/adminnote/số dư từ form. Số tiền phải >0, tối đa decimal(18,2), tối đa hai chữ số thập phân. Chuỗi được trim; tên ngân hàng/chủ tài khoản tối đa 100 ký tự, không ký tự điều khiển; số tài khoản 4–34 ký tự ASCII chữ/số, giữ nguyên số 0 ở đầu.
 
-Nguồn thu nhập chưa xác minh trả 503 và không ghi yêu cầu. Khi nguồn sẵn sàng, transaction Serializable + sp_getapplock `EduFlyUp.PayoutManagement` kiểm tra lại thu nhập/số tiền đã duyệt/đang chờ trước khi ghi. Chặn khi đã có Pending hoặc số tiền vượt khả dụng, trả 409; input sai trả 400. Yêu cầu mới luôn có owner Identity ID, Pending, UTC CreatedAt, AdminNote/ProcessedAt=null. Hai request đồng thời qua các context riêng chỉ tạo một Pending. Đây là chặn gửi đồng thời/yêu cầu mới khi đang chờ, chưa phải token idempotency bền vững cho replay sau khi yêu cầu cũ đã xử lý.
+Nguồn thu nhập chưa xác minh trả 503 và không ghi yêu cầu. Khi nguồn sẵn sàng, transaction Serializable + sp_getapplock `EduFlyUp.PayoutManagement` kiểm tra lại thu nhập/số tiền đã duyệt/đang chờ trước khi ghi. Chặn khi đã có Pending hoặc số tiền vượt khả dụng, trả 409; input sai trả 400. Yêu cầu mới luôn có owner Identity ID, Pending, UTC CreatedAt, AdminNote/ProcessedAt=null. Hai request đồng thời qua các context riêng chỉ tạo một Pending. Cơ chế nhận diện gửi lại sau khi yêu cầu đã xử lý được bổ sung ở bước tiếp theo bên dưới.
 
-Adapter thu nhập, writer đối soát và chức năng Admin thay đổi payout phải dùng cùng SQL lock và transaction để giữ quy tắc số dư. Không thêm schema/migration, không mở chức năng chuyển tiền. GET số dư là thông tin tại thời điểm đọc; POST luôn đọc lại dưới khóa. Chưa có writer Admin/adapter thật để nghiệm thu toàn bộ luồng tài chính.
+Adapter thu nhập, writer đối soát và chức năng Admin thay đổi payout phải dùng cùng SQL lock và transaction để giữ quy tắc số dư. Bước chuẩn bị form ban đầu không thêm schema/migration và không mở chức năng chuyển tiền. GET số dư là thông tin tại thời điểm đọc; POST luôn đọc lại dưới khóa. Chưa có writer Admin/adapter thật để nghiệm thu toàn bộ luồng tài chính.
 
 Kiểm tra cuối bước này: 199/199 test ứng dụng trên SQL Server thật, 0 bỏ qua; 11/11 test AdminDemo; build Release 0 lỗi/0 cảnh báo. Unit kiểm tra amount/account/normalize và null balance; SQL kiểm tra không ghi khi nguồn chưa có, trừ Approved/giữ chỗ Pending/bỏ Rejected, legacy owner, số tiền vượt khả dụng, server-owned fields và gửi đồng thời. HTTP kiểm tra anti-forgery, input sai, giả owner/status/balance không được tin, form sẵn sàng khi service xác minh (test double), redirect lịch sử và form đóng khi nguồn production chưa có.
 
 Trình duyệt demo database GUID riêng: từ lịch sử mở trang yêu cầu, thu nhập/khả dụng hiện Chưa xác minh, không có ô tài khoản/nút gửi; không console warning/error. Demo đạt đủ 8 nhóm regression Admin, đã dừng sau QA. Không thêm nguồn tiền giả vào ứng dụng hoặc database nhóm. Ảnh `.admin-demo/uc38-payout-request-proof.jpg` cục bộ.
 
 Ba commit riêng: policy và hợp đồng nguồn số dư; lưu yêu cầu dưới transaction/lock; form và chặn gửi khi chưa xác minh.
+
+## Bước tiếp theo — nhận diện cùng một lần gửi
+
+Thêm migration `20261030234022_AddPayoutSubmissionKey`: cột Guid? SubmissionKey trên PayoutRequests và unique filtered index cho các giá trị không null. Bản ghi cũ giữ null, không backfill ngẫu nhiên, không xóa dữ liệu. Chỉ áp dụng/kiểm tra migration trên database GUID riêng trong đợt này, chưa cập nhật database của nhóm. Khi tích hợp cần áp dụng migration trước khi dùng bản code mới. [Tài liệu EF Core về index](https://learn.microsoft.com/en-us/ef/core/modeling/indexes).
+
+GET Create cấp Guid mới, POST bắt buộc mã hợp lệ và khác Guid.Empty. Mã được giữ qua lỗi validation, thiếu số dư hoặc lỗi lưu để lần thử lại giữ cùng định danh; một lần GET mới là một yêu cầu mới. Key không thay thế anti-forgery hoặc quyền truy cập.
+
+Server tìm key trước khi phụ thuộc nguồn doanh thu, rồi kiểm tra lại dưới SQL lock. Cùng key + đúng chủ sở hữu + cùng amount/bank/account/holder đã normalize trả AlreadySubmitted, chuyển về lịch sử, không tạo thêm bản ghi kể cả trạng thái đã Approved/Rejected hoặc nguồn thu nhập hiện không sẵn sàng. Cùng key nhưng khác thông tin/chủ sở hữu trả 409, không trả chi tiết ngân hàng hoặc yêu cầu của người khác. Hai request cùng key đồng thời trả một Created/một AlreadySubmitted; hai key khác nhau vẫn bị chặn khi đã có Pending.
+
+Lưu key trên bản ghi mới trong cùng transaction tạo yêu cầu. Unique index là lớp bảo vệ cuối cùng trong database; writer Admin sau này phải giữ nguyên key. Không xóa key khi yêu cầu hoàn tất. Chưa có cơ chế xóa lịch sử payout; nếu tích hợp cơ chế xóa thì cần bảo toàn lịch sử key để giữ bảo đảm chống gửi lại.
+
+Kiểm tra cuối: 208/208 test ứng dụng với SQL Server thật, 0 bỏ qua; 11/11 test AdminDemo; build Release 0 lỗi/0 cảnh báo. SQL kiểm tra index không nhận key trùng nhưng chấp nhận nhiều bản ghi null cũ; nâng cấp từ migration cũ có dữ liệu vẫn giữ nguyên số tiền/chủ sở hữu/trạng thái/tài khoản và null key. Kiểm tra gửi lại sau Approved khi nguồn thu nhập unavailable, key với payload/owner khác và hai request cùng key đồng thời. HTTP kiểm tra redirect cho AlreadySubmitted, giữ key khi lỗi, GET mới cấp key khác, key thiếu/sai/rỗng bị chặn.
+
+Demo khởi động/migrate và 8 nhóm HTTP/SQL regression Admin đạt trên database GUID mới; server đã dừng. Không chạy thêm QA bằng trình duyệt cho thay đổi hidden field này. UC-38 vẫn cần adapter doanh thu/đối soát thật để mở gửi thực tế, phần xử lý Admin và lịch sử doanh thu chưa hoàn chỉnh.

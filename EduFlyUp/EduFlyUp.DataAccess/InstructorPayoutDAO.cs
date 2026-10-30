@@ -26,7 +26,7 @@ public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
     {
         if (string.IsNullOrWhiteSpace(instructor.UserId) || string.IsNullOrWhiteSpace(instructor.UserName) || !InstructorPayoutPolicy.Valid(input))
             return InstructorPayoutChange.Invalid;
-        if (input.SubmissionKey == Guid.Empty) return InstructorPayoutChange.Invalid;
+        if (!input.SubmissionKey.HasValue || input.SubmissionKey == Guid.Empty) return InstructorPayoutChange.Invalid;
         var previous = await PreviousSubmissionAsync(db, instructor, input);
         if (previous.HasValue) return previous.Value;
         if (!(await earnings.CreditedEarningsAsync(db, instructor)).HasValue)

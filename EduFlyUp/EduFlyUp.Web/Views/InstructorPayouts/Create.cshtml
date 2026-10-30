@@ -13,6 +13,7 @@
     </dl>
 </div>
 <form asp-action="Create" method="post" class="card card-modern p-4">
+    <input asp-for="SubmissionKey" type="hidden" />
     <div asp-validation-summary="All" class="text-danger" role="alert"></div>
     @if (!Model.Balance.CreditedEarnings.HasValue)
     {
