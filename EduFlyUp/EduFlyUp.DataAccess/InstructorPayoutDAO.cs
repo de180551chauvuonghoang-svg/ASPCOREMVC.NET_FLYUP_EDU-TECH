@@ -5,15 +5,16 @@ namespace EduFlyUp.DataAccess;
 
 public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
 {
-    public async Task<InstructorPayoutHistory> HistoryAsync(AppDbContext db, InstructorIdentity instructor, int page)
+    public async Task<InstructorPayoutHistory> HistoryAsync(AppDbContext db, InstructorIdentity instructor, int page, PayoutStatus? status = null)
     {
         var query = db.PayoutRequests.AsNoTracking()
             .Where(p => p.InstructorId == instructor.UserId || p.InstructorId == instructor.UserName);
+        if (status.HasValue) query = query.Where(p => p.Status == status.Value);
         var count = await query.CountAsync();
         page = Math.Clamp(page, 1, Math.Max(1, (count + InstructorPayoutHistory.PageSize - 1) / InstructorPayoutHistory.PageSize));
         var rows = await query.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
             .Skip((page - 1) * InstructorPayoutHistory.PageSize).Take(InstructorPayoutHistory.PageSize)
             .Select(p => new InstructorPayoutRow(p.Id, p.Amount, p.Status, p.CreatedAt, p.ProcessedAt, p.AdminNote)).ToListAsync();
-        return new(rows, page, count);
+        return new(rows, page, count, status);
     }
 }

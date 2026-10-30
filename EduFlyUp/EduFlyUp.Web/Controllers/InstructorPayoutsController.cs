@@ -11,10 +11,10 @@ namespace EduFlyUp.Web.Controllers;
 public sealed class InstructorPayoutsController(IInstructorPayoutService payouts) : Controller
 {
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1)
+    public async Task<IActionResult> Index(int page = 1, PayoutStatus? status = null)
     {
-        if (!ModelState.IsValid) return BadRequest();
+        if (!ModelState.IsValid || (status.HasValue && !Enum.IsDefined(status.Value))) return BadRequest();
         var instructor = new InstructorIdentity(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", User.Identity?.Name ?? "");
-        return View(await payouts.HistoryAsync(instructor, page));
+        return View(await payouts.HistoryAsync(instructor, page, status));
     }
 }

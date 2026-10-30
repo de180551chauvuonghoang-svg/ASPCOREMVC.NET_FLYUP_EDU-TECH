@@ -49,9 +49,14 @@ public sealed class InstructorPayoutTests
         foreach (var secret in new[] { "FOREIGN_NOTE", "PRIVATE_ACCOUNT", "PRIVATE_HOLDER" }) Assert.DoesNotContain(secret, html);
         var last = WebUtility.HtmlDecode(await browser.Client.GetStringAsync("/InstructorPayouts?page=999"));
         Assert.Contains("Trang 2/2", last);
+        var filteredHtml = WebUtility.HtmlDecode(await browser.Client.GetStringAsync("/InstructorPayouts?status=Rejected&page=999"));
+        Assert.Contains("Tổng cộng 4 yêu cầu", filteredHtml); Assert.Contains("Trang 1/1", filteredHtml);
+        foreach (var query in new[] { "status=999", "status=wrong" })
+            Assert.Equal(HttpStatusCode.BadRequest, (await browser.Client.GetAsync("/InstructorPayouts?" + query)).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await browser.Client.GetAsync("/InstructorPayouts?page=wrong")).StatusCode);
         using var empty = app.CreateBrowser(); await TestApplication.LoginAsync(empty, "empty@example.test");
         Assert.Contains("Chưa có yêu cầu rút tiền", WebUtility.HtmlDecode(await empty.Client.GetStringAsync("/InstructorPayouts")));
+        Assert.Contains("Không có yêu cầu phù hợp", WebUtility.HtmlDecode(await empty.Client.GetStringAsync("/InstructorPayouts?status=Pending")));
     }
 
     [SqlServerFact]
@@ -64,7 +69,7 @@ public sealed class InstructorPayoutTests
         for (var i = 0; i < 12; i++) db.PayoutRequests.Add(new PayoutRequest
         {
             InstructorId = i % 2 == 0 ? "owner-id" : "owner@example.test", Amount = 100000 + i,
-            CreatedAt = at, Status = PayoutStatus.Pending, AccountNumber = "PRIVATE_ACCOUNT", AccountHolderName = "PRIVATE_HOLDER"
+            CreatedAt = at, Status = (PayoutStatus)(i % 3), AccountNumber = "PRIVATE_ACCOUNT", AccountHolderName = "PRIVATE_HOLDER"
         });
         db.PayoutRequests.Add(new PayoutRequest { InstructorId = "foreign", Amount = 999999, AdminNote = "FOREIGN_NOTE" });
         await db.SaveChangesAsync();
@@ -76,6 +81,12 @@ public sealed class InstructorPayoutTests
         Assert.Equal(2, last.Page); Assert.Equal(2, last.Items.Count);
         Assert.Equal(Enumerable.Range(0, 12).Reverse().Select(i => (decimal)(100000 + i)), first.Items.Concat(last.Items).Select(p => p.Amount));
         Assert.DoesNotContain(first.Items.Concat(last.Items), p => p.AdminNote == "FOREIGN_NOTE");
+        foreach (var status in Enum.GetValues<PayoutStatus>())
+        {
+            var filtered = await service.HistoryAsync(actor, int.MaxValue, status);
+            Assert.Equal(4, filtered.TotalCount); Assert.Equal(1, filtered.Page); Assert.Equal(status, filtered.StatusFilter);
+            Assert.All(filtered.Items, item => Assert.Equal(status, item.Status));
+        }
         Assert.Empty((await service.HistoryAsync(new("empty", "empty@example.test"), 1)).Items);
         Assert.Empty((await service.HistoryAsync(new("", "owner@example.test"), 1)).Items);
     }
