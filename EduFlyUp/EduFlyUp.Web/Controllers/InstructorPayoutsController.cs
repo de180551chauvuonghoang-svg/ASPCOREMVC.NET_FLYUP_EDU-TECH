@@ -14,6 +14,14 @@ public sealed class InstructorPayoutsController(IInstructorPayoutService payouts
     private InstructorIdentity Instructor => new(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", User.Identity?.Name ?? "");
 
     [HttpGet]
+    public async Task<IActionResult> Details([FromRoute] int id)
+    {
+        if (!ModelState.IsValid || id <= 0) return BadRequest();
+        var detail = await payouts.DetailAsync(Instructor, id);
+        return detail is null ? NotFound() : View(detail);
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Create() => await Form(new() { SubmissionKey = Guid.NewGuid() });
 
     [HttpPost]
