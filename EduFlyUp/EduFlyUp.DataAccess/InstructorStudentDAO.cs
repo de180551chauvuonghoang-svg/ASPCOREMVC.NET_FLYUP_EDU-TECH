@@ -54,7 +54,7 @@ public sealed class InstructorStudentDAO : SingletonBase<InstructorStudentDAO>
         if (attempts.Count > 50000) throw new StudentExportLimitException();
         var byUser = attempts.ToLookup(a => a.UserId);
         var rows = roster.Students.SelectMany(s => byUser[s.UserId].Select(a =>
-            new InstructorStudentAttemptExport(s.EnrollmentId, s.UserId, s.FullName, s.Email, a.QuizId, a.Row))).ToList();
+            new InstructorStudentAttemptExport(s.EnrollmentId, s.UserId, s.FullName, s.Email, a.QuizId, a.Row))).Take(50001).ToList();
         if (rows.Count > 50000) throw new StudentExportLimitException();
         return new(roster, rows);
     }
