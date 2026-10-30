@@ -13,7 +13,7 @@ Truy vấn aggregate chạy tại SQL Server, chỉ lấy khóa học của gi�
 
 ## Chưa làm trong đợt này
 
-Danh sách khóa đông học viên, thống kê đánh giá và doanh thu thực nhận 70% sẽ triển khai ở các bước sau. Chưa có nguồn giao dịch/thanh toán để tính doanh thu thực nhận; không lấy giá hiện tại nhân số ghi danh để thay thế. Không thêm migration hoặc sửa database ứng dụng của nhóm.
+Thống kê đánh giá và doanh thu thực nhận 70% sẽ triển khai ở các bước sau. Chưa có nguồn giao dịch/thanh toán để tính doanh thu thực nhận; không lấy giá hiện tại nhân số ghi danh để thay thế. Không thêm migration hoặc sửa database ứng dụng của nhóm.
 
 ## Kiểm tra 31/10/2026
 
@@ -24,3 +24,15 @@ Danh sách khóa đông học viên, thống kê đánh giá và doanh thu thự
 - Ảnh kiểm tra ở `.admin-demo/uc37-enrollment-summary-proof.jpg` (cục bộ, không commit).
 
 Các bước được kiểm tra, commit tiếng Việt và push riêng: truy vấn tổng và distinct; phân tách trạng thái; hiển thị Studio.
+
+## Bước tiếp theo: khóa học đông học viên
+
+Studio bổ sung bảng tối đa 5 khóa học sở hữu có học viên Active hoặc Completed, gồm cả khóa lưu trữ. Đếm distinct UserId theo từng khóa, không tính Cancelled; bỏ các khóa có số đếm bằng 0. Sắp xếp StudentCount giảm dần rồi CourseId tăng dần để ổn định khi bằng nhau. Query Count/Distinct/OrderBy/Take chạy tại SQL Server, không lấy toàn bộ hồ sơ học viên để xếp hạng.
+
+Phạm vi của bảng top khác tổng lịch sử ghi danh phía trên: tổng lịch sử có Cancelled, bảng top không có Cancelled. Có mô tả ngay trên UI. Bộ lọc danh sách khóa học không thay đổi bảng top. Khi chưa có khóa phù hợp, hiện thông báo rỗng. Phiên Admin không hiển thị bảng này.
+
+Nút **Xem ghi danh** mở báo cáo của đúng courseId. Báo cáo đích giữ toàn bộ lịch sử, gồm cả Cancelled; ví dụ top đếm 2 học viên đang học/hoàn thành nhưng danh sách ghi danh có 3 người nếu 1 người đã hủy. Endpoint đích tự kiểm tra ownership, sửa courseId sang khóa ngoài quyền trả 404. Tiêu đề khóa và aria-label được Razor encode.
+
+Kiểm tra sau bước này: 180/180 test ứng dụng trên SQL Server thật, 0 bỏ qua; 11/11 test AdminDemo; build Release 0 lỗi/0 cảnh báo. SQL kiểm tra top 5 trong 7 khóa, thứ tự bằng điểm, cả ID/email cũ, khóa lưu trữ, khóa trống/chỉ hủy, khóa ngoài quyền có nhiều học viên hơn và định danh rỗng. HTTP kiểm tra dữ liệu top, bộ lọc không đổi bảng, empty/Admin, encode tiêu đề và liên kết đích đúng quyền.
+
+Demo database GUID riêng đạt đủ 8 nhóm regression Admin. Trình duyệt xác nhận top DEMO course a có 2 học viên khi bộ lọc không khớp khóa nào; nút Xem ghi danh mở đúng khóa với 3 dòng lịch sử (có một đã hủy). Không có console warning/error trong luồng đã xem. Ảnh `.admin-demo/uc37-popular-courses-proof.jpg` lưu cục bộ. Ba commit riêng: truy vấn xếp hạng; giao diện bảng; liên kết xem ghi danh và kiểm tra luồng.

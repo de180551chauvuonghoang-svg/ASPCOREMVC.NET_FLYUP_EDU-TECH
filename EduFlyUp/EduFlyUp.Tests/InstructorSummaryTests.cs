@@ -49,7 +49,7 @@ public sealed class InstructorSummaryTests
         var owner = await app.CreateUserAsync("owner@example.test", "Instructor");
         await app.CreateUserAsync("empty@example.test", "Instructor");
         await app.CreateUserAsync("admin@example.test", "Admin");
-        var first = new Course { Id = 1, Title = "Owned", InstructorId = owner };
+        var first = new Course { Id = 1, Title = "<script>alert(1)</script>", InstructorId = owner };
         var second = new Course { Id = 2, Title = "Legacy", InstructorId = "owner@example.test" };
         var foreign = new Course { Id = 3, Title = "FOREIGN_COURSE", InstructorId = "foreign" };
         app.Courses.Courses.AddRange([first, second, foreign]);
@@ -79,7 +79,14 @@ public sealed class InstructorSummaryTests
             Assert.Contains("data-popular-course-id=\"1\"", html);
             Assert.Contains("data-popular-course-id=\"2\"", html);
             Assert.DoesNotContain("data-popular-course-id=\"3\"", html);
+            Assert.DoesNotContain("<script>alert(1)</script>", html);
+            Assert.Contains("&lt;script&gt;alert(1)&lt;/script&gt;", html);
+            var topRow = System.Text.RegularExpressions.Regex.Match(html, "<tr data-popular-course-id=\"1\">(.*?)</tr>", System.Text.RegularExpressions.RegexOptions.Singleline).Value;
+            Assert.Contains("href=\"/InstructorStudents?courseId=1\"", topRow);
+            Assert.Contains("Xem ghi danh", topRow);
         }
+        Assert.Equal(HttpStatusCode.OK, (await browser.Client.GetAsync("/InstructorStudents?courseId=1")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await browser.Client.GetAsync("/InstructorStudents?courseId=3")).StatusCode);
         using var empty = app.CreateBrowser(); await TestApplication.LoginAsync(empty, "empty@example.test");
         var emptyHtml = await empty.Client.GetStringAsync("/Instructor/Dashboard");
         Assert.Contains("id=\"total-enrollments\">0<", emptyHtml);
