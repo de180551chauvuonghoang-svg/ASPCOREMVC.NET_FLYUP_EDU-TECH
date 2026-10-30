@@ -12,6 +12,16 @@ public sealed class InstructorStudentDAO : SingletonBase<InstructorStudentDAO>
         => Owned(db, instructor).OrderBy(c => c.Title).ThenBy(c => c.Id)
             .Select(c => new InstructorStudentCourse(c.Id, c.Title, c.Enrollments.Count)).ToListAsync();
 
+    public async Task<InstructorEnrollmentSummary> SummaryAsync(AppDbContext db, InstructorIdentity instructor)
+    {
+        var counts = await db.Enrollments.AsNoTracking()
+            .Where(e => Owned(db, instructor).Any(c => c.Id == e.CourseId))
+            .GroupBy(_ => 1)
+            .Select(g => new { Total = g.Count(), Unique = g.Select(e => e.UserId).Distinct().Count() })
+            .SingleOrDefaultAsync();
+        return new(counts?.Total ?? 0, counts?.Unique ?? 0);
+    }
+
     public async Task<InstructorStudentRoster?> RosterAsync(AppDbContext db, InstructorIdentity instructor, int courseId, int page,
         string? search = null, EnrollmentStatus? status = null, bool allRows = false)
     {
