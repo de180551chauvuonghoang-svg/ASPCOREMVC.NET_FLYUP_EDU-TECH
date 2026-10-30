@@ -5,6 +5,7 @@ namespace EduFlyUp.Repositories;
 
 public interface IInstructorStudentRepository
 {
+    Task<List<InstructorPopularCourse>> PopularCoursesAsync(InstructorIdentity instructor);
     Task<InstructorEnrollmentSummary> SummaryAsync(InstructorIdentity instructor);
     Task<InstructorStudentExport?> ExportAsync(InstructorIdentity instructor, int courseId, string? search, EnrollmentStatus? status);
     Task<List<InstructorStudentCourse>> CoursesAsync(InstructorIdentity instructor);
@@ -14,6 +15,8 @@ public interface IInstructorStudentRepository
 
 public sealed class InstructorStudentRepository(AppDbContext db) : IInstructorStudentRepository
 {
+    public Task<List<InstructorPopularCourse>> PopularCoursesAsync(InstructorIdentity instructor)
+        => InstructorStudentDAO.Instance.PopularCoursesAsync(db, instructor);
     public Task<InstructorEnrollmentSummary> SummaryAsync(InstructorIdentity instructor)
         => InstructorStudentDAO.Instance.SummaryAsync(db, instructor);
     public Task<InstructorStudentExport?> ExportAsync(InstructorIdentity instructor, int courseId, string? search, EnrollmentStatus? status)

@@ -5,6 +5,7 @@ namespace EduFlyUp.Services;
 
 public interface IInstructorStudentService
 {
+    Task<List<InstructorPopularCourse>> PopularCoursesAsync(InstructorIdentity instructor);
     Task<InstructorEnrollmentSummary> SummaryAsync(InstructorIdentity instructor);
     Task<InstructorStudentExport?> ExportAsync(InstructorIdentity instructor, int courseId, string? search, EnrollmentStatus? status);
     Task<List<InstructorStudentCourse>> CoursesAsync(InstructorIdentity instructor);
@@ -14,6 +15,8 @@ public interface IInstructorStudentService
 
 public sealed class InstructorStudentService(IInstructorStudentRepository repository) : IInstructorStudentService
 {
+    public Task<List<InstructorPopularCourse>> PopularCoursesAsync(InstructorIdentity instructor)
+        => Valid(instructor) ? repository.PopularCoursesAsync(instructor) : Task.FromResult(new List<InstructorPopularCourse>());
     public Task<InstructorEnrollmentSummary> SummaryAsync(InstructorIdentity instructor)
         => Valid(instructor) ? repository.SummaryAsync(instructor) : Task.FromResult(new InstructorEnrollmentSummary(0, 0));
     public Task<InstructorStudentExport?> ExportAsync(InstructorIdentity instructor, int courseId, string? search, EnrollmentStatus? status)

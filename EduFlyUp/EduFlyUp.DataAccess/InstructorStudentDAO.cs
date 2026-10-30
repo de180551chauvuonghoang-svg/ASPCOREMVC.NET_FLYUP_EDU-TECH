@@ -26,6 +26,15 @@ public sealed class InstructorStudentDAO : SingletonBase<InstructorStudentDAO>
             counts?.Active ?? 0, counts?.Completed ?? 0, counts?.Cancelled ?? 0);
     }
 
+    public Task<List<InstructorPopularCourse>> PopularCoursesAsync(AppDbContext db, InstructorIdentity instructor)
+        => Owned(db, instructor)
+            .Select(c => new { c.Id, c.Title, StudentCount = c.Enrollments
+                .Where(e => e.Status == EnrollmentStatus.Active || e.Status == EnrollmentStatus.Completed)
+                .Select(e => e.UserId).Distinct().Count() })
+            .Where(c => c.StudentCount > 0)
+            .OrderByDescending(c => c.StudentCount).ThenBy(c => c.Id).Take(5)
+            .Select(c => new InstructorPopularCourse(c.Id, c.Title, c.StudentCount)).ToListAsync();
+
     public async Task<InstructorStudentRoster?> RosterAsync(AppDbContext db, InstructorIdentity instructor, int courseId, int page,
         string? search = null, EnrollmentStatus? status = null, bool allRows = false)
     {

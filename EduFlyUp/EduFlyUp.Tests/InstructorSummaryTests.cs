@@ -9,6 +9,39 @@ namespace EduFlyUp.Tests;
 
 public sealed class InstructorSummaryTests
 {
+    [SqlServerFact]
+    public async Task Popular_courses_are_owned_ranked_limited_and_count_distinct_non_cancelled_students()
+    {
+        await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync();
+        using var scope = database.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var owned = Enumerable.Range(1, 7).Select(i => new Course { Title = "Course " + i,
+            InstructorId = i % 2 == 0 ? "owner-id" : "owner@example.test",
+            Status = i == 1 ? CourseStatus.Archived : CourseStatus.Approved }).ToList();
+        var cancelledOnly = new Course { Title = "Cancelled only", InstructorId = "owner-id" };
+        var empty = new Course { Title = "Empty", InstructorId = "owner-id" };
+        var foreign = new Course { Title = "Foreign", InstructorId = "foreign" };
+        db.Courses.AddRange(owned); db.Courses.AddRange(cancelledOnly, empty, foreign);
+        await db.SaveChangesAsync();
+        for (var i = 0; i < owned.Count; i++)
+        {
+            var count = i < 2 ? 8 : 7 - i;
+            for (var j = 0; j < count; j++) db.Enrollments.Add(new Enrollment { Course = owned[i], UserId = "student-" + j,
+                Status = j % 2 == 0 ? EnrollmentStatus.Active : EnrollmentStatus.Completed });
+        }
+        db.Enrollments.AddRange(new Enrollment { Course = owned[0], UserId = "cancelled", Status = EnrollmentStatus.Cancelled },
+            new Enrollment { Course = cancelledOnly, UserId = "cancelled", Status = EnrollmentStatus.Cancelled });
+        for (var j = 0; j < 20; j++) db.Enrollments.Add(new Enrollment { Course = foreign, UserId = "foreign-" + j });
+        await db.SaveChangesAsync();
+        var service = new InstructorStudentService(new InstructorStudentRepository(db));
+        var result = await service.PopularCoursesAsync(new("owner-id", "owner@example.test"));
+        Assert.Equal(5, result.Count);
+        Assert.Equal(owned.Take(5).Select(c => c.Id), result.Select(c => c.Id));
+        Assert.Equal(new[] { 8, 8, 5, 4, 3 }, result.Select(c => c.StudentCount));
+        Assert.Empty(await service.PopularCoursesAsync(new("empty-owner", "empty@example.test")));
+        Assert.Empty(await service.PopularCoursesAsync(new("", "owner@example.test")));
+    }
+
     [Fact]
     public async Task Studio_summary_is_personal_unaffected_by_course_filters_and_has_an_empty_state()
     {
