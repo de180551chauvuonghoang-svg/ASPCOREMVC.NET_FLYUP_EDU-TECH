@@ -27,7 +27,7 @@ internal sealed class TestApplication : IDisposable
     public TestCouponRepository Coupons { get; } = new();
     public IServiceProvider Services => _server.Services;
 
-    public TestApplication(EduFlyUp.Web.Storage.ILessonMaterialStorage? materialStorage = null, EduFlyUp.Web.Storage.ILessonVideoStorage? videoStorage = null, IInstructorPayoutService? payoutService = null)
+    public TestApplication(EduFlyUp.Web.Storage.ILessonMaterialStorage? materialStorage = null, EduFlyUp.Web.Storage.ILessonVideoStorage? videoStorage = null, IInstructorPayoutService? payoutService = null, IInstructorSettlementSource? settlements = null)
     {
         var database = Guid.NewGuid().ToString();
         _server = new TestServer(new WebHostBuilder()
@@ -61,8 +61,11 @@ internal sealed class TestApplication : IDisposable
                 services.AddScoped<IInstructorStudentService, InstructorStudentService>();
                 services.AddScoped<IInstructorPayoutRepository, InstructorPayoutRepository>();
                 services.AddScoped<IInstructorSettlementSource, UnavailableInstructorSettlementSource>();
+                if (settlements is not null) services.AddSingleton(settlements);
                 services.AddScoped<IInstructorEarningsSource, SettlementInstructorEarningsSource>();
                 services.AddScoped<IInstructorPayoutService, InstructorPayoutService>();
+                services.AddScoped<IInstructorRevenueRepository, InstructorRevenueRepository>();
+                services.AddScoped<IInstructorRevenueService, InstructorRevenueService>();
                 if (payoutService is not null) services.AddSingleton(payoutService);
                 services.AddScoped<ICourseAccessService, CourseAccessService>();
                 services.AddScoped<IAdminCourseRepository, AdminCourseRepository>();

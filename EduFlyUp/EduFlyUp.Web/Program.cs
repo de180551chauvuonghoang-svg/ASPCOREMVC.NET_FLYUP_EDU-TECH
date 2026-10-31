@@ -53,6 +53,8 @@ builder.Services.AddScoped<IInstructorPayoutRepository, InstructorPayoutReposito
 builder.Services.AddScoped<IInstructorSettlementSource, UnavailableInstructorSettlementSource>();
 builder.Services.AddScoped<IInstructorEarningsSource, SettlementInstructorEarningsSource>();
 builder.Services.AddScoped<IInstructorPayoutService, InstructorPayoutService>();
+builder.Services.AddScoped<IInstructorRevenueRepository, InstructorRevenueRepository>();
+builder.Services.AddScoped<IInstructorRevenueService, InstructorRevenueService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<ICourseAccessService, CourseAccessService>();

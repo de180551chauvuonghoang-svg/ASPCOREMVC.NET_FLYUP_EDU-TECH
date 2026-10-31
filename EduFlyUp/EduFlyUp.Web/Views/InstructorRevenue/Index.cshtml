@@ -1,0 +1,49 @@
+@using System.Globalization
+@using EduFlyUp.Web.Models.Instructor
+@model EduFlyUp.BusinessObjects.InstructorRevenuePage
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Doanh thu của tôi"; var vi = CultureInfo.GetCultureInfo("vi-VN"); }
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div><h1 class="h3 fw-bold">Doanh thu của tôi</h1><p class="text-muted mb-0">Các khoản thu đã đối soát và phần chia doanh thu của bạn. Đơn vị VNĐ; thời gian theo giờ Việt Nam (UTC+7).</p></div>
+    <a asp-controller="InstructorPayouts" asp-action="Index" class="btn btn-outline-primary">Lịch sử rút tiền</a>
+</div>
+@if (Model is null)
+{
+    <div class="card card-modern p-4"><h2 class="h5">Chưa có dữ liệu doanh thu đã xác minh</h2><p class="text-muted mb-0">Báo cáo sẽ hiển thị khi nguồn thanh toán và đối soát được kết nối. Chưa thể xác định doanh thu hoặc số dư từ dữ liệu hiện có.</p></div>
+}
+else
+{
+    <div class="row g-3 mb-3" id="revenue-summary">
+        <div class="col-md-4"><div class="card card-modern p-3 h-100"><span class="text-muted">Thực thu sau hoàn tiền</span><strong class="h4 mt-2 mb-0">@Model.TotalNet.ToString("N2", vi) VNĐ</strong></div></div>
+        <div class="col-md-4"><div class="card card-modern p-3 h-100"><span class="text-muted">Khoản chia giảng viên (70%)</span><strong class="h4 mt-2 mb-0">@Model.TotalInstructor.ToString("N2", vi) VNĐ</strong></div></div>
+        <div class="col-md-4"><div class="card card-modern p-3 h-100"><span class="text-muted">Khoản chia nền tảng</span><strong class="h4 mt-2 mb-0">@Model.TotalPlatform.ToString("N2", vi) VNĐ</strong></div></div>
+    </div>
+    <p class="text-muted small mb-4">Tổng trên toàn bộ báo cáo, không chỉ trang đang xem. Khoản chia giảng viên là thu nhập trước khi trừ các yêu cầu rút tiền; không phải số dư khả dụng.</p>
+    <div class="card card-modern border-0 shadow-sm overflow-hidden">
+        <div class="p-3 border-bottom text-muted">Tổng cộng @Model.TotalCount khoản thu · Trang @Model.Page/@Model.TotalPages</div>
+        @if (Model.Items.Count == 0)
+        {
+            <div class="p-5 text-center"><h2 class="h5">Chưa có khoản thu đã đối soát</h2><p class="text-muted mb-0">Nguồn đã được xác minh và chưa có khoản thu của bạn.</p></div>
+        }
+        else
+        {
+            <div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr>
+                <th scope="col">Mã khoản thu</th><th scope="col">Khóa học</th><th scope="col">Học viên</th><th scope="col">Giá gốc tại giao dịch</th><th scope="col">Tiền đã thu</th><th scope="col">Đã hoàn</th><th scope="col">Thực thu</th><th scope="col">Khoản chia giảng viên</th><th scope="col">Ngày đối soát</th>
+            </tr></thead><tbody>
+            @foreach (var item in Model.Items)
+            {
+                var info = item.Receipt.Info;
+                <tr><th scope="row" class="text-break fw-normal">@item.Receipt.Reference</th><td class="text-break">@(string.IsNullOrWhiteSpace(info?.CourseTitle) ? "Chưa có thông tin" : info.CourseTitle)</td>
+                    <td class="text-break">@(string.IsNullOrWhiteSpace(info?.StudentName) ? "Chưa có thông tin" : info.StudentName)</td>
+                    <td class="text-nowrap">@(info?.OriginalPrice is decimal price ? price.ToString("N2", vi) : "Chưa có thông tin")</td>
+                    <td class="text-nowrap">@item.Receipt.PaidAmount.ToString("N2", vi)</td><td class="text-nowrap">@item.Receipt.RefundedAmount.ToString("N2", vi)</td>
+                    <td class="text-nowrap">@item.Share.NetCollected.ToString("N2", vi)</td><td class="text-nowrap fw-bold">@item.Share.InstructorAmount.ToString("N2", vi)</td>
+                    <td class="small text-nowrap">@(info?.SettledAtUtc is DateTime at ? InstructorReportDisplay.VietnamTime(at) : "Chưa có thông tin")</td></tr>
+            }
+            </tbody></table></div>
+            <nav class="d-flex gap-2 justify-content-end p-3" aria-label="Phân trang doanh thu">
+                @if (Model.Page > 1) { <a asp-action="Index" asp-route-page="@(Model.Page - 1)" class="btn btn-sm btn-outline-secondary">Trang trước</a> }
+                @if (Model.Page < Model.TotalPages) { <a asp-action="Index" asp-route-page="@(Model.Page + 1)" class="btn btn-sm btn-outline-secondary">Trang sau</a> }
+            </nav>
+        }
+    </div>
+}
