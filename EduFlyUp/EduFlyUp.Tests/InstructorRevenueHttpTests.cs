@@ -55,6 +55,13 @@ public sealed class InstructorRevenueHttpTests
         var last = WebUtility.HtmlDecode(await browser.Client.GetStringAsync("/InstructorRevenue?page=999"));
         Assert.Contains("Trang 2/2", last);
         Assert.Equal(HttpStatusCode.BadRequest, (await browser.Client.GetAsync("/InstructorRevenue?page=wrong")).StatusCode);
+        var matched = WebUtility.HtmlDecode(await browser.Client.GetStringAsync("/InstructorRevenue?search=RECEIPT-11&page=999"));
+        Assert.Contains("Tổng cộng 1 khoản thu", matched); Assert.Contains("52.500,00", matched);
+        var searched = await browser.Client.GetStringAsync("/InstructorRevenue?search=STUDENT");
+        Assert.Contains("href=\"/InstructorRevenue?page=2&amp;search=STUDENT\"", searched);
+        Assert.Contains("Trang 2/2", WebUtility.HtmlDecode(await browser.Client.GetStringAsync("/InstructorRevenue?page=2&search=STUDENT")));
+        Assert.Contains("Không tìm thấy khoản thu phù hợp", WebUtility.HtmlDecode(await browser.Client.GetStringAsync("/InstructorRevenue?search=nomatch")));
+        Assert.Equal(HttpStatusCode.BadRequest, (await browser.Client.GetAsync("/InstructorRevenue?search=" + new string('a', 101))).StatusCode);
     }
 
     internal sealed class ReportSource : IInstructorSettlementSource

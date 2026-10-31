@@ -18,8 +18,11 @@ Mỗi `InstructorSettledReceipt` gồm:
 | InstructorId | Chủ sở hữu doanh thu của giao dịch, theo Identity ID hoặc username/email cũ. |
 | PaidAmount | Tiền thực tế đã thu, sau giảm giá, trước hoàn tiền. Không phải giá niêm yết hiện tại. |
 | RefundedAmount | Tổng tiền đã xác nhận hoàn của chính giao dịch đó. |
+| Info (tùy chọn) | Snapshot CourseId, CourseTitle, StudentName, OriginalPrice và SettledAtUtc để hiển thị báo cáo. Thiếu trường nào thì UI ghi Chưa có thông tin, không suy ra từ dữ liệu hôm nay. |
 
 Nguồn phải lọc theo giảng viên và chỉ trả giao dịch đã thanh toán/đối soát xác minh. Giao dịch chưa trả tiền, thất bại hoặc chờ xác nhận không được ghi có. Mỗi giao dịch chỉ có một dòng với số hoàn tiền cộng dồn, không nhân bản dòng khi có nhiều lần hoàn. Quyền hưởng doanh thu nên dùng chủ sở hữu đã lưu tại lúc phát sinh giao dịch, không suy ra lại từ chủ sở hữu khóa học sau khi chuyển nhượng.
+
+Nếu một thanh toán gồm nhiều khóa học, Reference phải nhận diện duy nhất từng khoản được phân bổ cho khóa/giảng viên, chẳng hạn kết hợp nhà cung cấp, mã thanh toán và mã dòng hàng; không lặp cùng một Reference cho các dòng. Chưa có bảng đơn hàng để xác nhận cấu trúc khóa thực tế. Báo cáo hiện ghi Mã khoản thu, không tự diễn giải thành mã đơn hàng khi nguồn chưa cung cấp ánh xạ.
 
 Các số tiền trong hợp đồng hiện dùng VNĐ, cùng đơn vị với Course.Price và PayoutRequest.Amount. Nguồn phải xác nhận đúng đơn vị tiền trước khi cung cấp; chưa có chức năng đa tiền tệ hoặc tự đổi tỷ giá.
 
@@ -41,4 +44,4 @@ Thu 1.000.000, hoàn 200.000 → khoản Instructor 560.000. Thu thêm 500.000, 
 
 ## Chưa hoàn thành
 
-Adapter từ bảng/cổng thanh toán thật, kiểm tra xác thực giao dịch, lịch sử báo cáo chi tiết doanh thu theo đơn/khóa/học viên và chức năng xử lý của Admin. Tài liệu này không xác nhận các chức năng đó đã có. Các nguồn giả chỉ ở project Tests; không có endpoint cho người dùng tự khai doanh thu.
+Adapter từ bảng/cổng thanh toán thật, kiểm tra xác thực giao dịch, cung cấp snapshot/ánh xạ đơn hàng thực và chức năng xử lý của Admin. Màn hình báo cáo theo khoản thu đã có qua nguồn xác minh, nhưng chưa có dữ liệu thật để nghiệm thu báo cáo đầy đủ. Các nguồn giả chỉ ở project Tests; không có endpoint cho người dùng tự khai doanh thu.

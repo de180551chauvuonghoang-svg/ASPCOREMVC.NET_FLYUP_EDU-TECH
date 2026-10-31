@@ -7,7 +7,7 @@ public sealed record InstructorRevenueItem(InstructorSettledReceipt Receipt, Ins
 public sealed record InstructorRevenueStatement(IReadOnlyList<InstructorRevenueItem> Items, decimal TotalNet,
     decimal TotalInstructor, decimal TotalPlatform);
 public sealed record InstructorRevenuePage(IReadOnlyList<InstructorRevenueItem> Items, int Page, int TotalCount,
-    decimal TotalNet, decimal TotalInstructor, decimal TotalPlatform)
+    decimal TotalNet, decimal TotalInstructor, decimal TotalPlatform, string? Search = null)
 {
     public const int PageSize = 10;
     public int TotalPages => Math.Max(1, (TotalCount + PageSize - 1) / PageSize);

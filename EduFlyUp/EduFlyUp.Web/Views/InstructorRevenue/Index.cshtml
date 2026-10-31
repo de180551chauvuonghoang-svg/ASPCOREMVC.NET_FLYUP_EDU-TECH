@@ -12,17 +12,23 @@
 }
 else
 {
+    <form asp-action="Index" method="get" class="card card-modern p-3 mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-8"><label for="revenueSearch" class="form-label">Mã khoản thu, khóa học hoặc học viên</label><input id="revenueSearch" name="search" value="@Model.Search" maxlength="100" class="form-control" /></div>
+            <div class="col-md-4 d-flex gap-2"><button type="submit" class="btn btn-primary">Tìm kiếm</button><a asp-action="Index" class="btn btn-outline-secondary">Đặt lại</a></div>
+        </div>
+    </form>
     <div class="row g-3 mb-3" id="revenue-summary">
         <div class="col-md-4"><div class="card card-modern p-3 h-100"><span class="text-muted">Thực thu sau hoàn tiền</span><strong class="h4 mt-2 mb-0">@Model.TotalNet.ToString("N2", vi) VNĐ</strong></div></div>
         <div class="col-md-4"><div class="card card-modern p-3 h-100"><span class="text-muted">Khoản chia giảng viên (70%)</span><strong class="h4 mt-2 mb-0">@Model.TotalInstructor.ToString("N2", vi) VNĐ</strong></div></div>
         <div class="col-md-4"><div class="card card-modern p-3 h-100"><span class="text-muted">Khoản chia nền tảng</span><strong class="h4 mt-2 mb-0">@Model.TotalPlatform.ToString("N2", vi) VNĐ</strong></div></div>
     </div>
-    <p class="text-muted small mb-4">Tổng trên toàn bộ báo cáo, không chỉ trang đang xem. Khoản chia giảng viên là thu nhập trước khi trừ các yêu cầu rút tiền; không phải số dư khả dụng.</p>
+    <p class="text-muted small mb-4">Tổng trên toàn bộ kết quả tìm kiếm, không chỉ trang đang xem. Khoản chia giảng viên là thu nhập trước khi trừ các yêu cầu rút tiền; không phải số dư khả dụng.</p>
     <div class="card card-modern border-0 shadow-sm overflow-hidden">
         <div class="p-3 border-bottom text-muted">Tổng cộng @Model.TotalCount khoản thu · Trang @Model.Page/@Model.TotalPages</div>
         @if (Model.Items.Count == 0)
         {
-            <div class="p-5 text-center"><h2 class="h5">Chưa có khoản thu đã đối soát</h2><p class="text-muted mb-0">Nguồn đã được xác minh và chưa có khoản thu của bạn.</p></div>
+            <div class="p-5 text-center"><h2 class="h5">@(Model.Search is null ? "Chưa có khoản thu đã đối soát" : "Không tìm thấy khoản thu phù hợp")</h2><p class="text-muted mb-0">@(Model.Search is null ? "Nguồn đã được xác minh và chưa có khoản thu của bạn." : "Kiểm tra từ khóa hoặc đặt lại tìm kiếm để xem toàn bộ báo cáo.")</p></div>
         }
         else
         {
@@ -41,8 +47,8 @@ else
             }
             </tbody></table></div>
             <nav class="d-flex gap-2 justify-content-end p-3" aria-label="Phân trang doanh thu">
-                @if (Model.Page > 1) { <a asp-action="Index" asp-route-page="@(Model.Page - 1)" class="btn btn-sm btn-outline-secondary">Trang trước</a> }
-                @if (Model.Page < Model.TotalPages) { <a asp-action="Index" asp-route-page="@(Model.Page + 1)" class="btn btn-sm btn-outline-secondary">Trang sau</a> }
+                @if (Model.Page > 1) { <a asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-search="@Model.Search" class="btn btn-sm btn-outline-secondary">Trang trước</a> }
+                @if (Model.Page < Model.TotalPages) { <a asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-search="@Model.Search" class="btn btn-sm btn-outline-secondary">Trang sau</a> }
             </nav>
         }
     </div>

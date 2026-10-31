@@ -11,10 +11,10 @@ namespace EduFlyUp.Web.Controllers;
 public sealed class InstructorRevenueController(IInstructorRevenueService revenue) : Controller
 {
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1)
+    public async Task<IActionResult> Index(int page = 1, string? search = null)
     {
-        if (!ModelState.IsValid) return BadRequest();
+        if (!ModelState.IsValid || search?.Length > 100) return BadRequest();
         var instructor = new InstructorIdentity(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", User.Identity?.Name ?? "");
-        return View(await revenue.ReportAsync(instructor, page));
+        return View(await revenue.ReportAsync(instructor, page, search));
     }
 }

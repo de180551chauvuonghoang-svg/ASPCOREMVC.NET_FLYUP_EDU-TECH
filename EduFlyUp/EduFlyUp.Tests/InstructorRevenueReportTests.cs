@@ -8,6 +8,24 @@ namespace EduFlyUp.Tests;
 public sealed class InstructorRevenueReportTests
 {
     [Fact]
+    public async Task Search_trims_ignores_case_filters_before_totals_and_does_not_infer_missing_fields()
+    {
+        using var db = new AppDbContext();
+        var owner = new InstructorIdentity("owner-id", "owner@example.test");
+        var service = new InstructorRevenueService(new InstructorRevenueRepository(db, new InstructorSettlementEarningsTests.TestSettlements([
+            new("order-1", owner.UserId, 1000000, 200000, new(1, "C# Course", "Student One", 1200000, null)),
+            new("order-2", owner.UserId, 500000, 0),
+            new("order-3", owner.UserId, 3000000, 3000000, new(2, "Other", "Student Two", 3000000, null))])));
+        var result = await service.ReportAsync(owner, int.MaxValue, "  c# COURSE  ");
+        Assert.NotNull(result); Assert.Equal(1, result.TotalCount); Assert.Equal(1, result.Page);
+        Assert.Equal("c# COURSE", result.Search); Assert.Equal(800000m, result.TotalNet); Assert.Equal(560000m, result.TotalInstructor);
+        Assert.Equal(2, (await service.ReportAsync(owner, 1, "STUDENT"))!.TotalCount);
+        Assert.Equal(350000m, (await service.ReportAsync(owner, 1, "ORDER-2"))!.TotalInstructor);
+        var empty = await service.ReportAsync(owner, 1, "nomatch");
+        Assert.NotNull(empty); Assert.Empty(empty.Items); Assert.Equal(0, empty.TotalNet);
+    }
+
+    [Fact]
     public async Task Report_uses_verified_receipts_pages_and_orders_without_inventing_missing_metadata()
     {
         using var db = new AppDbContext();
