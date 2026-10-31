@@ -60,7 +60,8 @@ internal sealed class TestApplication : IDisposable
                 services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();
                 services.AddScoped<IInstructorStudentService, InstructorStudentService>();
                 services.AddScoped<IInstructorPayoutRepository, InstructorPayoutRepository>();
-                services.AddScoped<IInstructorEarningsSource, UnavailableInstructorEarningsSource>();
+                services.AddScoped<IInstructorSettlementSource, UnavailableInstructorSettlementSource>();
+                services.AddScoped<IInstructorEarningsSource, SettlementInstructorEarningsSource>();
                 services.AddScoped<IInstructorPayoutService, InstructorPayoutService>();
                 if (payoutService is not null) services.AddSingleton(payoutService);
                 services.AddScoped<ICourseAccessService, CourseAccessService>();

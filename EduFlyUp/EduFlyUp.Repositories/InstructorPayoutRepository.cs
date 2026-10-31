@@ -15,7 +15,7 @@ public sealed class InstructorPayoutRepository(AppDbContext db, IInstructorEarni
 {
     public Task<InstructorPayoutDetail?> DetailAsync(InstructorIdentity instructor, int id)
         => InstructorPayoutDAO.Instance.DetailAsync(db, instructor, id);
-    private readonly IInstructorEarningsSource _earnings = earnings ?? new UnavailableInstructorEarningsSource();
+    private readonly IInstructorEarningsSource _earnings = earnings ?? new SettlementInstructorEarningsSource(new UnavailableInstructorSettlementSource());
     public Task<InstructorPayoutBalance> BalanceAsync(InstructorIdentity instructor)
         => InstructorPayoutDAO.Instance.BalanceAsync(db, _earnings, instructor);
     public Task<InstructorPayoutChange> CreateAsync(InstructorIdentity instructor, InstructorPayoutInput input)
