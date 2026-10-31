@@ -28,7 +28,8 @@ public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
                 Pending = g.Sum(p => p.Status == PayoutStatus.Pending ? p.Amount : 0),
                 Approved = g.Sum(p => p.Status == PayoutStatus.Approved ? p.Amount : 0),
                 PendingCount = g.Count(p => p.Status == PayoutStatus.Pending),
-                Invalid = g.Any(p => (p.Status == PayoutStatus.Pending || p.Status == PayoutStatus.Approved) && p.Amount <= 0)
+                Invalid = g.Any(p => (p.Status != PayoutStatus.Pending && p.Status != PayoutStatus.Approved && p.Status != PayoutStatus.Rejected)
+                    || ((p.Status == PayoutStatus.Pending || p.Status == PayoutStatus.Approved) && p.Amount <= 0))
             }).SingleOrDefaultAsync();
         if (credited < 0 || (credited.HasValue && decimal.Round(credited.Value, 2) != credited.Value) || summary?.Invalid == true) credited = null;
         return new(credited, Math.Max(0, summary?.Pending ?? 0), Math.Max(0, summary?.Approved ?? 0), summary?.PendingCount ?? 0);

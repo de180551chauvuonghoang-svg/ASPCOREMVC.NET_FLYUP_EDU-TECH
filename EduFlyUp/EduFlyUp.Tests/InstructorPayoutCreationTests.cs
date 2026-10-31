@@ -10,6 +10,29 @@ namespace EduFlyUp.Tests;
 public sealed class InstructorPayoutCreationTests
 {
     [SqlServerFact]
+    public async Task Unknown_payout_states_block_new_requests_instead_of_being_ignored_in_available_balance()
+    {
+        await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync();
+        using var scope = database.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var existing = new PayoutRequest { InstructorId = Owner.UserName, Amount = 600000, Status = (PayoutStatus)99 };
+        db.PayoutRequests.Add(existing); await db.SaveChangesAsync();
+        var service = new InstructorPayoutService(new InstructorPayoutRepository(db, new VerifiedTestEarnings(700000)));
+        foreach (var invalid in new[] { (PayoutStatus)99, (PayoutStatus)(-1) })
+        {
+            existing.Status = invalid; await db.SaveChangesAsync();
+            var balance = await service.BalanceAsync(Owner);
+            Assert.Null(balance.Available); Assert.False(balance.CanRequest);
+            Assert.Equal(InstructorPayoutChange.EarningsUnavailable, (await service.CreateAsync(Owner, Input)).Change);
+            Assert.Equal(1, await db.PayoutRequests.CountAsync());
+        }
+        existing.Status = PayoutStatus.Rejected;
+        db.PayoutRequests.Add(new PayoutRequest { InstructorId = "foreign", Amount = 900000, Status = (PayoutStatus)99 });
+        await db.SaveChangesAsync();
+        Assert.Equal(700000m, (await service.BalanceAsync(Owner)).Available);
+    }
+
+    [SqlServerFact]
     public async Task Replaying_a_processed_submission_does_not_create_again_even_when_earnings_source_is_unavailable()
     {
         await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync();
