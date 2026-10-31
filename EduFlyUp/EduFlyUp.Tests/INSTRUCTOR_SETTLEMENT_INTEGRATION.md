@@ -14,7 +14,7 @@ Mỗi `InstructorSettledReceipt` gồm:
 
 | Trường | Ý nghĩa |
 | --- | --- |
-| Reference | Mã giao dịch ổn định, chuẩn hóa và duy nhất; nếu nhiều nhà cung cấp cần phân biệt nhà cung cấp trong mã. |
+| Reference | Mã giao dịch ổn định, chuẩn hóa và duy nhất, không có khoảng trắng đầu/cuối; nếu nhiều nhà cung cấp cần phân biệt nhà cung cấp trong mã. |
 | InstructorId | Chủ sở hữu doanh thu của giao dịch, theo Identity ID hoặc username/email cũ. |
 | PaidAmount | Tiền thực tế đã thu, sau giảm giá, trước hoàn tiền. Không phải giá niêm yết hiện tại. |
 | RefundedAmount | Tổng tiền đã xác nhận hoàn của chính giao dịch đó. |

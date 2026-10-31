@@ -93,3 +93,9 @@ Role Instructor, phiên lấy owner từ claims, query không đổi được ch
 Kiểm tra sau bước này: 238/238 test ứng dụng với SQL Server thật, 0 bỏ qua; 11/11 test AdminDemo; build Release 0 lỗi/0 cảnh báo. Unit kiểm tra tổng tiền/phân trang/thứ tự, metadata thiếu và tìm kiếm trước tổng. HTTP kiểm tra role/guest/owner giả, dữ liệu ngoài quyền, nguồn chưa có không thành 0, HTML encode, tiền/ngày, tìm kiếm/tổng/phân trang và 400 cho query sai/quá dài. Các snapshot có tiền chỉ được cấp trong Tests, không vào ứng dụng production.
 
 Demo Kestrel database GUID riêng đạt đủ 8 nhóm regression Admin. Trình duyệt mở mục Doanh thu của tôi, xác nhận trạng thái Chưa có dữ liệu doanh thu đã xác minh, không hiển thị thẻ tổng 0 hoặc bảng tiền giả; liên kết lịch sử rút tiền có trên trang, không console warning/error. Nhánh báo cáo có receipt/tìm kiếm được kiểm tra qua HTTP/Razor trong Tests, chưa mở với nguồn tiền thật trên trình duyệt. Ảnh `.admin-demo/uc38-revenue-report-proof.jpg` giữ cục bộ; server đã dừng sau QA. Ba commit riêng: dữ liệu/phân trang; giao diện; tìm kiếm và tổng theo bộ lọc.
+
+## Rà soát tích hợp ngày 01/11/2026
+
+Đã tái hiện và sửa ba trường hợp: payout có trạng thái ngoài miền khiến số dư bị tính thiếu khoản chưa xác định; gửi lại với email cũ khác hoa/thường bị báo xung đột; mã khoản thu có khoảng trắng đầu/cuối không bị loại nên có thể cộng hai dòng cùng mã logic. Hiện trạng thái payout không rõ làm số dư chưa xác minh/chặn tạo mới, username replay đối chiếu không phân biệt hoa thường và Reference chưa chuẩn hóa khiến snapshot bị từ chối. Lỗi của chủ sở hữu khác không tác động số dư của mình.
+
+Sau sửa: 241/241 test ứng dụng đạt với SQL Server, 0 bỏ qua; 11/11 test AdminDemo, build 0 lỗi/0 cảnh báo và đủ 8 nhóm regression HTTP/SQL demo đạt. Chưa thay đổi database nhóm, không thêm migration/package. Tình trạng từng use case và kịch bản demo ở [INSTRUCTOR_B_READINESS.md](INSTRUCTOR_B_READINESS.md).
