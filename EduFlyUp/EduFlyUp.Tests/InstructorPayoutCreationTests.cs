@@ -10,6 +10,27 @@ namespace EduFlyUp.Tests;
 public sealed class InstructorPayoutCreationTests
 {
     [SqlServerFact]
+    public async Task Replay_accepts_legacy_username_casing_consistently_with_history_ownership()
+    {
+        await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync();
+        using var scope = database.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.PayoutRequests.Add(new PayoutRequest
+        {
+            InstructorId = Owner.UserName.ToUpperInvariant(), Amount = Input.Amount, BankName = Input.BankName,
+            AccountNumber = Input.AccountNumber, AccountHolderName = Input.AccountHolderName,
+            Status = PayoutStatus.Approved, SubmissionKey = Input.SubmissionKey
+        });
+        await db.SaveChangesAsync();
+        var service = new InstructorPayoutService(new InstructorPayoutRepository(db));
+        Assert.Equal(1, (await service.HistoryAsync(Owner, 1)).TotalCount);
+        Assert.Equal(InstructorPayoutChange.AlreadySubmitted, (await service.CreateAsync(Owner, Input)).Change);
+        Assert.Equal(InstructorPayoutChange.SubmissionConflict,
+            (await service.CreateAsync(new("foreign", "foreign@example.test"), Input)).Change);
+        Assert.Equal(1, await db.PayoutRequests.CountAsync());
+    }
+
+    [SqlServerFact]
     public async Task Unknown_payout_states_block_new_requests_instead_of_being_ignored_in_available_balance()
     {
         await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync();

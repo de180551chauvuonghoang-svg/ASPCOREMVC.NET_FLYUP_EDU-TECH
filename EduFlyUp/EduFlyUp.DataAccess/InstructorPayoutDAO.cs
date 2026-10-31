@@ -76,7 +76,7 @@ public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
         if (!input.SubmissionKey.HasValue) return null;
         var previous = await db.PayoutRequests.AsNoTracking().SingleOrDefaultAsync(p => p.SubmissionKey == input.SubmissionKey);
         if (previous is null) return null;
-        var owned = previous.InstructorId == instructor.UserId || previous.InstructorId == instructor.UserName;
+        var owned = previous.InstructorId == instructor.UserId || string.Equals(previous.InstructorId, instructor.UserName, StringComparison.OrdinalIgnoreCase);
         return owned && previous.Amount == input.Amount && previous.BankName == input.BankName
             && previous.AccountNumber == input.AccountNumber && previous.AccountHolderName == input.AccountHolderName
             ? InstructorPayoutChange.AlreadySubmitted : InstructorPayoutChange.SubmissionConflict;
