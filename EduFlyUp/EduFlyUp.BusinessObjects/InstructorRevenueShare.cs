@@ -1,6 +1,7 @@
 namespace EduFlyUp.BusinessObjects;
 
-public sealed record InstructorSettledReceipt(string Reference, string InstructorId, decimal PaidAmount, decimal RefundedAmount);
+public sealed record InstructorSettledReceipt(string Reference, string InstructorId, decimal PaidAmount, decimal RefundedAmount,
+    InstructorSettlementInfo? Info = null);
 
 public sealed record InstructorRevenueShare(decimal NetCollected, decimal InstructorAmount, decimal PlatformAmount)
 {

@@ -18,21 +18,27 @@ public interface IInstructorEarningsSource
 public sealed class SettlementInstructorEarningsSource(IInstructorSettlementSource settlements) : IInstructorEarningsSource
 {
     public async Task<decimal?> CreditedEarningsAsync(AppDbContext db, InstructorIdentity instructor)
+        => (await ReadStatementAsync(db, instructor))?.TotalInstructor;
+
+    public async Task<InstructorRevenueStatement?> ReadStatementAsync(AppDbContext db, InstructorIdentity instructor)
     {
         if (string.IsNullOrWhiteSpace(instructor.UserId) || string.IsNullOrWhiteSpace(instructor.UserName)) return null;
         var receipts = await settlements.ReadVerifiedReceiptsAsync(db, instructor);
         if (receipts is null) return null;
         var references = new HashSet<string>(StringComparer.Ordinal);
-        decimal total = 0;
+        decimal total = 0, totalNet = 0, totalPlatform = 0;
+        var items = new List<InstructorRevenueItem>();
         foreach (var receipt in receipts)
         {
             if (receipt is null || string.IsNullOrWhiteSpace(receipt.Reference) || !references.Add(receipt.Reference)
                 || (receipt.InstructorId != instructor.UserId && !string.Equals(receipt.InstructorId, instructor.UserName, StringComparison.OrdinalIgnoreCase))) return null;
             var share = InstructorRevenueShare.Calculate(receipt.PaidAmount, receipt.RefundedAmount);
             if (share is null) return null;
-            try { total += share.InstructorAmount; }
+            if (receipt.Info?.OriginalPrice is decimal price && InstructorRevenueShare.Calculate(price, 0) is null) return null;
+            try { total += share.InstructorAmount; totalNet += share.NetCollected; totalPlatform += share.PlatformAmount; }
             catch (OverflowException) { return null; }
+            items.Add(new(receipt, share));
         }
-        return total;
+        return new(items, totalNet, total, totalPlatform);
     }
 }
