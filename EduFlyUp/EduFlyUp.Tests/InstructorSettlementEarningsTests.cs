@@ -31,6 +31,7 @@ public sealed class InstructorSettlementEarningsTests
     [InlineData("duplicate")]
     [InlineData("invalid-money")]
     [InlineData("empty-reference")]
+    [InlineData("uncanonical-reference")]
     public async Task Inconsistent_snapshots_do_not_produce_an_available_balance(string problem)
     {
         var valid = new InstructorSettledReceipt("receipt-1", Owner.UserId, 1000000, 0);
@@ -39,6 +40,7 @@ public sealed class InstructorSettlementEarningsTests
             "foreign" => valid with { Reference = "receipt-2", InstructorId = "other" },
             "duplicate" => valid,
             "invalid-money" => valid with { Reference = "receipt-2", RefundedAmount = 1000001 },
+            "uncanonical-reference" => valid with { Reference = " " + valid.Reference + " " },
             _ => valid with { Reference = "" }
         };
         using var db = new AppDbContext();

@@ -30,7 +30,7 @@ public sealed class SettlementInstructorEarningsSource(IInstructorSettlementSour
         var items = new List<InstructorRevenueItem>();
         foreach (var receipt in receipts)
         {
-            if (receipt is null || string.IsNullOrWhiteSpace(receipt.Reference) || !references.Add(receipt.Reference)
+            if (receipt is null || string.IsNullOrWhiteSpace(receipt.Reference) || receipt.Reference != receipt.Reference.Trim() || !references.Add(receipt.Reference)
                 || (receipt.InstructorId != instructor.UserId && !string.Equals(receipt.InstructorId, instructor.UserName, StringComparison.OrdinalIgnoreCase))) return null;
             var share = InstructorRevenueShare.Calculate(receipt.PaidAmount, receipt.RefundedAmount);
             if (share is null) return null;
