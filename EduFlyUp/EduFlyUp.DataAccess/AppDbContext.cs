@@ -26,12 +26,17 @@ namespace EduFlyUp.DataAccess
             if (!optionsBuilder.IsConfigured)
             {
                 var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
-                var config = new ConfigurationBuilder()
+                var configBuilder = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("appsettings.json", optional: true)
-                    .AddJsonFile($"appsettings.{env}.json", optional: true)
-                    .AddEnvironmentVariables()
-                    .Build();
+                    .AddJsonFile($"appsettings.{env}.json", optional: true);
+
+                if (string.Equals(env, "Development", StringComparison.OrdinalIgnoreCase))
+                {
+                    configBuilder.AddJsonFile("appsettings.Local.json", optional: true);
+                }
+
+                var config = configBuilder.AddEnvironmentVariables().Build();
 
                 var connectionString = config.GetConnectionString("DefaultConnection")
                     ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")

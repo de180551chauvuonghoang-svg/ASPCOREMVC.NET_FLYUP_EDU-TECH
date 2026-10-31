@@ -8,6 +8,14 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Cấu hình riêng từng máy; biến môi trường và tham số dòng lệnh vẫn ưu tiên cao nhất.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
+        .AddEnvironmentVariables()
+        .AddCommandLine(args);
+}
+
 // ──────────────── Đăng ký Services ────────────────
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<EduFlyUp.Web.Storage.ILessonMaterialStorage, EduFlyUp.Web.Storage.LessonMaterialStorage>();
