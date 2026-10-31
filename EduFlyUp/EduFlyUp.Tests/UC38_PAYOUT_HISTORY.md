@@ -28,7 +28,7 @@ Ba commit riêng: dữ liệu lịch sử theo quyền; màn hình lịch sử; 
 
 GET `/InstructorPayouts/Create` hiển thị thu nhập đã đối soát, tổng tiền yêu cầu Approved, tổng tiền Pending và khả dụng. Khả dụng = Max(0, thu nhập đã ghi có - Approved - Pending), không trừ Rejected. Khi chưa xác minh thu nhập, Available=null và UI ghi Chưa xác minh, không hiển thị ô nhập ngân hàng/nút gửi. Có yêu cầu Pending thì chờ xử lý trước khi gửi mới; không có số dư thì hiện thông báo.
 
-`IInstructorEarningsSource` là điểm tích hợp dữ liệu thu nhập đã được đối soát của chính giảng viên: số cộng dồn sau giảm giá/hoàn tiền và đã áp dụng phần chia 70%, trước khi trừ payout. Adapter phải đọc bằng AppDbContext/transaction được truyền vào. Chưa có adapter thanh toán thật, DI production dùng `UnavailableInstructorEarningsSource` trả null; tuyệt đối không thay bằng dữ liệu demo hoặc tổng Enrollment x Course.Price. Test dùng nguồn xác minh giả riêng trong project Tests.
+`IInstructorEarningsSource` trả thu nhập đã được đối soát của chính giảng viên, sau giảm giá/hoàn tiền và phần chia 70%, trước khi trừ payout. Hiện `SettlementInstructorEarningsSource` thực hiện phép chia từ các khoản thu đã xác minh qua `IInstructorSettlementSource` (chi tiết ở phần tiếp theo). Adapter phải đọc bằng AppDbContext/transaction được truyền vào. Chưa có adapter thanh toán thật, DI production dùng `UnavailableInstructorSettlementSource` trả null; tuyệt đối không thay bằng dữ liệu demo hoặc tổng Enrollment x Course.Price. Test dùng nguồn xác minh giả riêng trong project Tests.
 
 POST Create yêu cầu role Instructor và anti-forgery. Chỉ bind Amount/BankName/AccountNumber/AccountHolderName; owner lấy từ phiên, không nhận status/processed/adminnote/số dư từ form. Số tiền phải >0, tối đa decimal(18,2), tối đa hai chữ số thập phân. Chuỗi được trim; tên ngân hàng/chủ tài khoản tối đa 100 ký tự, không ký tự điều khiển; số tài khoản 4–34 ký tự ASCII chữ/số, giữ nguyên số 0 ở đầu.
 
@@ -67,3 +67,15 @@ Giữ page/status từ lịch sử khi mở chi tiết và khi bấm quay lại,
 Kiểm tra cuối: 213/213 test ứng dụng trên SQL Server thật, 0 bỏ qua; 11/11 test AdminDemo; build Release 0 lỗi/0 cảnh báo. SQL kiểm tra dual identity, ngoài quyền, dữ liệu thiếu, tài khoản ngắn và chỉ trả số đã che. HTTP kiểm tra role/guest, route id không bị query ghi đè, no-store, encode HTML, không lộ số tài khoản hoặc SubmissionKey, trạng thái/ngày/tiền, 400/404 và liên kết giữ page/status.
 
 Demo Kestrel trên database GUID riêng đạt đủ 8 nhóm regression Admin. Chỉ thêm yêu cầu kiểm thử vào database demo đã kiểm tra phạm vi. Trình duyệt xác nhận lọc Rejected → mở chi tiết → tài khoản chỉ hiện đuôi 5678 → quay về vẫn giữ bộ lọc/trang; không có console warning/error. Server đã dừng, ảnh `.admin-demo/uc38-payout-detail-proof.jpg` giữ cục bộ. Ba commit riêng: truy vấn/che số; màn hình; liên kết giữ bộ lọc.
+
+## Bước tiếp theo — tính khoản chia từ tiền thực thu
+
+`InstructorRevenueShare.Calculate` áp dụng BR-38.1 trên từng giao dịch đã đối soát: net = PaidAmount - RefundedAmount, Instructor nhận 70% làm tròn hai số lẻ AwayFromZero, nền tảng nhận phần còn lại để tổng luôn khớp net. PaidAmount là tiền đã thu sau giảm giá, không phải giá niêm yết hiện tại. Hoàn toàn bộ tạo khoản chia 0; dữ liệu tiền âm/sai độ chính xác/hoàn quá số đã thu bị từ chối.
+
+`SettlementInstructorEarningsSource` cộng các khoản Instructor sau khi tính từng dòng. Kiểm tra ownership ID hoặc username/email cũ (không phân biệt hoa thường ở username), mã giao dịch duy nhất/không rỗng và số tiền hợp lệ. Bất kỳ dòng lỗi hoặc sai phạm vi đều trả null, không bỏ qua rồi công bố tổng thiếu/sai. Nguồn chưa xác minh trả null; snapshot đã xác minh rỗng mới là 0.
+
+Phần thanh toán cần triển khai `IInstructorSettlementSource` để cung cấp snapshot đầy đủ các khoản thu thực. Production vẫn đăng ký nguồn unavailable; luồng POST tiếp tục không ghi yêu cầu mới khi chưa xác minh. Không có endpoint tự khai doanh thu; không thêm bảng/migration hay nguồn tiền mẫu trong đợt này. Hướng dẫn trường dữ liệu, quy tắc khóa/transaction, ví dụ và ranh giới tích hợp ở `INSTRUCTOR_SETTLEMENT_INTEGRATION.md`.
+
+Kiểm tra sau bước này: 231/231 test ứng dụng với SQL Server thật, 0 bỏ qua; 11/11 test AdminDemo, build Release 0 lỗi/0 cảnh báo. Unit kiểm tra 70%/30% khớp net, hoàn một phần/toàn bộ, làm tròn từng dòng, null khác verified-empty, bản ghi trùng/sai quyền/sai tiền. SQL kiểm tra chuỗi nguồn receipt xác minh → 70% → trừ Approved/bỏ Rejected → kiểm tra vượt số dư → giữ chỗ Pending; nguồn được đọc đúng context và bên trong transaction gửi yêu cầu. Dữ liệu receipt thử nghiệm chỉ ở Tests, không phải nguồn production.
+
+Lần khởi động demo sau thay đổi DI đạt startup/migrations và đủ 8 nhóm HTTP/SQL regression Admin trên database GUID mới; server đã dừng. Không thay đổi giao diện hoặc chạy lại QA trình duyệt ở bước backend này. Ba commit riêng: quy tắc chia; nguồn tính thu nhập; kiểm tra tích hợp và hướng dẫn phối hợp thanh toán.

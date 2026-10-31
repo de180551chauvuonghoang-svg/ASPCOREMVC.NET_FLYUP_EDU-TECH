@@ -20,7 +20,7 @@ public sealed class InstructorSettlementEarningsTests
     {
         using var db = new AppDbContext();
         var source = new SettlementInstructorEarningsSource(new TestSettlements([
-            new("receipt-1", Owner.UserId, 0.05m, 0), new("receipt-2", Owner.UserName, 0.05m, 0),
+            new("receipt-1", Owner.UserId, 0.05m, 0), new("receipt-2", Owner.UserName.ToUpperInvariant(), 0.05m, 0),
             new("receipt-refunded", Owner.UserId, 1000000, 1000000)]));
         Assert.Equal(0.08m, await source.CreditedEarningsAsync(db, Owner));
         Assert.Null(await source.CreditedEarningsAsync(db, new("", Owner.UserName)));
