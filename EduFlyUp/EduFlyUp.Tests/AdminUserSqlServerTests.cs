@@ -81,7 +81,7 @@ public sealed class AdminUserSqlServerTests
     internal sealed class SqlDatabase(ServiceProvider services, string connection) : IAsyncDisposable
     {
         public ServiceProvider Services => services;
-        public static async Task<SqlDatabase> CreateAsync()
+        public static async Task<SqlDatabase> CreateAsync(bool useMigrations = false)
         {
             var connection = new SqlConnectionStringBuilder(Environment.GetEnvironmentVariable("FLYUP_TEST_SQLSERVER"))
             {
@@ -102,7 +102,9 @@ public sealed class AdminUserSqlServerTests
             try
             {
                 using var scope = provider.CreateScope();
-                await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.EnsureCreatedAsync();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                if (useMigrations) await db.Database.MigrateAsync();
+                else await db.Database.EnsureCreatedAsync();
                 return new SqlDatabase(provider, connection);
             }
             catch { await provider.DisposeAsync(); throw; }

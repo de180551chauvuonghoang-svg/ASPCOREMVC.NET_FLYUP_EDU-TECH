@@ -1,0 +1,20 @@
+@model EduFlyUp.Web.Models.Instructor.CouponFormModel
+@{ Layout = "_AdminLayout"; var editing = Model.Id.HasValue; ViewData["Title"] = editing ? "Sửa mã giảm giá" : "Tạo mã giảm giá"; }
+<div class="mb-4"><a asp-action="Index" class="text-decoration-none">← Mã giảm giá của tôi</a><h1 class="h3 fw-bold mt-3">@ViewData["Title"]</h1><p class="text-muted">Thời gian bên dưới theo giờ Việt Nam (UTC+7).</p></div>
+<div class="card card-modern border-0 shadow-sm p-3 p-md-4" style="max-width: 850px">
+    @if (Model.UsedCount > 0) { <div class="alert alert-info">Mã đã dùng @Model.UsedCount lượt. Giữ nguyên mã, mức giảm và khóa học áp dụng; bạn có thể đổi thời hạn, giới hạn hoặc tắt mã.</div> }
+    <form asp-action="@(editing ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post">
+        <input asp-for="Id" type="hidden" /><input asp-for="Version" type="hidden" />
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <div class="row g-3">
+            <div class="col-md-8"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control font-monospace" maxlength="40" autocomplete="off" placeholder="Ví dụ: FLYUP50" /><div class="form-text">3–40 ký tự chữ không dấu, số, dấu gạch ngang hoặc gạch dưới. Không phân biệt hoa/thường.</div><span asp-validation-for="Code" class="text-danger"></span></div>
+            <div class="col-md-4"><label asp-for="DiscountPercent" class="form-label"></label><input asp-for="DiscountPercent" type="number" min="1" max="90" class="form-control" /><span asp-validation-for="DiscountPercent" class="text-danger"></span></div>
+            <div class="col-12"><label asp-for="CourseId" class="form-label"></label><select asp-for="CourseId" asp-items="Model.Courses" class="form-select"><option value="">Tất cả khóa học của tôi</option></select><span asp-validation-for="CourseId" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="StartDate" class="form-label"></label><input asp-for="StartDate" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" class="form-control" min="2000-01-01T00:00" max="2100-12-31T23:59" /><span asp-validation-for="StartDate" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="EndDate" class="form-label"></label><input asp-for="EndDate" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" class="form-control" min="2000-01-01T00:00" max="2100-12-31T23:59" /><span asp-validation-for="EndDate" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="MaxUsage" class="form-label"></label><input asp-for="MaxUsage" type="number" min="@(Math.Max(1, Model.UsedCount))" class="form-control" /><span asp-validation-for="MaxUsage" class="text-danger"></span></div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-4"><button type="submit" class="btn btn-brand px-4">@(editing ? "Lưu thay đổi" : "Tạo mã giảm giá")</button><a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>@if(editing) { <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-link">Tải lại dữ liệu</a> }</div>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

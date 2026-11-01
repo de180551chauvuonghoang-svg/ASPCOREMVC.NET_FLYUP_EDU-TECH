@@ -1,0 +1,42 @@
+@using EduFlyUp.Web.Models.Instructor
+@model EduFlyUp.BusinessObjects.InstructorStudentDetail
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Kết quả học viên"; }
+<div class="mb-4"><a asp-action="Index" asp-route-courseId="@Model.CourseId" class="text-decoration-none">← Học viên trong khóa học</a><h1 class="h3 fw-bold mt-3">Kết quả học viên</h1><p class="text-muted">@Model.CourseTitle · Thời gian theo giờ Việt Nam (UTC+7)</p></div>
+<div class="card card-modern p-3 p-md-4 mb-4 border-0 shadow-sm">
+    <h2 class="h5 fw-bold">@Model.Student.FullName</h2><p>@(Model.Student.Email ?? "Không có email")</p>
+    <div class="d-flex flex-wrap gap-3 small text-muted"><span>Ghi danh: @InstructorReportDisplay.VietnamTime(Model.Student.EnrolledAt)</span><span>@InstructorReportDisplay.Status(Model.Student.Status)</span>
+        @if (Model.Student.CompletedAt.HasValue) { <span>Hoàn thành: @InstructorReportDisplay.VietnamTime(Model.Student.CompletedAt.Value)</span> }
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card card-modern p-3 h-100"><div class="text-muted">Lần thi đã nộp</div><strong class="fs-3">@Model.SubmittedCount</strong></div></div>
+    <div class="col-md-4"><div class="card card-modern p-3 h-100"><div class="text-muted">Lần thi đạt</div><strong class="fs-3 text-success">@Model.PassedCount</strong></div></div>
+    <div class="col-md-4"><div class="card card-modern p-3 h-100"><div class="text-muted">Nộp gần nhất</div><strong class="mt-2">@(Model.LastSubmittedAt.HasValue ? InstructorReportDisplay.VietnamTime(Model.LastSubmittedAt.Value) : "Chưa có lần nộp bài")</strong></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-6"><div class="card card-modern p-3 h-100"><h2 class="h6 fw-bold">Tiến độ bài học</h2><p class="text-muted small mb-0">Chưa có dữ liệu hoàn thành từng bài học để tính tỷ lệ tiến độ.</p></div></div>
+    <div class="col-md-6"><div class="card card-modern p-3 h-100"><h2 class="h6 fw-bold">Đáp án từng câu</h2><p class="text-muted small mb-0">Chưa có dữ liệu đáp án chi tiết của các lần thi.</p></div></div>
+</div>
+<div class="card card-modern border-0 shadow-sm overflow-hidden">
+    <div class="p-3 border-bottom"><h2 class="h5 mb-1">Lịch sử làm bài</h2><div class="text-muted small">@Model.TotalCount lần làm bài · Trang @Model.Page/@Model.TotalPages · Điểm và kết quả theo dữ liệu đã lưu.</div></div>
+    @if (Model.Attempts.Count == 0)
+    {
+        <div class="p-5 text-center text-muted">Chưa có lịch sử làm bài của học viên trong khóa học này.</div>
+    }
+    else
+    {
+        <div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th scope="col">Bài kiểm tra</th><th scope="col">Bắt đầu</th><th scope="col">Nộp bài</th><th scope="col">Điểm</th><th scope="col">Kết quả</th></tr></thead><tbody>
+        @foreach (var attempt in Model.Attempts)
+        {
+            <tr><td><strong>@attempt.QuizTitle</strong><div class="small text-muted">@(attempt.IsCAT ? "Thích ứng CAT" : "Tiêu chuẩn")</div></td>
+                <td class="small">@InstructorReportDisplay.VietnamTime(attempt.StartedAt)</td><td class="small">@(attempt.CompletedAt.HasValue ? InstructorReportDisplay.VietnamTime(attempt.CompletedAt.Value) : "Chưa nộp")</td>
+                <td>@(attempt.Score?.ToString("0.##", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) ?? "—")</td>
+                <td><span class="badge @(attempt.Passed == true ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary")">@(attempt.Passed.HasValue ? attempt.Passed.Value ? "Đạt" : "Chưa đạt" : "Chưa nộp")</span></td></tr>
+        }
+        </tbody></table></div>
+        <nav class="d-flex gap-2 justify-content-end p-3" aria-label="Phân trang lịch sử làm bài">
+            @if (Model.Page > 1) { <a asp-action="Details" asp-route-id="@Model.Student.EnrollmentId" asp-route-courseId="@Model.CourseId" asp-route-page="@(Model.Page - 1)" class="btn btn-sm btn-outline-secondary">Trang trước</a> }
+            @if (Model.Page < Model.TotalPages) { <a asp-action="Details" asp-route-id="@Model.Student.EnrollmentId" asp-route-courseId="@Model.CourseId" asp-route-page="@(Model.Page + 1)" class="btn btn-sm btn-outline-secondary">Trang sau</a> }
+        </nav>
+    }
+</div>

@@ -3,6 +3,7 @@ using EduFlyUp.Services;
 using EduFlyUp.Web.Models.Instructor;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EduFlyUp.Web.Controllers;
 
@@ -12,16 +13,21 @@ public class InstructorController : Controller
     private readonly ICourseService _courseService;
     private readonly ICourseAccessService _courseAccess;
     private readonly ILessonService _lessonService;
+    private readonly EduFlyUp.Web.Storage.LessonFileCleanup _fileCleanup;
+    private readonly IInstructorStudentService _students;
 
-    public InstructorController(ICourseService courseService, ICourseAccessService courseAccess, ILessonService lessonService)
+    public InstructorController(ICourseService courseService, ICourseAccessService courseAccess, ILessonService lessonService, EduFlyUp.Web.Storage.LessonFileCleanup fileCleanup, IInstructorStudentService students)
     {
         _courseService = courseService;
         _courseAccess = courseAccess;
         _lessonService = lessonService;
+        _fileCleanup = fileCleanup;
+        _students = students;
     }
 
     // GET: /Instructor/Dashboard or /Instructor
     [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Dashboard(string? search, string? level, string? status, string? category)
     {
         var isAdmin = User.IsInRole("Admin");
@@ -75,6 +81,12 @@ public class InstructorController : Controller
         ViewBag.RejectedCourses = instructorCourses.Count(c => c.Status == CourseStatus.Rejected);
         ViewBag.ArchivedCourses = instructorCourses.Count(c => c.Status == CourseStatus.Archived);
         ViewBag.TotalLessons = instructorCourses.Sum(c => c.Lessons?.Count ?? 0);
+        if (!isAdmin)
+        {
+            var instructor = new InstructorIdentity(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", User.Identity?.Name ?? "");
+            ViewData["EnrollmentSummary"] = await _students.SummaryAsync(instructor);
+            ViewData["PopularCourses"] = await _students.PopularCoursesAsync(instructor);
+        }
 
         ViewBag.Categories = (await _courseService.GetCategoriesAsync()).ToList();
 
@@ -298,13 +310,18 @@ public class InstructorController : Controller
 
         lesson.Title = model.Title.Trim();
         lesson.SectionName = string.IsNullOrWhiteSpace(model.SectionName) ? "Chương 1: Tổng quan" : model.SectionName.Trim();
-        lesson.VideoUrl = model.VideoUrl?.Trim() ?? string.Empty;
+        if (!lesson.VideoUrl.StartsWith("/LessonVideos/Stream/", StringComparison.Ordinal))
+            lesson.VideoUrl = model.VideoUrl?.Trim() ?? string.Empty;
         lesson.Content = model.Content?.Trim() ?? string.Empty;
         lesson.DurationMinutes = model.DurationMinutes;
         lesson.Order = model.Order;
         lesson.IsPreview = model.IsPreview;
-        lesson.MaterialUrl = model.MaterialUrl?.Trim() ?? string.Empty;
-        lesson.AttachmentName = model.AttachmentName?.Trim() ?? string.Empty;
+        // Uploaded files are managed separately from external links.
+        if (!lesson.MaterialUrl.StartsWith("/LessonMaterials/Download/", StringComparison.Ordinal))
+        {
+            lesson.MaterialUrl = model.MaterialUrl?.Trim() ?? string.Empty;
+            lesson.AttachmentName = model.AttachmentName?.Trim() ?? string.Empty;
+        }
         lesson.UpdatedAt = DateTime.UtcNow;
 
         await _lessonService.UpdateLessonAsync(lesson);
@@ -333,7 +350,8 @@ public class InstructorController : Controller
 
         try
         {
-            await _lessonService.DeleteLessonAsync(id);
+            var deleted = await _lessonService.DeleteLessonAsync(id);
+            if (deleted is not null) _fileCleanup.DeleteFiles(deleted);
             TempData["SuccessMessage"] = "Đã xóa bài giảng thành công.";
         }
         catch (Exception)

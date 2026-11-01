@@ -49,7 +49,14 @@ internal sealed class TestCourseRepository : ICourseRepository
         stored.Level = course.Level;
         stored.ThumbnailUrl = course.ThumbnailUrl;
     }
-    public Task DeleteAsync(int id) { Courses.RemoveAll(c => c.Id == id); return Task.CompletedTask; }
+    public bool FailDeletes { get; set; }
+    public Task<IReadOnlyList<Lesson>> DeleteAsync(int id)
+    {
+        if (FailDeletes) throw new InvalidOperationException("Test course delete failure");
+        IReadOnlyList<Lesson> lessons = Courses.Find(c => c.Id == id)?.Lessons.ToList() ?? [];
+        Courses.RemoveAll(c => c.Id == id);
+        return Task.FromResult(lessons);
+    }
     public Task<int> CountAsync() => Task.FromResult(Courses.Count);
     public Task<int> CountPublishedAsync() => Task.FromResult(Courses.Count(c => c.IsPublished));
 
@@ -96,10 +103,75 @@ internal sealed class TestEnrollmentRepository : IEnrollmentRepository
 
 internal sealed class TestLessonRepository : ILessonRepository
 {
-    public Task<IEnumerable<Lesson>> GetByCourseIdAsync(int id) => Task.FromResult<IEnumerable<Lesson>>([]);
-    public Task<Lesson?> GetByIdAsync(int id) => Task.FromResult<Lesson?>(null);
-    public Task<Lesson> AddAsync(Lesson lesson) => Task.FromResult(lesson);
-    public Task UpdateAsync(Lesson lesson) => Task.CompletedTask;
-    public Task DeleteAsync(int id) => Task.CompletedTask;
-    public Task<int> CountAsync() => Task.FromResult(0);
+    public List<Lesson> Lessons { get; } = [];
+    public bool FailUpdates { get; set; }
+    public bool RejectNextMaterialUpdate { get; set; }
+    public Task<IEnumerable<Lesson>> GetByCourseIdAsync(int id) => Task.FromResult<IEnumerable<Lesson>>(Lessons.Where(l => l.CourseId == id).ToList());
+    public Task<Lesson?> GetByIdAsync(int id) => Task.FromResult(Lessons.Find(l => l.Id == id));
+    public Task<Lesson> AddAsync(Lesson lesson) { Lessons.Add(lesson); return Task.FromResult(lesson); }
+    public Task UpdateAsync(Lesson lesson) => FailUpdates ? Task.FromException(new InvalidOperationException("Test save failure")) : Task.CompletedTask;
+    public Task<bool> TryUpdateMaterialAsync(int id, string expectedUrl, string materialUrl, string attachmentName)
+    {
+        if (FailUpdates) throw new InvalidOperationException("Test save failure");
+        if (RejectNextMaterialUpdate) { RejectNextMaterialUpdate = false; return Task.FromResult(false); }
+        var lesson = Lessons.Find(l => l.Id == id && l.MaterialUrl == expectedUrl);
+        if (lesson is null) return Task.FromResult(false);
+        lesson.MaterialUrl = materialUrl;
+        lesson.AttachmentName = attachmentName;
+        return Task.FromResult(true);
+    }
+    public Task<Lesson?> DeleteAsync(int id)
+    {
+        if (FailUpdates) throw new InvalidOperationException("Test lesson delete failure");
+        var lesson = Lessons.Find(l => l.Id == id);
+        Lessons.RemoveAll(l => l.Id == id);
+        return Task.FromResult(lesson);
+    }
+    public Task<bool> TryUpdateVideoAsync(int id, string expectedUrl, string videoUrl)
+    {
+        if (FailUpdates) throw new InvalidOperationException("Test save failure");
+        if (RejectNextMaterialUpdate) { RejectNextMaterialUpdate = false; return Task.FromResult(false); }
+        var lesson = Lessons.Find(l => l.Id == id && l.VideoUrl == expectedUrl);
+        if (lesson is null) return Task.FromResult(false);
+        lesson.VideoUrl = videoUrl;
+        return Task.FromResult(true);
+    }
+    public Task<int> CountAsync() => Task.FromResult(Lessons.Count);
+}
+
+internal sealed class TestVideoStorage : EduFlyUp.Web.Storage.ILessonVideoStorage
+{
+    public Dictionary<string, byte[]> Files { get; } = [];
+    public async Task<string> SaveAsync(Microsoft.AspNetCore.Http.IFormFile file, CancellationToken cancellationToken)
+    {
+        var name = Guid.NewGuid().ToString("N") + ".mp4";
+        using var data = new MemoryStream();
+        await file.CopyToAsync(data, cancellationToken);
+        Files[name] = data.ToArray();
+        return name;
+    }
+    public Stream? OpenRead(string name) => Files.TryGetValue(name, out var bytes) ? new MemoryStream(bytes) : null;
+    public void Delete(string name) => Files.Remove(name);
+}
+
+internal sealed class TestMaterialStorage : EduFlyUp.Web.Storage.ILessonMaterialStorage
+{
+    public Dictionary<string, byte[]> Files { get; } = [];
+    public bool FailDelete { get; set; }
+    public bool RejectFile { get; set; }
+    public async Task<string> SaveAsync(Microsoft.AspNetCore.Http.IFormFile file, CancellationToken cancellationToken)
+    {
+        if (RejectFile) throw new InvalidDataException("Tài liệu không hợp lệ.");
+        var name = Guid.NewGuid().ToString("N") + ".pdf";
+        using var content = new MemoryStream();
+        await file.CopyToAsync(content, cancellationToken);
+        Files[name] = content.ToArray();
+        return name;
+    }
+    public Stream? OpenRead(string fileName) => Files.TryGetValue(fileName, out var bytes) ? new MemoryStream(bytes) : null;
+    public void Delete(string fileName)
+    {
+        if (FailDelete) throw new IOException("Test delete failure");
+        Files.Remove(fileName);
+    }
 }

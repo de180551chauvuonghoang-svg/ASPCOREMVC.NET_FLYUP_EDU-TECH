@@ -31,19 +31,71 @@ namespace EduFlyUp.DataAccess
         public async Task UpdateAsync(Lesson lesson)
         {
             using var context = new AppDbContext();
-            context.Lessons.Update(lesson);
-            await context.SaveChangesAsync();
+            await UpdateContentAsync(context, lesson);
         }
 
-        public async Task DeleteAsync(int id)
+        internal static async Task UpdateContentAsync(AppDbContext context, Lesson lesson)
+        {
+            // Update content without restoring a stale upload after replacement/removal.
+            var preserveMaterial = lesson.MaterialUrl.StartsWith("/LessonMaterials/Download/", StringComparison.Ordinal);
+            var preserveVideo = lesson.VideoUrl.StartsWith("/LessonVideos/Stream/", StringComparison.Ordinal);
+            var query = context.Lessons.Where(l => l.Id == lesson.Id);
+            await query.ExecuteUpdateAsync(setters => setters
+                .SetProperty(l => l.Title, lesson.Title)
+                .SetProperty(l => l.Content, lesson.Content)
+                .SetProperty(l => l.VideoUrl, l => preserveVideo || l.VideoUrl.StartsWith("/LessonVideos/Stream/") ? l.VideoUrl : lesson.VideoUrl)
+                .SetProperty(l => l.SectionName, lesson.SectionName)
+                .SetProperty(l => l.DurationMinutes, lesson.DurationMinutes)
+                .SetProperty(l => l.Order, lesson.Order)
+                .SetProperty(l => l.IsPreview, lesson.IsPreview)
+                .SetProperty(l => l.UpdatedAt, DateTime.UtcNow)
+                .SetProperty(l => l.MaterialUrl, l => preserveMaterial || l.MaterialUrl.StartsWith("/LessonMaterials/Download/") ? l.MaterialUrl : lesson.MaterialUrl)
+                .SetProperty(l => l.AttachmentName, l => preserveMaterial || l.MaterialUrl.StartsWith("/LessonMaterials/Download/") ? l.AttachmentName : lesson.AttachmentName));
+        }
+
+        public async Task<bool> TryUpdateMaterialAsync(int id, string expectedUrl, string materialUrl, string attachmentName)
         {
             using var context = new AppDbContext();
+            return await TryUpdateMaterialAsync(context, id, expectedUrl, materialUrl, attachmentName);
+        }
+
+        internal static async Task<bool> TryUpdateMaterialAsync(AppDbContext context, int id, string expectedUrl, string materialUrl, string attachmentName)
+        {
+            return await context.Lessons.Where(l => l.Id == id && l.MaterialUrl == expectedUrl)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(l => l.MaterialUrl, materialUrl)
+                    .SetProperty(l => l.AttachmentName, attachmentName)
+                    .SetProperty(l => l.UpdatedAt, DateTime.UtcNow)) == 1;
+        }
+
+        public async Task<bool> TryUpdateVideoAsync(int id, string expectedUrl, string videoUrl)
+        {
+            using var context = new AppDbContext();
+            return await TryUpdateVideoAsync(context, id, expectedUrl, videoUrl);
+        }
+
+        internal static async Task<bool> TryUpdateVideoAsync(AppDbContext context, int id, string expectedUrl, string videoUrl)
+            => await context.Lessons.Where(l => l.Id == id && l.VideoUrl == expectedUrl)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(l => l.VideoUrl, videoUrl)
+                    .SetProperty(l => l.UpdatedAt, DateTime.UtcNow)) == 1;
+
+        public async Task<Lesson?> DeleteAsync(int id)
+        {
+            using var context = new AppDbContext();
+            return await DeleteAsync(context, id);
+        }
+
+        internal static async Task<Lesson?> DeleteAsync(AppDbContext context, int id)
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var lesson = await context.Lessons.FindAsync(id);
             if (lesson != null)
             {
                 context.Lessons.Remove(lesson);
                 await context.SaveChangesAsync();
             }
+            await transaction.CommitAsync();
+            return lesson;
         }
 
         public async Task<int> CountAsync()

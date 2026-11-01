@@ -10,6 +10,7 @@ namespace EduFlyUp.DataAccess.Configurations
         {
             builder.ToTable("PayoutRequests");
             builder.Property(p => p.Amount).HasColumnType("decimal(18,2)");
+            builder.HasIndex(p => p.SubmissionKey).IsUnique().HasFilter("[SubmissionKey] IS NOT NULL");
         }
     }
 }

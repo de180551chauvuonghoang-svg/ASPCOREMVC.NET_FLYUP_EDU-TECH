@@ -254,11 +254,50 @@ else
                                                         <span class="text-muted small fst-italic">Chưa có video</span>
                                                     }
 
+                                                    <form asp-controller="LessonVideos" asp-action="Save" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center" data-confirm-message="Lưu video đã chọn cho bài giảng này?">
+                                                        <input type="hidden" name="id" value="@lesson.Id" />
+                                                        <input type="hidden" name="expectedUrl" value="@lesson.VideoUrl" />
+                                                        <label class="small" for="videoFile-@lesson.Id">Video MP4</label>
+                                                        <input type="file" id="videoFile-@lesson.Id" name="videoFile" class="form-control form-control-sm" style="max-width: 240px" accept=".mp4,video/mp4" required aria-describedby="videoHelp-@lesson.Id" />
+                                                        <button type="submit" class="btn btn-outline-primary btn-sm">@(string.IsNullOrWhiteSpace(lesson.VideoUrl) ? "Tải video lên" : "Thay video")</button>
+                                                        <small id="videoHelp-@lesson.Id" class="text-muted">MP4 · Tối đa 100 MB</small>
+                                                    </form>
+                                                    @if (lesson.VideoUrl.StartsWith("/LessonVideos/Stream/", StringComparison.Ordinal))
+                                                    {
+                                                        <form asp-controller="LessonVideos" asp-action="Remove" method="post" data-confirm-message="Gỡ video đã tải lên của bài giảng này?">
+                                                            <input type="hidden" name="id" value="@lesson.Id" />
+                                                            <input type="hidden" name="expectedUrl" value="@lesson.VideoUrl" />
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm">Gỡ video</button>
+                                                        </form>
+                                                    }
+                                                    @if (string.IsNullOrWhiteSpace(lesson.MaterialUrl))
+                                                    {
+                                                        <form asp-controller="LessonMaterials" asp-action="Upload" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
+                                                            <input type="hidden" name="id" value="@lesson.Id" />
+                                                            <label class="small" for="materialFile-@lesson.Id">Tài liệu bài giảng</label>
+                                                            <input type="file" id="materialFile-@lesson.Id" name="materialFile" class="form-control form-control-sm" style="max-width: 240px" accept=".pdf,.doc,.docx,.ppt,.pptx" required aria-describedby="materialHelp-@lesson.Id" />
+                                                            <button type="submit" class="btn btn-outline-primary btn-sm">Tải lên</button>
+                                                            <small id="materialHelp-@lesson.Id" class="text-muted">PDF, Word, PowerPoint · Tối đa 10 MB</small>
+                                                        </form>
+                                                    }
                                                     @if (!string.IsNullOrWhiteSpace(lesson.MaterialUrl))
                                                     {
                                                         <a href="@lesson.MaterialUrl" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" title="Tải học liệu đính kèm (UC-24)">
                                                             <i class="bi bi-file-earmark-arrow-down me-1"></i>@(string.IsNullOrWhiteSpace(lesson.AttachmentName) ? "Tài liệu" : lesson.AttachmentName)
                                                         </a>
+                                                        <form asp-controller="LessonMaterials" asp-action="Replace" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center" data-confirm-message="Thay thế tài liệu hiện tại bằng file đã chọn?">
+                                                            <input type="hidden" name="id" value="@lesson.Id" />
+                                                            <input type="hidden" name="expectedUrl" value="@lesson.MaterialUrl" />
+                                                            <label class="small" for="replaceMaterial-@lesson.Id">Tài liệu thay thế</label>
+                                                            <input type="file" id="replaceMaterial-@lesson.Id" name="materialFile" class="form-control form-control-sm" style="max-width: 240px" accept=".pdf,.doc,.docx,.ppt,.pptx" required aria-describedby="replaceHelp-@lesson.Id" />
+                                                            <button type="submit" class="btn btn-outline-primary btn-sm">Thay tài liệu</button>
+                                                            <small id="replaceHelp-@lesson.Id" class="text-muted">PDF, Word, PowerPoint · Tối đa 10 MB</small>
+                                                        </form>
+                                                        <form asp-controller="LessonMaterials" asp-action="Remove" method="post" data-confirm-message="Xóa tài liệu đính kèm của bài giảng này?">
+                                                            <input type="hidden" name="id" value="@lesson.Id" />
+                                                            <input type="hidden" name="expectedUrl" value="@lesson.MaterialUrl" />
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm">Xóa tài liệu</button>
+                                                        </form>
                                                     }
                                                 </div>
                                             </td>
@@ -404,6 +443,7 @@ else
                                 Tên hiển thị của tài liệu
                             </label>
                             <input type="text" id="lessonAttachmentName" name="AttachmentName" class="form-control rounded-3" placeholder="Ví dụ: Slide_Bai_1_Overview.pdf" maxlength="150" />
+                            <div class="form-text small">Tài liệu tải trực tiếp được giữ nguyên khi sửa bài giảng. Để tải tài liệu mới, lưu bài giảng rồi chọn file trong danh sách giáo trình.</div>
                         </div>
 
                         <!-- Ghi chú / Tóm tắt bài giảng -->
@@ -446,6 +486,22 @@ else
     </div>
 </div>
 
+<div class="modal fade" id="assetConfirmModal" tabindex="-1" aria-labelledby="assetConfirmTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assetConfirmTitle">Xác nhận thay đổi học liệu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body" id="assetConfirmMessage"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="assetConfirmSubmit">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @using System.Text.Encodings.Web
     <script>
@@ -453,6 +509,27 @@ else
         let videoPreviewModalInstance = null;
 
         document.addEventListener("DOMContentLoaded", function () {
+            const confirmElement = document.getElementById("assetConfirmModal");
+            const confirmModal = new bootstrap.Modal(confirmElement);
+            let pendingForm = null;
+            document.querySelectorAll("form[data-confirm-message]").forEach(function (form) {
+                form.addEventListener("submit", function (event) {
+                    if (form.dataset.confirmed === "true") return;
+                    event.preventDefault();
+                    pendingForm = form;
+                    document.getElementById("assetConfirmMessage").textContent = form.dataset.confirmMessage;
+                    confirmModal.show();
+                });
+            });
+            document.getElementById("assetConfirmSubmit").addEventListener("click", function () {
+                const form = pendingForm;
+                if (!form) return;
+                pendingForm = null;
+                form.dataset.confirmed = "true";
+                confirmModal.hide();
+                form.requestSubmit();
+            });
+            confirmElement.addEventListener("hidden.bs.modal", function () { pendingForm = null; });
             const lessonModalEl = document.getElementById("lessonModal");
             if (lessonModalEl) {
                 lessonModalInstance = new bootstrap.Modal(lessonModalEl);
@@ -479,10 +556,13 @@ else
             document.getElementById("lessonTitle").value = "";
             document.getElementById("lessonSectionName").value = defaultSection || "Chương 1: Tổng quan";
             document.getElementById("lessonVideoUrl").value = "";
+            document.getElementById("lessonVideoUrl").disabled = false;
             document.getElementById("lessonDurationMinutes").value = "15";
             document.getElementById("lessonOrder").value = "@(Model.TotalLessons + 1)";
             document.getElementById("lessonIsPreview").checked = false;
             document.getElementById("lessonMaterialUrl").value = "";
+            document.getElementById("lessonMaterialUrl").disabled = false;
+            document.getElementById("lessonAttachmentName").disabled = false;
             document.getElementById("lessonAttachmentName").value = "";
             document.getElementById("lessonContent").value = "";
 
@@ -503,11 +583,16 @@ else
             document.getElementById("lessonId").value = lesson.id;
             document.getElementById("lessonTitle").value = lesson.title || "";
             document.getElementById("lessonSectionName").value = lesson.sectionName || "Chương 1: Tổng quan";
-            document.getElementById("lessonVideoUrl").value = lesson.videoUrl || "";
+            const hasUploadedVideo = (lesson.videoUrl || "").startsWith("/LessonVideos/Stream/");
+            document.getElementById("lessonVideoUrl").value = hasUploadedVideo ? "" : (lesson.videoUrl || "");
+            document.getElementById("lessonVideoUrl").disabled = hasUploadedVideo;
             document.getElementById("lessonDurationMinutes").value = lesson.durationMinutes || 0;
             document.getElementById("lessonOrder").value = lesson.order || 1;
             document.getElementById("lessonIsPreview").checked = !!lesson.isPreview;
-            document.getElementById("lessonMaterialUrl").value = lesson.materialUrl || "";
+            const hasUploadedMaterial = (lesson.materialUrl || "").startsWith("/LessonMaterials/Download/");
+            document.getElementById("lessonMaterialUrl").value = hasUploadedMaterial ? "" : (lesson.materialUrl || "");
+            document.getElementById("lessonMaterialUrl").disabled = hasUploadedMaterial;
+            document.getElementById("lessonAttachmentName").disabled = hasUploadedMaterial;
             document.getElementById("lessonAttachmentName").value = lesson.attachmentName || "";
             document.getElementById("lessonContent").value = lesson.content || "";
 
@@ -539,7 +624,12 @@ else
                 container.innerHTML = `<iframe src="${embedUrl}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-100 h-100"></iframe>`;
             } else {
                 // Video MP4 thông thường hoặc link trực tiếp
-                container.innerHTML = `<video controls autoplay class="w-100 h-100 object-fit-contain"><source src="${url}">Trình duyệt của bạn không hỗ trợ thẻ video.</video>`;
+                const video = document.createElement("video");
+                video.controls = true;
+                video.autoplay = true;
+                video.className = "w-100 h-100 object-fit-contain";
+                video.src = url;
+                container.appendChild(video);
             }
 
             if (videoPreviewModalInstance) {

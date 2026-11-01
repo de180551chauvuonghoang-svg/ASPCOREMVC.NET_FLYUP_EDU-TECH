@@ -51,15 +51,24 @@ namespace EduFlyUp.DataAccess
             await context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<IReadOnlyList<Lesson>> DeleteAsync(int id)
         {
             using var context = new AppDbContext();
-            var course = await context.Courses.FindAsync(id);
+            return await DeleteAsync(context, id);
+        }
+
+        internal static async Task<IReadOnlyList<Lesson>> DeleteAsync(AppDbContext context, int id)
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            var course = await context.Courses.Include(c => c.Lessons).FirstOrDefaultAsync(c => c.Id == id);
+            var lessons = course?.Lessons.ToList() ?? [];
             if (course != null)
             {
                 context.Courses.Remove(course);
                 await context.SaveChangesAsync();
             }
+            await transaction.CommitAsync();
+            return lessons;
         }
 
         public async Task<int> CountAsync()

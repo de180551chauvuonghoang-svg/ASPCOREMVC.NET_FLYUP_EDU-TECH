@@ -11,7 +11,7 @@ namespace EduFlyUp.Services
         Task<Course> CreateCourseAsync(Course course);
         Task UpdateCourseAsync(Course course);
         Task UpdateCourseContentAsync(Course course);
-        Task DeleteCourseAsync(int id);
+        Task<IReadOnlyList<Lesson>> DeleteCourseAsync(int id);
         Task<int> GetTotalCoursesCountAsync();
         Task<int> GetPublishedCoursesCountAsync();
         Task<IEnumerable<Course>> GetCoursesByInstructorIdAsync(string instructorId, CourseStatus? status = null, string? search = null, string? category = null);
@@ -45,7 +45,7 @@ namespace EduFlyUp.Services
         public async Task UpdateCourseAsync(Course course) => await _courseRepository.UpdateAsync(course);
         public async Task UpdateCourseContentAsync(Course course) => await _courseRepository.UpdateContentAsync(course);
 
-        public async Task DeleteCourseAsync(int id) => await _courseRepository.DeleteAsync(id);
+        public Task<IReadOnlyList<Lesson>> DeleteCourseAsync(int id) => _courseRepository.DeleteAsync(id);
 
         public async Task<int> GetTotalCoursesCountAsync() => await _courseRepository.CountAsync();
 
