@@ -32,3 +32,27 @@ Kết quả ngày 05/11/2026: toàn bộ **247/247 test ứng dụng đạt, kh�
 6. Nối nguồn giao dịch đã xác minh sang báo cáo/70%/rút tiền với khóa `EduFlyUp.PayoutManagement`; kiểm thử đầy đủ trước khi mở nguồn.
 
 Hoàn tiền/đối soát và xử lý rút tiền của Admin cần phạm vi riêng trước khi nghiệm thu dòng tiền hoàn chỉnh.
+
+## Phần 2: tạo đơn ở server và khóa miễn phí (05/11/2026)
+
+Đã chốt hướng **Casso + VietQR** theo tài liệu nhóm. VietQR tạo mã chuyển khoản; Casso cung cấp thông báo giao dịch để server xác minh. Cần tài khoản Casso, ngân hàng nhận tiền và khóa xác thực do nhóm cấu hình khi triển khai kết nối; chưa gửi thông tin hay đăng ký dịch vụ bên ngoài trong bước này.
+
+Nguồn chính thức đã đối chiếu:
+- [Casso — tích hợp xác nhận thanh toán](https://developer.casso.vn/tai-nguyen-khac/tich-hop-xac-nhan-thanh-toan).
+- [VietQR — thay đổi API tạo QR](https://www.vietqr.io/danh-sach-api/link-tao-ma-nhanh/api-tao-ma-qr): API generate cũ ngừng hỗ trợ và dừng từ 01/01/2027; không tích hợp mới vào endpoint này. Cách tạo QR sẽ dùng cơ chế đang được hỗ trợ khi làm giao diện thanh toán.
+
+`ICheckoutService.CreateAsync` nhận claims của phiên đăng nhập và `CheckoutInput` chỉ có SubmissionKey/danh sách CourseId. Người mua, giá, giảng viên và trạng thái được xác định ở server. Chỉ tài khoản đang hoạt động với role Student trong database được tạo đơn; role trong cookie không thay thế kiểm tra database. Input tối đa 20 khóa, mã dương không trùng, key Guid khác rỗng.
+
+Tạo đơn qua Repository/DAO scoped, Serializable và khóa `EduFlyUp.CheckoutManagement`. Khóa phải được dùng lại trong writer xác nhận thanh toán/ghi danh sau này. Nếu một writer cần cả ba khóa, thống nhất thứ tự CheckoutManagement → CouponManagement → PayoutManagement, không đảo thứ tự giữa các writer.
+
+- Các khóa phải vừa Approved vừa IsPublished; không mua khóa của chính tài khoản. VND hiện nhận số nguyên, không tự làm tròn giá có phần lẻ; tổng tối đa 9.999.999.999.999 VND.
+- Chụp giá/tên/giảng viên theo database, cộng tổng tại server; chưa áp dụng coupon ở bước này.
+- Cùng key + cùng tập khóa trả lại đơn đã lưu, kể cả giá/trạng thái khóa đã đổi. Cùng key + tập khóa khác báo xung đột. Key có phạm vi người mua.
+- Khóa đã Active/Completed không mua lại. Đơn Pending còn hạn của cùng người mua có khóa trùng sẽ chặn tạo đơn khác; đơn hết hạn không chặn tạo mới. Xử lý nhận tiền muộn của đơn hết hạn còn ở bước webhook/đối soát.
+- Đơn có phí ở Pending, hạn 30 phút, chưa tạo giao dịch hoặc enrollment. Giỏ hỗn hợp miễn phí/có phí chờ xác nhận toàn bộ đơn.
+- Đơn hoàn toàn miễn phí được Paid với số tiền 0, cấp enrollment trong cùng transaction; tái kích hoạt enrollment Cancelled thay vì chèn trùng. Không tạo giao dịch ngân hàng giả cho đơn miễn phí.
+- Nếu lưu đơn lỗi thì rollback cả việc tái kích hoạt enrollment; service trả Unavailable, không trả kết quả thành công.
+
+Đây là backend tạo đơn, chưa có controller/view/QR/webhook; chưa kích hoạt nguồn doanh thu Instructor. Không có migration hoặc package mới trong phần 2. Kiểm thử unit và SQL thật bao gồm snapshot, replay, account/role hiện tại, giới hạn tiền, toàn bộ giỏ, khóa miễn phí, rollback và tạo đồng thời.
+
+Kết quả phần 2: **261/261 test ứng dụng đạt, không bỏ qua**, gồm 14 test mới (4 unit, 10 SQL Server). Chưa cập nhật database ứng dụng của nhóm; fixture chỉ dùng database GUID riêng.

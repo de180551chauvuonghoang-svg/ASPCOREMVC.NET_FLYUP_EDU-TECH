@@ -53,6 +53,8 @@ builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<ICouponRepository, CouponRepository>();
 builder.Services.AddScoped<ICouponService, CouponService>();
 builder.Services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();
