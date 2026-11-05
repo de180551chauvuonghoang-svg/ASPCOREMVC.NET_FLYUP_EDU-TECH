@@ -56,3 +56,24 @@ Tạo đơn qua Repository/DAO scoped, Serializable và khóa `EduFlyUp.Checkout
 Đây là backend tạo đơn, chưa có controller/view/QR/webhook; chưa kích hoạt nguồn doanh thu Instructor. Không có migration hoặc package mới trong phần 2. Kiểm thử unit và SQL thật bao gồm snapshot, replay, account/role hiện tại, giới hạn tiền, toàn bộ giỏ, khóa miễn phí, rollback và tạo đồng thời.
 
 Kết quả phần 2: **261/261 test ứng dụng đạt, không bỏ qua**, gồm 14 test mới (4 unit, 10 SQL Server). Chưa cập nhật database ứng dụng của nhóm; fixture chỉ dùng database GUID riêng.
+
+## Phần 3: áp dụng, thay và gỡ mã giảm giá trên đơn Pending
+
+`ICheckoutCouponService.ApplyAsync` nhận phiên người mua và OrderPublicId/Code/Version. Code trim/chuyển hoa; để trống là gỡ mã. Version là rowversion SQL mã hóa base64, không dùng số tiền từ trình duyệt. Chỉ tài khoản Student đang hoạt động trong database được sửa đơn của mình. Sai owner trả NotFound; form cũ trả Stale. Đơn phải Pending còn hạn và chưa có PaymentTransaction; không sửa đơn đã trả tiền, hết hạn hoặc đã nhận giao dịch.
+
+Mã phải duy nhất, đang bật, trong thời hạn, tỷ lệ 1–90 và còn lượt. Giảm trên snapshot giá trong đơn, chỉ các dòng của giảng viên phát hành mã (chấp nhận Identity ID hoặc username cũ) và đúng CourseId nếu mã giới hạn một khóa. Đơn được dùng một mã tại một thời điểm; mã không áp dụng được vào dòng nào thì từ chối, không giữ chỗ. Tiền giảm làm tròn xuống từng dòng về VND nguyên; ví dụ 101 VND giảm 10% thành giảm 10 VND. Các dòng ngoài phạm vi không giảm. Tổng đơn luôn cộng lại từ các dòng sau khi áp dụng.
+
+### Lượt dùng và giữ chỗ
+
+- Một lượt sử dụng tính trên một đơn thanh toán thành công, không tính trên số khóa trong đơn.
+- Đơn Pending còn hạn có snapshot CouponId là một chỗ giữ. Khả dụng = MaxUsage - UsedCount - số đơn giữ chỗ. Không tăng UsedCount chỉ vì áp dụng mã.
+- Tính giữ chỗ trực tiếp từ đơn và dòng đã có, không thêm bảng/cột/migration. Gỡ mã, thay sang mã khác, hoặc đơn hết hạn/Cancelled sẽ nhả chỗ tương ứng.
+- Mọi kiểm tra và cập nhật tổng/dòng diễn ra trong Serializable, khóa CheckoutManagement rồi CouponManagement. Nếu ghi dòng lỗi, rollback cả tổng đơn; không giữ chỗ nửa chừng.
+- Quản lý mã Instructor nay khóa Code/DiscountPercent/CourseId khi có lượt đã dùng **hoặc đơn đang giữ chỗ**; MaxUsage không thấp hơn UsedCount cộng giữ chỗ. Thời hạn/bật tắt vẫn điều chỉnh được cho đơn mới. Snapshot trên đơn còn hạn đã áp dụng không đổi theo việc tắt hoặc sửa thời hạn của mã; áp dụng lại cùng mã/version hiện tại không cộng chỗ mới. Form version cũ vẫn phải tải lại.
+- Writer xác nhận thanh toán sau này phải lấy đúng thứ tự khóa, xác nhận đơn còn hạn, tăng UsedCount một lần cho mỗi CouponId trong đơn và đổi Pending sang Paid trong cùng transaction. Chưa có writer đó ở bước này; chưa có giao dịch thật được ghi nhận hay nguồn doanh thu được bật.
+
+Backend này chưa có controller/view. Khi tạo QR ở bước sau phải chốt và khóa số phải trả trước khi phát hành QR để không đổi chiết khấu sau khi người mua đã nhận thông tin chuyển tiền; hiện chưa phát hành QR nào.
+
+Kiểm thử mới gồm chuẩn hóa/validation/role, phạm vi snapshot và legacy owner, làm tròn, mã lỗi/trùng/hết hạn, stale/ownership, các trạng thái không sửa được, hai đơn tranh lượt cuối, thay/gỡ/hết hạn nhả chỗ, rollback khi ghi dòng lỗi và quản lý giới hạn đồng thời với checkout. Không áp dụng migration lên database nhóm trong bước này.
+
+Kết quả xác nhận ngày 06/11/2026: **276/276 test ứng dụng đạt, không bỏ qua**, gồm 15 test mới (9 SQL Server và 6 unit/case làm tròn). Lần chạy đầy đủ đầu có hai timeout SQL (tạo tài khoản fixture và lấy khóa checkout); kiểm tra truy vấn SQL rồi chạy lại toàn bộ không đổi code hay nới timeout cho kết quả trên. Không kiểm tra giao diện trình duyệt ở bước backend này.

@@ -55,6 +55,8 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<ICheckoutCouponRepository, CheckoutCouponRepository>();
+builder.Services.AddScoped<ICheckoutCouponService, CheckoutCouponService>();
 builder.Services.AddScoped<ICouponRepository, CouponRepository>();
 builder.Services.AddScoped<ICouponService, CouponService>();
 builder.Services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();
