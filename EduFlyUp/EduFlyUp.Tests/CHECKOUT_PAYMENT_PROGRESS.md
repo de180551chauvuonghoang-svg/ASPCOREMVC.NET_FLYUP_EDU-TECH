@@ -77,3 +77,26 @@ Backend này chưa có controller/view. Khi tạo QR ở bước sau phải ch�
 Kiểm thử mới gồm chuẩn hóa/validation/role, phạm vi snapshot và legacy owner, làm tròn, mã lỗi/trùng/hết hạn, stale/ownership, các trạng thái không sửa được, hai đơn tranh lượt cuối, thay/gỡ/hết hạn nhả chỗ, rollback khi ghi dòng lỗi và quản lý giới hạn đồng thời với checkout. Không áp dụng migration lên database nhóm trong bước này.
 
 Kết quả xác nhận ngày 06/11/2026: **276/276 test ứng dụng đạt, không bỏ qua**, gồm 15 test mới (9 SQL Server và 6 unit/case làm tròn). Lần chạy đầy đủ đầu có hai timeout SQL (tạo tài khoản fixture và lấy khóa checkout); kiểm tra truy vấn SQL rồi chạy lại toàn bộ không đổi code hay nới timeout cho kết quả trên. Không kiểm tra giao diện trình duyệt ở bước backend này.
+
+## Phần 4: giao diện checkout và xem đơn của người mua
+
+- Nút Đăng ký học ngay trên trang chi tiết khóa học mở GET `/Checkout/Create?courseId=...`; hiện hỗ trợ mua một khóa từ trang khóa học, chưa có giao diện giỏ hàng nhiều khóa.
+- GET chỉ xem lại tên/giá server và tạo SubmissionKey cho form; chưa tạo đơn hay ghi danh. POST Create chỉ bind CourseId/SubmissionKey, có anti-forgery; giá/owner/trạng thái do backend xác định. Lỗi giữ key của form để thử lại.
+- POST thành công hoặc gửi lại chuyển sang `/Checkout/Details/{publicId}`. Nếu có đơn Pending chứa khóa đang mua, mở lại đơn đó thay vì tạo thêm đơn. Không dùng returnUrl bên ngoài.
+- Chi tiết chỉ đọc đơn của Student đang hoạt động và còn role Student trong database. Scope buyer từ claims, không từ query/body. DTO không chứa BuyerId hoặc thông tin xác thực. No-store và Razor encode tên khóa/mã.
+- Hiển thị snapshot từng dòng, giá gốc, giảm giá, tổng phải trả, trạng thái và hạn theo UTC+7. Đơn Pending quá hạn được trình bày là hết hạn mà không sửa database bằng GET.
+- Form áp dụng/gỡ mã dùng route publicId, Code/Version và anti-forgery. Trả lỗi 400/404/409/503 phù hợp; lỗi stale tải lại phiên bản hiện tại để người mua kiểm tra tổng trước khi thử lại. Không có form khi đơn hết hạn/đã trả tiền/đã nhận giao dịch.
+- Đơn miễn phí hiển thị đăng ký thành công và liên kết quay lại khóa học. Đơn có phí ghi rõ chưa mở thanh toán trực tuyến; chưa có QR hoặc nút tự xác nhận đã trả tiền.
+
+Kiểm thử HTTP với cookie/Identity, Razor và SQL Server thật: quyền Student/guest/sai role, GET không ghi dữ liệu, anti-forgery, overposting giá/owner/status, gửi lại/mở lại Pending, scope route/owner, encode, no-store, áp dụng/gỡ/stale và đăng ký miễn phí. TestApplication có tùy chọn SQL dành cho fixture GUID để các kiểm thử này chạy trọn backend thay vì mock transaction.
+
+Kết quả ngày 06/11/2026: **281/281 test ứng dụng đạt, 0 bỏ qua**, có 5 test HTTP/SQL mới. Các lượt đầu dùng Shared Memory bị timeout ở tạo database/Identity kể cả test cũ; đổi kết nối kiểm thử sang TCP trên đúng instance MSSQLSERVER01 và chạy tuần tự giữa các lớp đã đạt. Các test đồng thời bên trong từng ca vẫn giữ nguyên. Lượt xác nhận cuối dùng timeout mặc định của ứng dụng, không đổi cấu hình database nhóm:
+
+```powershell
+$env:FLYUP_TEST_SQLSERVER='Server=tcp:127.0.0.1,1433;Integrated Security=True;TrustServerCertificate=True;Connect Timeout=10;'
+dotnet test EduFlyUp/EduFlyUp.Tests/EduFlyUp.Tests.csproj --configuration Release --no-build --no-restore --nologo -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1
+```
+
+Địa chỉ/cổng trên là kết nối local đã kiểm tra, không phải cấu hình bắt buộc cho các máy khác. Cách giới hạn chạy song song theo [RunSettings của xUnit](https://xunit.net/docs/config-runsettings).
+
+Demo Kestrel/migration trên database GUID riêng vượt đủ 8 nhóm regression Admin; trình duyệt đã đăng nhập Student, mở nút đăng ký từ trang khóa học, tạo đơn 200.000 VND, áp mã CHECKOUT20 còn 160.000 VND, gỡ mã về 200.000 VND và đăng ký khóa miễn phí. Đối chiếu SQL: chỉ khóa miễn phí có enrollment Active, đơn có phí vẫn Pending và chưa có enrollment, UsedCount vẫn 0. Ảnh minh chứng lưu trong `.admin-demo/checkout-ui-proof.png` cục bộ, không đưa vào Git. Server demo đã dừng sau xác nhận trình duyệt; không có thanh toán/ngân hàng thật hoặc database nhóm được cập nhật.

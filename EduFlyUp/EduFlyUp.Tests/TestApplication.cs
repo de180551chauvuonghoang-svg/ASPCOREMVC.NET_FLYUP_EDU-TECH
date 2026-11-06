@@ -27,7 +27,7 @@ internal sealed class TestApplication : IDisposable
     public TestCouponRepository Coupons { get; } = new();
     public IServiceProvider Services => _server.Services;
 
-    public TestApplication(EduFlyUp.Web.Storage.ILessonMaterialStorage? materialStorage = null, EduFlyUp.Web.Storage.ILessonVideoStorage? videoStorage = null, IInstructorPayoutService? payoutService = null, IInstructorSettlementSource? settlements = null)
+    public TestApplication(EduFlyUp.Web.Storage.ILessonMaterialStorage? materialStorage = null, EduFlyUp.Web.Storage.ILessonVideoStorage? videoStorage = null, IInstructorPayoutService? payoutService = null, IInstructorSettlementSource? settlements = null, string? sqlConnection = null)
     {
         var database = Guid.NewGuid().ToString();
         _server = new TestServer(new WebHostBuilder()
@@ -36,7 +36,11 @@ internal sealed class TestApplication : IDisposable
             {
                 services.AddLogging(logging => logging.SetMinimumLevel(LogLevel.Warning));
                 services.AddDataProtection().UseEphemeralDataProtectionProvider();
-                services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(database));
+                services.AddDbContext<AppDbContext>(options =>
+                {
+                    if (sqlConnection is null) options.UseInMemoryDatabase(database);
+                    else options.UseSqlServer(sqlConnection);
+                });
                 services.AddIdentity<ApplicationUser, IdentityRole>()
                     .AddEntityFrameworkStores<AppDbContext>()
                     .AddDefaultTokenProviders()
@@ -55,6 +59,12 @@ internal sealed class TestApplication : IDisposable
                 services.AddScoped<ICourseService, CourseService>();
                 services.AddScoped<ILessonService, LessonService>();
                 services.AddSingleton(TimeProvider.System);
+                services.AddScoped<ICheckoutRepository, CheckoutRepository>();
+                services.AddScoped<ICheckoutService, CheckoutService>();
+                services.AddScoped<ICheckoutCouponRepository, CheckoutCouponRepository>();
+                services.AddScoped<ICheckoutCouponService, CheckoutCouponService>();
+                services.AddScoped<ICheckoutQueryRepository, CheckoutQueryRepository>();
+                services.AddScoped<ICheckoutQueryService, CheckoutQueryService>();
                 services.AddSingleton<ICouponRepository>(Coupons);
                 services.AddScoped<ICouponService, CouponService>();
                 services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();

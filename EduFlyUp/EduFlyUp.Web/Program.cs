@@ -57,6 +57,8 @@ builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<ICheckoutCouponRepository, CheckoutCouponRepository>();
 builder.Services.AddScoped<ICheckoutCouponService, CheckoutCouponService>();
+builder.Services.AddScoped<ICheckoutQueryRepository, CheckoutQueryRepository>();
+builder.Services.AddScoped<ICheckoutQueryService, CheckoutQueryService>();
 builder.Services.AddScoped<ICouponRepository, CouponRepository>();
 builder.Services.AddScoped<ICouponService, CouponService>();
 builder.Services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();

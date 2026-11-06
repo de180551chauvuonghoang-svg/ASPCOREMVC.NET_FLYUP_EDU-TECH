@@ -41,8 +41,9 @@ public sealed class CheckoutDAO : SingletonBase<CheckoutDAO>
 
         var enrollments = await db.Enrollments.AsNoTracking().Where(e => e.UserId == buyerId && ids.Contains(e.CourseId)).ToListAsync();
         if (enrollments.Any(e => e.Status != EnrollmentStatus.Cancelled)) return new(CheckoutChange.AlreadyEnrolled);
-        if (await db.CheckoutOrders.AsNoTracking().AnyAsync(o => o.BuyerId == buyerId && o.Status == CheckoutOrderStatus.Pending &&
-            o.ExpiresAtUtc > now && o.Items.Any(i => ids.Contains(i.CourseId)))) return new(CheckoutChange.PendingExists);
+        var pending = await db.CheckoutOrders.AsNoTracking().Where(o => o.BuyerId == buyerId && o.Status == CheckoutOrderStatus.Pending &&
+            o.ExpiresAtUtc > now && o.Items.Any(i => ids.Contains(i.CourseId))).OrderBy(o => o.CreatedAt).ThenBy(o => o.Id).FirstOrDefaultAsync();
+        if (pending is not null) return Result(CheckoutChange.PendingExists, pending);
 
         var total = courses.Sum(c => c.Price);
         if (total > CheckoutPolicy.MaxVndAmount) return new(CheckoutChange.Invalid);
