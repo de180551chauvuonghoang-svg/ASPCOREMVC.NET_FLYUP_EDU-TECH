@@ -1,0 +1,73 @@
+@model CheckoutDetail
+@using System.Globalization
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+    string Money(decimal v) => v.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) + " VNĐ";
+    string Time(DateTime v) => DateTime.SpecifyKind(v, DateTimeKind.Utc).AddHours(7).ToString("dd/MM/yyyy HH:mm");
+    var code = Model.Items.FirstOrDefault(i => i.CouponCode != null)?.CouponCode;
+    var status = Model.Status switch { CheckoutOrderStatus.Paid => Model.Payable == 0 ? "Đã đăng ký miễn phí" : "Đã thanh toán",
+        CheckoutOrderStatus.Cancelled => "Đã hủy", CheckoutOrderStatus.Expired => "Đã hết hạn", _ => "Chờ thanh toán" };
+}
+<div class="py-4">
+    <a asp-controller="Courses" asp-action="Index" class="text-decoration-none">← Khám phá khóa học</a>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 my-3">
+        <div><h1 class="h3 fw-bold mb-1">Chi tiết đơn hàng</h1><span class="text-muted small text-break">Mã đơn: @Model.PublicId</span></div>
+        <span class="badge rounded-pill text-bg-light border px-3 py-2">@status</span>
+    </div>
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+    }
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h2 class="h5 mb-3">Khóa học trong đơn</h2>
+                @foreach (var item in Model.Items)
+                {
+                    <div class="border-bottom py-3">
+                        <h3 class="h6">@item.Title</h3>
+                        <div class="d-flex flex-wrap justify-content-between gap-2"><span class="text-muted">Giá: @Money(item.Original)</span><strong>@Money(item.Payable)</strong></div>
+                        @if (item.CouponCode != null) { <small class="text-success">Mã @item.CouponCode · Giảm @Money(item.Discount)</small> }
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h2 class="h5">Tổng đơn hàng</h2>
+                <dl class="mb-3"><dt class="text-muted fw-normal">Giá gốc</dt><dd>@Money(Model.Original)</dd>
+                    <dt class="text-muted fw-normal">Giảm giá</dt><dd class="text-success">−@Money(Model.Discount)</dd>
+                    <dt>Cần thanh toán</dt><dd class="fs-4 fw-bold text-primary" id="checkout-payable">@Money(Model.Payable)</dd></dl>
+                @if (Model.CanEditCoupon)
+                {
+                    <form asp-action="ApplyCoupon" asp-route-id="@Model.PublicId" method="post" class="mb-3">
+                        <input type="hidden" name="Version" value="@Model.Version" />
+                        <label for="checkout-code" class="form-label">Mã giảm giá</label>
+                        <div class="input-group"><input id="checkout-code" name="Code" value="@code" maxlength="40" class="form-control" autocomplete="off" /><button class="btn btn-outline-primary" type="submit">Áp dụng</button></div>
+                    </form>
+                    @if (code != null)
+                    {
+                        <form asp-action="ApplyCoupon" asp-route-id="@Model.PublicId" method="post" class="mb-3">
+                            <input type="hidden" name="Version" value="@Model.Version" /><input type="hidden" name="Code" value="" />
+                            <button type="submit" class="btn btn-link text-danger p-0">Gỡ mã giảm giá</button>
+                        </form>
+                    }
+                    <p class="small text-muted">Đơn có hiệu lực đến @Time(Model.ExpiresAtUtc) (giờ Việt Nam). Mã giảm giá được giữ chỗ trong thời hạn đơn.</p>
+                }
+                @if (Model.Status == CheckoutOrderStatus.Pending)
+                {
+                    <div class="alert alert-info mb-0">Thanh toán trực tuyến chưa mở. Đơn này chưa thu tiền hoặc cấp quyền học.</div>
+                }
+                @if (Model.Status == CheckoutOrderStatus.Expired)
+                {
+                    <div class="alert alert-warning mb-0">Đơn đã hết hạn. Vui lòng quay lại khóa học để tạo đơn mới.</div>
+                }
+                @if (Model.Status == CheckoutOrderStatus.Paid && Model.Payable == 0)
+                {
+                    <div class="alert alert-success">Bạn đã có quyền học các khóa trong đơn.</div>
+                    @foreach (var item in Model.Items) { <a asp-controller="Courses" asp-action="Details" asp-route-id="@item.CourseId" class="btn btn-brand mb-2">Mở khóa học</a> }
+                }
+            </div>
+        </div>
+    </div>
+</div>

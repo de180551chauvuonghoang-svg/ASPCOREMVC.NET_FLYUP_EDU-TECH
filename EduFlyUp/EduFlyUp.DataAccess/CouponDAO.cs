@@ -52,8 +52,9 @@ public sealed class CouponDAO : SingletonBase<CouponDAO>
             stored = await Owned(db, owner).FirstOrDefaultAsync(c => c.Id == id);
             if (stored is null) return CouponChange.NotFound;
             if (CouponPresentation.Version(stored) != version) return CouponChange.Stale;
-            if (input.MaxUsage < stored.UsedCount) return CouponChange.UsageConflict;
-            if (stored.UsedCount > 0 && (!string.Equals(stored.Code.Trim(), input.Code, StringComparison.OrdinalIgnoreCase) || stored.DiscountPercent != input.DiscountPercent || stored.CourseId != input.CourseId))
+            var reserved = await CheckoutCouponReservations.CountAsync(db, stored.Id, DateTime.UtcNow);
+            if (input.MaxUsage < (long)stored.UsedCount + reserved) return CouponChange.UsageConflict;
+            if ((stored.UsedCount > 0 || reserved > 0) && (!string.Equals(stored.Code.Trim(), input.Code, StringComparison.OrdinalIgnoreCase) || stored.DiscountPercent != input.DiscountPercent || stored.CourseId != input.CourseId))
                 return CouponChange.UsedTermsLocked;
         }
         if (input.CourseId.HasValue && !await db.Courses.AnyAsync(c => c.Id == input.CourseId &&

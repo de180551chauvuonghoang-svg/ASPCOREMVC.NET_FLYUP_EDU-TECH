@@ -168,10 +168,13 @@
                 </div>
             </div>
 
-            <button class="btn btn-brand w-100 py-3 mb-3 rounded-pill shadow-glow fs-6 d-flex align-items-center justify-content-center gap-2">
+            @if (!Model.CanManage && (User.Identity?.IsAuthenticated != true || User.IsInRole("Student")))
+            {
+            <a asp-controller="Checkout" asp-action="Create" asp-route-courseId="@Model.Id" class="btn btn-brand w-100 py-3 mb-3 rounded-pill shadow-glow fs-6 d-flex align-items-center justify-content-center gap-2">
                 <i class="bi bi-lightning-charge-fill"></i>
                 <span>Đăng ký học ngay</span>
-            </button>
+            </a>
+            }
 
             @if (Model.CanManage)
             {

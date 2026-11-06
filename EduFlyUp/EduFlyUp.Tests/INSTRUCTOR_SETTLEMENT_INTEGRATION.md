@@ -4,7 +4,7 @@
 
 Phần Instructor đã có phép chia 70%, tính khả dụng sau Approved/Pending, kiểm tra số tiền, luồng tạo yêu cầu, chống gửi trùng và lịch sử/chi tiết. Phần thanh toán cần cung cấp giao dịch đã xác minh qua `IInstructorSettlementSource`. Không cần tính lại khoản chia 70% bên checkout.
 
-Chưa có model/bảng giao dịch thanh toán trong repo đã kiểm tra. Production đang đăng ký `UnavailableInstructorSettlementSource`, trả null; vì vậy chưa mở gửi yêu cầu thực tế. Không bật bằng dữ liệu demo, dữ liệu ghi danh hoặc giá khóa học hiện tại.
+Ngày 05/11/2026 bắt đầu bổ sung model/bảng CheckoutOrders, CheckoutOrderItems và PaymentTransactions; xem [tiến độ thanh toán](CHECKOUT_PAYMENT_PROGRESS.md). Hiện mới có cấu trúc lưu trữ, chưa có luồng xác minh giao dịch. Production vẫn đăng ký `UnavailableInstructorSettlementSource`, trả null; vì vậy chưa mở gửi yêu cầu thực tế. Không bật bằng dữ liệu demo, đơn Pending, dữ liệu ghi danh hoặc giá khóa học hiện tại.
 
 ## Hợp đồng nguồn dữ liệu
 

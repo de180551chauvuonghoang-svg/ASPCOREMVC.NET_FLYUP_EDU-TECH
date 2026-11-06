@@ -1,0 +1,19 @@
+@model EduFlyUp.Web.Models.Checkout.CheckoutCreateForm
+@{ ViewData["Title"] = "Xác nhận đăng ký khóa học"; }
+<div class="row justify-content-center py-4">
+    <div class="col-lg-7">
+        <a asp-controller="Courses" asp-action="Details" asp-route-id="@Model.CourseId" class="text-decoration-none">← Quay lại khóa học</a>
+        <div class="card border-0 shadow-sm rounded-4 p-4 mt-3">
+            <h1 class="h3 fw-bold">Xác nhận đăng ký</h1>
+            <h2 class="h5 mt-3">@Model.Preview!.Title</h2>
+            <p class="fs-4 text-primary fw-bold">@(Model.Preview.Price == 0 ? "Miễn phí" : Model.Preview.Price.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) + " VNĐ")</p>
+            <p class="text-muted">@(Model.Preview.Price == 0 ? "Bạn sẽ được cấp quyền học sau khi xác nhận đăng ký." : "Tạo đơn để xem chi tiết và áp dụng mã giảm giá trước khi thanh toán.")</p>
+            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+            <form asp-action="Create" method="post">
+                <input asp-for="CourseId" type="hidden" />
+                <input asp-for="SubmissionKey" type="hidden" />
+                <button type="submit" class="btn btn-brand rounded-pill px-4">@(Model.Preview.Price == 0 ? "Đăng ký miễn phí" : "Tạo đơn hàng")</button>
+            </form>
+        </div>
+    </div>
+</div>
