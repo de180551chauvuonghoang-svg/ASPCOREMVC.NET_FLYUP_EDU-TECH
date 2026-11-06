@@ -59,6 +59,9 @@ builder.Services.AddScoped<ICheckoutCouponRepository, CheckoutCouponRepository>(
 builder.Services.AddScoped<ICheckoutCouponService, CheckoutCouponService>();
 builder.Services.AddScoped<ICheckoutQueryRepository, CheckoutQueryRepository>();
 builder.Services.AddScoped<ICheckoutQueryService, CheckoutQueryService>();
+builder.Services.Configure<BankTransferOptions>(builder.Configuration.GetSection("Payments:BankTransfer"));
+builder.Services.AddScoped<ICheckoutPaymentRepository, CheckoutPaymentRepository>();
+builder.Services.AddScoped<ICheckoutPaymentService, CheckoutPaymentService>();
 builder.Services.AddScoped<ICouponRepository, CouponRepository>();
 builder.Services.AddScoped<ICouponService, CouponService>();
 builder.Services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();

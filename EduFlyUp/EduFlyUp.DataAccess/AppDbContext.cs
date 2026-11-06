@@ -23,6 +23,7 @@ namespace EduFlyUp.DataAccess
         public DbSet<CheckoutOrder> CheckoutOrders => Set<CheckoutOrder>();
         public DbSet<CheckoutOrderItem> CheckoutOrderItems => Set<CheckoutOrderItem>();
         public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
+        public DbSet<CheckoutPaymentIntent> CheckoutPaymentIntents => Set<CheckoutPaymentIntent>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

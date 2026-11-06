@@ -100,3 +100,23 @@ dotnet test EduFlyUp/EduFlyUp.Tests/EduFlyUp.Tests.csproj --configuration Releas
 Địa chỉ/cổng trên là kết nối local đã kiểm tra, không phải cấu hình bắt buộc cho các máy khác. Cách giới hạn chạy song song theo [RunSettings của xUnit](https://xunit.net/docs/config-runsettings).
 
 Demo Kestrel/migration trên database GUID riêng vượt đủ 8 nhóm regression Admin; trình duyệt đã đăng nhập Student, mở nút đăng ký từ trang khóa học, tạo đơn 200.000 VND, áp mã CHECKOUT20 còn 160.000 VND, gỡ mã về 200.000 VND và đăng ký khóa miễn phí. Đối chiếu SQL: chỉ khóa miễn phí có enrollment Active, đơn có phí vẫn Pending và chưa có enrollment, UsedCount vẫn 0. Ảnh minh chứng lưu trong `.admin-demo/checkout-ui-proof.png` cục bộ, không đưa vào Git. Server demo đã dừng sau xác nhận trình duyệt; không có thanh toán/ngân hàng thật hoặc database nhóm được cập nhật.
+
+## Phần 5a: chốt thông tin chuyển khoản trước khi phát hành QR (07/11/2026)
+
+Thêm `CheckoutPaymentIntents` và migration `20261106180828_AddCheckoutPaymentIntents`. Một đơn có tối đa một bộ thông tin chuyển khoản; nội dung chuyển khoản Reference duy nhất toàn hệ thống, dạng FU + 20 ký tự hex viết hoa (22 ký tự, vừa giới hạn nội dung QR). Snapshot gồm số tiền VND nguyên, BIN/người nhận/số tài khoản, hạn thanh toán theo đơn. Không xóa cascade lịch sử. Đây không phải PaymentTransaction hoặc bằng chứng đã thu tiền.
+
+`ICheckoutPaymentService.PrepareAsync` chỉ nhận OrderPublicId/Version từ lớp gọi và phiên Student. Thông tin ngân hàng đọc từ cấu hình server `Payments:BankTransfer`, mặc định Disabled. Chưa có controller/view gọi bước chuẩn bị thanh toán nên chưa mở thông tin chuyển khoản hay QR cho người dùng ở phần này.
+
+- Kiểm tra lại Student đang hoạt động/role trong database và quyền sở hữu đơn. Đơn phải Pending, còn hạn, số tiền dương nguyên VND và tổng khớp từng dòng; không chuẩn bị cho đơn miễn phí, đã thanh toán hoặc đã có giao dịch.
+- Form cũ bị từ chối trước khi tạo snapshot mới. Cùng đơn đã chốt trả lại đúng snapshot cũ khi thử lại, không thay người nhận hoặc sinh mã mới dù cấu hình ngân hàng thay đổi; dữ liệu snapshot không khớp đơn thì chặn.
+- Serializable với CheckoutManagement → CouponManagement. Tạo snapshot và cập nhật version đơn trong cùng transaction. Lỗi cập nhật đơn rollback cả intent vừa thêm. Hai lần chuẩn bị đồng thời chỉ tạo một dòng.
+- Sau khi có intent, backend coupon từ chối áp dụng/thay/gỡ mã và query chi tiết không trả quyền sửa mã. Test tranh chấp giữa áp mã và chốt đơn chỉ cho một phía thắng; không âm thầm đổi số tiền đã chốt.
+- Chưa tăng UsedCount, tạo giao dịch đã xác minh, cấp enrollment cho khóa có phí hoặc nối nguồn doanh thu Instructor.
+
+Thông số cấu hình khi tích hợp các bước sau: `Enabled`, `BankBin` (6 chữ số), `AccountNumber` (4–19 chữ/số, giữ số 0 đầu), `AccountName` (5–50 chữ/số không dấu viết hoa và khoảng trắng). Cấu hình này chỉ kiểm tra định dạng, không xác thực tài khoản có thật tại ngân hàng. Không bật nhận tiền thật trước khi chốt tài khoản thụ hưởng và hoàn thiện xác thực/đối soát. Không thêm số tài khoản mẫu hoặc khóa bí mật vào cấu hình production; các giá trị demo chỉ nằm trong Tests.
+
+Nguồn đối chiếu cho bước QR/webhook tiếp theo: [Quick Link VietQR](https://www.vietqr.io/qr-dong) và [Webhook Casso](https://developer.casso.vn/webhook/thiet-lap-webhook-thu-cong). Webhook V2 có chữ ký; QR chỉ là thông tin chuyển khoản, không phải kết quả thanh toán. Chưa đăng ký tài khoản/webhook hoặc gửi thông tin ngân hàng tới dịch vụ ngoài trong phần 5a.
+
+Kiểm thử mới: 7 ca SQL thật và 4 unit cho snapshot, cấu hình tắt/thiếu/sai, quyền/account/role, stale, gửi đồng thời, tranh chấp với coupon, rollback, unique reference/đơn và nâng cấp schema giữ đơn cũ.
+
+Kết quả ngày 07/11/2026: **292/292 test ứng dụng đạt, không bỏ qua**, chạy SQL qua TCP và tuần tự giữa các lớp như phần 4. EF xác nhận model khớp migration. Chỉ kiểm tra database fixture GUID riêng; chưa cập nhật database nhóm hoặc chạy demo QR/webhook trên trình duyệt ở bước backend này.

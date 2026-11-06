@@ -37,7 +37,8 @@ public sealed class CheckoutQueryRepository(AppDbContext db) : ICheckoutQueryRep
             .SingleOrDefaultAsync(o => o.PublicId == id && o.BuyerId == buyerId);
         if (order is null) return null;
         var canEdit = order.Status == CheckoutOrderStatus.Pending && order.ExpiresAtUtc > now &&
-            !await db.PaymentTransactions.AnyAsync(t => t.CheckoutOrderId == order.Id);
+            !await db.PaymentTransactions.AnyAsync(t => t.CheckoutOrderId == order.Id) &&
+            !await db.CheckoutPaymentIntents.AnyAsync(i => i.CheckoutOrderId == order.Id);
         var status = order.Status == CheckoutOrderStatus.Pending && order.ExpiresAtUtc <= now ? CheckoutOrderStatus.Expired : order.Status;
         return new(order.PublicId, status, order.OriginalAmount, order.DiscountAmount, order.PayableAmount,
             order.ExpiresAtUtc, order.PaidAtUtc, Convert.ToBase64String(order.RowVersion), canEdit,

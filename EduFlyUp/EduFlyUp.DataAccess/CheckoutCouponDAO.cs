@@ -39,7 +39,8 @@ public sealed class CheckoutCouponDAO : SingletonBase<CheckoutCouponDAO>
         if (order is null) return new(CheckoutCouponChange.NotFound);
         if (!order.RowVersion.SequenceEqual(Convert.FromBase64String(input.Version!))) return new(CheckoutCouponChange.Stale);
         if (order.Status != CheckoutOrderStatus.Pending || order.ExpiresAtUtc <= now ||
-            await db.PaymentTransactions.AnyAsync(t => t.CheckoutOrderId == order.Id)) return new(CheckoutCouponChange.NotEditable);
+            await db.PaymentTransactions.AnyAsync(t => t.CheckoutOrderId == order.Id) ||
+            await db.CheckoutPaymentIntents.AnyAsync(i => i.CheckoutOrderId == order.Id)) return new(CheckoutCouponChange.NotEditable);
         if (order.Items.Count == 0 || order.Items.Any(i => i.OriginalAmount < 0 || decimal.Truncate(i.OriginalAmount) != i.OriginalAmount) ||
             order.OriginalAmount != order.Items.Sum(i => i.OriginalAmount)) return new(CheckoutCouponChange.NotEditable);
 
