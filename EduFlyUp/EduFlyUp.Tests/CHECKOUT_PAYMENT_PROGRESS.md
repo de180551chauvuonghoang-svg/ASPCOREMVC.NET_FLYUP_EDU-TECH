@@ -126,3 +126,17 @@ Kết quả ngày 07/11/2026: **292/292 test ứng dụng đạt, không bỏ qu
 Rút ngắn hướng dẫn và nhãn nút ở trang tạo/chi tiết đơn. Tổng tiền nổi bật; chỉ hiển thị giá gốc và phần giảm khi có giảm giá. Mã đơn và hạn đơn vẫn đầy đủ trong mục mở rộng “Thông tin đơn”. Giữ nhãn cho trình đọc màn hình khi gạch giá gốc, trạng thái đơn và thông báo chưa mở thanh toán. Không thay đổi xử lý đơn/coupon hoặc bật nhận tiền.
 
 Kiểm tra: build Release và 5/5 kiểm thử CheckoutHttpTests với Razor/Identity/SQL Server thật đạt, không bỏ qua. Chưa kiểm tra trực quan trên trình duyệt ở lượt tinh gọn này. Bước chức năng kế tiếp vẫn là hiển thị QR từ thông tin đã chốt, sau đó xác thực webhook.
+
+## Phần 5b: hiển thị QR từ thông tin đã chốt (10/11/2026)
+
+Student bấm **Tạo QR thanh toán** trên chi tiết đơn. POST `/Checkout/PreparePayment/{id}` dùng anti-forgery, route id và chỉ bind Version; người mua, giá và ngân hàng không lấy từ form. Backend chốt nguyên tử như phần 5a, sau đó redirect về chi tiết. GET chỉ đọc; tải lại và gửi lại không tạo intent khác. Lỗi stale tải lại version/tổng hiện tại để kiểm tra trước khi thử lại.
+
+Query chỉ trả thông tin chuyển khoản cho chủ đơn Student đang hoạt động, khi đơn Pending còn hạn, VND, snapshot khớp tổng/hạn và chưa có giao dịch nhận. QR và bảng người nhận/số tài khoản/BIN/số tiền/nội dung dùng snapshot đã lưu, giữ số 0 đầu; đổi cấu hình ngân hàng không làm đổi đơn đã chốt. Không hiện QR hoặc form tạo QR khi hết hạn/đã thanh toán/đã có giao dịch, hoặc tắt cấu hình. Thông tin phụ nằm trong mục mở rộng, không thêm nút “Tôi đã thanh toán”.
+
+Ảnh dùng HTTPS Quick Link của VietQR theo [cú pháp chính thức](https://www.vietqr.io/qr-dong). URL được dựng từ trường đã kiểm tra, escape tham số, cố định host; template chỉ nhận chữ/số/gạch dưới, tối đa 64 ký tự. Ảnh đặt `referrerpolicy=no-referrer` để không gửi URL chứa mã đơn. Trình duyệt gửi BIN, số tài khoản, tên người nhận, số tiền và nội dung chuyển khoản tới img.vietqr.io để lấy ảnh; không gửi tài khoản học viên hoặc cookie ứng dụng. Nếu ảnh không tải được, người mua vẫn có thể mở thông tin chuyển khoản dạng chữ.
+
+Cấu hình `Payments:BankTransfer` cần Enabled, BankBin, AccountNumber, AccountName và **QrTemplate**. QrTemplate mặc định rỗng nên web chưa mở QR. VietQR yêu cầu dự án chính thức có template riêng; `qr_only` và tài khoản giả chỉ dùng trong fixture/demo. Không thêm ngân hàng thật hoặc bật cấu hình nhận tiền trong repository. QR không tự hết hiệu lực trong ứng dụng ngân hàng: khi đơn hết hạn website sẽ ẩn QR, nhưng xử lý chuyển tiền muộn cần webhook/đối soát ở bước sau.
+
+Chưa có webhook Casso hoặc xác nhận đã thu tiền; chưa tăng UsedCount, ghi danh khóa có phí hay bật nguồn doanh thu Instructor. Không cập nhật database nhóm hoặc thay đổi schema ở phần này.
+
+Xác nhận ngày 10/11/2026: **296/296 test đạt, 0 bỏ qua**, gồm 3 HTTP/SQL mới và 1 unit cho QR. Build Release không lỗi/cảnh báo. Sau chỉnh bố cục tổng tiền, build lại Web và kiểm tra trực quan trên demo Kestrel/SQL riêng: đăng nhập Student, tạo đơn 200.000 VND, áp QRDEMO20 còn 160.000 VND, tạo QR và mở thông tin chuyển khoản. Ảnh VietQR đã tải, form coupon đã ẩn. SQL đối chiếu đúng intent 160.000, đơn vẫn Pending, giao dịch/enrollment của người mua/UsedCount đều 0. Demo vượt 8 nhóm regression và đã dừng server; ảnh cục bộ `.admin-demo/checkout-qr-proof.png` không commit. Không chuyển tiền hoặc dùng tài khoản ngân hàng thật.

@@ -15,3 +15,8 @@ public sealed class CheckoutCouponForm
     [StringLength(120)] public string? Code { get; set; }
     [Required, StringLength(32)] public string Version { get; set; } = "";
 }
+
+public sealed class CheckoutPaymentForm
+{
+    [Required, StringLength(32)] public string Version { get; set; } = "";
+}

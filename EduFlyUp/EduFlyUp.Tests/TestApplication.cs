@@ -27,7 +27,7 @@ internal sealed class TestApplication : IDisposable
     public TestCouponRepository Coupons { get; } = new();
     public IServiceProvider Services => _server.Services;
 
-    public TestApplication(EduFlyUp.Web.Storage.ILessonMaterialStorage? materialStorage = null, EduFlyUp.Web.Storage.ILessonVideoStorage? videoStorage = null, IInstructorPayoutService? payoutService = null, IInstructorSettlementSource? settlements = null, string? sqlConnection = null)
+    public TestApplication(EduFlyUp.Web.Storage.ILessonMaterialStorage? materialStorage = null, EduFlyUp.Web.Storage.ILessonVideoStorage? videoStorage = null, IInstructorPayoutService? payoutService = null, IInstructorSettlementSource? settlements = null, string? sqlConnection = null, BankTransferOptions? bankTransfer = null)
     {
         var database = Guid.NewGuid().ToString();
         _server = new TestServer(new WebHostBuilder()
@@ -65,6 +65,14 @@ internal sealed class TestApplication : IDisposable
                 services.AddScoped<ICheckoutCouponService, CheckoutCouponService>();
                 services.AddScoped<ICheckoutQueryRepository, CheckoutQueryRepository>();
                 services.AddScoped<ICheckoutQueryService, CheckoutQueryService>();
+                services.AddScoped<ICheckoutPaymentRepository, CheckoutPaymentRepository>();
+                services.AddScoped<ICheckoutPaymentService, CheckoutPaymentService>();
+                services.Configure<BankTransferOptions>(o =>
+                {
+                    if (bankTransfer is null) return;
+                    o.Enabled = bankTransfer.Enabled; o.BankBin = bankTransfer.BankBin; o.AccountNumber = bankTransfer.AccountNumber;
+                    o.AccountName = bankTransfer.AccountName; o.QrTemplate = bankTransfer.QrTemplate;
+                });
                 services.AddSingleton<ICouponRepository>(Coupons);
                 services.AddScoped<ICouponService, CouponService>();
                 services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();

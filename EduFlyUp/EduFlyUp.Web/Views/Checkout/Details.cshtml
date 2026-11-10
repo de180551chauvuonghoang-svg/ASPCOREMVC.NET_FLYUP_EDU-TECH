@@ -1,10 +1,14 @@
 @model CheckoutDetail
 @using System.Globalization
+@using EduFlyUp.Web.Models.Checkout
+@inject Microsoft.Extensions.Options.IOptions<EduFlyUp.Services.BankTransferOptions> PaymentOptions
 @{
     ViewData["Title"] = "Chi tiết đơn hàng";
     string Money(decimal v) => v.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) + " VNĐ";
     string Time(DateTime v) => DateTime.SpecifyKind(v, DateTimeKind.Utc).AddHours(7).ToString("dd/MM/yyyy HH:mm");
     var code = Model.Items.FirstOrDefault(i => i.CouponCode != null)?.CouponCode;
+    var paymentAvailable = CheckoutPaymentDisplay.Available(PaymentOptions.Value);
+    var qr = CheckoutPaymentDisplay.QrUrl(PaymentOptions.Value, Model.PaymentInstructions);
     var status = Model.Status switch { CheckoutOrderStatus.Paid => Model.Payable == 0 ? "Đã đăng ký miễn phí" : "Đã thanh toán",
         CheckoutOrderStatus.Cancelled => "Đã hủy", CheckoutOrderStatus.Expired => "Đã hết hạn", _ => "Chờ thanh toán" };
 }
@@ -44,7 +48,7 @@
                         <dt class="col-6 text-muted fw-normal">Tạm tính</dt><dd class="col-6 text-end">@Money(Model.Original)</dd>
                         <dt class="col-6 text-muted fw-normal">Giảm giá</dt><dd class="col-6 text-end text-success">−@Money(Model.Discount)</dd>
                     }
-                    <dt class="col-4 align-self-center">Tổng</dt><dd class="col-8 text-end fs-4 fw-bold text-primary mb-0" id="checkout-payable">@Money(Model.Payable)</dd>
+                    <dt class="visually-hidden">Tổng</dt><dd class="col-12 text-break fs-4 fw-bold text-primary mb-0" id="checkout-payable">@Money(Model.Payable)</dd>
                 </dl>
                 @if (Model.CanEditCoupon)
                 {
@@ -63,7 +67,34 @@
                 }
                 @if (Model.Status == CheckoutOrderStatus.Pending)
                 {
-                    <div class="alert alert-info mb-0">Chưa mở thanh toán. Khóa học chưa được kích hoạt.</div>
+                    @if (qr != null && Model.PaymentInstructions is { } payment)
+                    {
+                        <h2 class="h5">Quét mã chuyển khoản</h2>
+                        <img src="@qr" alt="QR chuyển khoản đúng số tiền và nội dung đơn" class="img-fluid d-block mx-auto mb-3" width="280" height="280" referrerpolicy="no-referrer" />
+                        <details class="small mb-3">
+                            <summary>Thông tin chuyển khoản</summary>
+                            <dl class="mt-2 mb-0">
+                                <dt>Ngân hàng (BIN)</dt><dd>@payment.BankBin</dd>
+                                <dt>Số tài khoản</dt><dd class="text-break user-select-all">@payment.AccountNumber</dd>
+                                <dt>Người nhận</dt><dd class="text-break">@payment.AccountName</dd>
+                                <dt>Số tiền</dt><dd>@Money(payment.Amount)</dd>
+                                <dt>Nội dung</dt><dd class="text-break user-select-all">@payment.Reference</dd>
+                            </dl>
+                        </details>
+                        <p class="small text-muted mb-0">Giữ nguyên số tiền và nội dung. Đơn chờ xác minh thanh toán.</p>
+                    }
+                    else if (paymentAvailable && Model.CanEditCoupon && Model.Payable > 0)
+                    {
+                        <form asp-action="PreparePayment" asp-route-id="@Model.PublicId" method="post">
+                            <input type="hidden" name="Version" value="@Model.Version" />
+                            <button type="submit" class="btn btn-brand w-100">Tạo QR thanh toán</button>
+                            <p class="small text-muted mt-2 mb-0">Sau bước này không thể đổi mã giảm giá.</p>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">@(paymentAvailable ? "Chưa thể tạo QR cho đơn này." : "Chưa mở thanh toán. Khóa học chưa được kích hoạt.")</div>
+                    }
                 }
                 @if (Model.Status == CheckoutOrderStatus.Expired)
                 {

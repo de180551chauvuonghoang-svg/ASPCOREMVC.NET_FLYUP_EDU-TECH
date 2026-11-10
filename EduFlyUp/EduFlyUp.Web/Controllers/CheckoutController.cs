@@ -5,13 +5,15 @@ using EduFlyUp.Web.Models.Checkout;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace EduFlyUp.Web.Controllers;
 
 [Authorize(Roles = "Student")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class CheckoutController(ICheckoutService checkout, ICheckoutCouponService coupons,
-    ICheckoutQueryService queries, ILogger<CheckoutController> logger) : Controller
+    ICheckoutQueryService queries, ICheckoutPaymentService payments, IOptions<BankTransferOptions> paymentOptions,
+    ILogger<CheckoutController> logger) : Controller
 {
     [HttpGet]
     public async Task<IActionResult> Create(int courseId)
@@ -48,6 +50,34 @@ public sealed class CheckoutController(ICheckoutService checkout, ICheckoutCoupo
     {
         if (!ModelState.IsValid || id == Guid.Empty) return BadRequest();
         try { var order = await queries.DetailAsync(User, id); return order is null ? NotFound() : View(order); }
+        catch (Exception ex) when (ex is DbException or DbUpdateException) { return ReadFailure(ex); }
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> PreparePayment([FromRoute] Guid id, [Bind("Version")] CheckoutPaymentForm form)
+    {
+        if (!ModelState.IsValid || id == Guid.Empty) return BadRequest();
+        if (!CheckoutPaymentDisplay.Available(paymentOptions.Value)) return StatusCode(503, "Chưa mở thanh toán.");
+        var result = await payments.PrepareAsync(User, new(id, form.Version));
+        if (result.Change == CheckoutPaymentChange.Forbidden) return Forbid();
+        if (result.Change == CheckoutPaymentChange.NotFound) return NotFound();
+        if (result.Change is CheckoutPaymentChange.Prepared or CheckoutPaymentChange.AlreadyPrepared)
+            return RedirectToAction(nameof(Details), new { id });
+        ModelState.AddModelError("", result.Change switch
+        {
+            CheckoutPaymentChange.Stale => "Đơn đã thay đổi. Kiểm tra tổng tiền và thử lại.",
+            CheckoutPaymentChange.NotPayable => "Đơn không còn khả dụng để thanh toán.",
+            CheckoutPaymentChange.Invalid => "Thông tin đơn không hợp lệ. Tải lại trang để thử lại.",
+            _ => "Chưa tạo được QR. Vui lòng thử lại sau."
+        });
+        try
+        {
+            var order = await queries.DetailAsync(User, id); if (order is null) return NotFound();
+            ModelState.Remove("Version");
+            Response.StatusCode = result.Change is CheckoutPaymentChange.Unavailable or CheckoutPaymentChange.NotConfigured ? 503 :
+                result.Change == CheckoutPaymentChange.Invalid ? 400 : 409;
+            return View("Details", order);
+        }
         catch (Exception ex) when (ex is DbException or DbUpdateException) { return ReadFailure(ex); }
     }
 

@@ -2,6 +2,8 @@ using System.Net;
 using System.Text.RegularExpressions;
 using EduFlyUp.BusinessObjects;
 using EduFlyUp.DataAccess;
+using EduFlyUp.Services;
+using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -99,6 +101,77 @@ public sealed class CheckoutHttpTests
         Assert.Empty(await r.Db.PaymentTransactions.ToListAsync());
     }
 
+    private static BankTransferOptions DemoBank() => new() { Enabled = true, BankBin = "970415", AccountNumber = "000000123456", AccountName = "DEMO ACCOUNT", QrTemplate = "qr_only" };
+
+    [SqlServerFact]
+    public async Task Qr_is_opt_in_post_only_and_does_not_prepare_on_get_or_without_antiforgery()
+    {
+        await using var r = await Rig.CreateAsync(); var url = await r.CreateOrder();
+        var order = await r.Db.CheckoutOrders.AsNoTracking().SingleAsync();
+        var endpoint = $"/Checkout/PreparePayment/{order.PublicId}";
+        var page = await r.Browser.Client.GetStringAsync(url);
+        Assert.DoesNotContain("Tạo QR thanh toán", WebUtility.HtmlDecode(page));
+        Assert.DoesNotContain("img.vietqr.io", page); Assert.Empty(await r.Db.CheckoutPaymentIntents.ToListAsync());
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, (await r.Browser.Client.GetAsync(endpoint)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await r.Browser.Client.PostAsync(endpoint, new FormUrlEncodedContent(new Dictionary<string, string> { ["Version"] = Hidden(page, "Version") }))).StatusCode);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, (await r.Browser.Client.PostAsync(endpoint, new FormUrlEncodedContent(new Dictionary<string, string>
+            { ["Version"] = Hidden(page, "Version"), ["__RequestVerificationToken"] = Hidden(page, "__RequestVerificationToken") }))).StatusCode);
+        Assert.Empty(await r.Db.CheckoutPaymentIntents.ToListAsync());
+    }
+
+    [SqlServerFact]
+    public async Task Qr_uses_sealed_discounted_amount_ignores_posted_bank_and_replays_without_confirming_payment()
+    {
+        await using var r = await Rig.CreateAsync(DemoBank()); var url = await r.CreateOrder();
+        var page = await r.Browser.Client.GetStringAsync(url); var oldVersion = Hidden(page, "Version");
+        var order = await r.Db.CheckoutOrders.AsNoTracking().SingleAsync(); var endpoint = $"/Checkout/PreparePayment/{order.PublicId}";
+        var fields = new Dictionary<string, string> { ["Version"] = oldVersion, ["__RequestVerificationToken"] = Hidden(page, "__RequestVerificationToken"), ["Code"] = "DEMO10" };
+        Assert.Equal(HttpStatusCode.Redirect, (await r.Browser.Client.PostAsync($"/Checkout/ApplyCoupon/{order.PublicId}", new FormUrlEncodedContent(fields))).StatusCode);
+        var stale = await r.Browser.Client.PostAsync(endpoint, new FormUrlEncodedContent(fields));
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode); Assert.Empty(await r.Db.CheckoutPaymentIntents.ToListAsync());
+        page = await stale.Content.ReadAsStringAsync(); fields["Version"] = Hidden(page, "Version");
+        fields["Amount"] = "1"; fields["BankBin"] = "999999"; fields["AccountNumber"] = "ATTACKER"; fields["Reference"] = "FORGED"; fields["BuyerId"] = "foreign";
+        var prepared = await r.Browser.Client.PostAsync(endpoint, new FormUrlEncodedContent(fields));
+        Assert.Equal(HttpStatusCode.Redirect, prepared.StatusCode);
+        var intent = await r.Db.CheckoutPaymentIntents.AsNoTracking().SingleAsync();
+        Assert.Equal(180000m, intent.Amount); Assert.Equal("000000123456", intent.AccountNumber);
+        page = await r.Browser.Client.GetStringAsync(url);
+        Assert.Contains($"https://img.vietqr.io/image/970415-000000123456-qr_only.svg?amount=180000&amp;addInfo={intent.Reference}&amp;accountName=DEMO%20ACCOUNT", page);
+        Assert.Contains("referrerpolicy=\"no-referrer\"", page); Assert.DoesNotContain("checkout-code", page);
+        var settings = r.App.Services.GetRequiredService<IOptions<BankTransferOptions>>().Value; settings.AccountNumber = "NEWACCOUNT";
+        Assert.Equal(HttpStatusCode.Redirect, (await r.Browser.Client.PostAsync(endpoint, new FormUrlEncodedContent(fields))).StatusCode);
+        Assert.Contains("970415-000000123456-qr_only.svg", await r.Browser.Client.GetStringAsync(url));
+        Assert.Equal(1, await r.Db.CheckoutPaymentIntents.CountAsync());
+        Assert.Equal(HttpStatusCode.Conflict, (await r.Browser.Client.PostAsync($"/Checkout/ApplyCoupon/{order.PublicId}", new FormUrlEncodedContent(fields))).StatusCode);
+        Assert.Empty(await r.Db.PaymentTransactions.ToListAsync()); Assert.Empty(await r.Db.Enrollments.ToListAsync());
+        Assert.Equal(0, (await r.Db.Coupons.AsNoTracking().SingleAsync()).UsedCount);
+        Assert.Equal(CheckoutOrderStatus.Pending, (await r.Db.CheckoutOrders.AsNoTracking().SingleAsync()).Status);
+        settings.Enabled = false; Assert.DoesNotContain("img.vietqr.io", await r.Browser.Client.GetStringAsync(url));
+    }
+
+    [SqlServerFact]
+    public async Task Qr_is_owner_scoped_and_hidden_for_expired_or_received_orders()
+    {
+        await using var r = await Rig.CreateAsync(DemoBank()); var url = await r.CreateOrder();
+        var page = await r.Browser.Client.GetStringAsync(url); var order = await r.Db.CheckoutOrders.AsNoTracking().SingleAsync();
+        var fields = new Dictionary<string, string> { ["Version"] = Hidden(page, "Version"), ["__RequestVerificationToken"] = Hidden(page, "__RequestVerificationToken") };
+        var endpoint = $"/Checkout/PreparePayment/{order.PublicId}";
+        await r.App.CreateUserAsync("foreign@example.test", "Student"); using var other = r.App.CreateBrowser();
+        await TestApplication.LoginAsync(other, "foreign@example.test");
+        var foreignFields = new Dictionary<string, string>(fields) { ["__RequestVerificationToken"] = await TestApplication.AntiForgeryTokenAsync(other, $"/Checkout/Create?courseId={r.CourseId}") };
+        Assert.Equal(HttpStatusCode.NotFound, (await other.Client.PostAsync(endpoint, new FormUrlEncodedContent(foreignFields))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await other.Client.GetAsync(url)).StatusCode);
+        Assert.Empty(await r.Db.CheckoutPaymentIntents.ToListAsync());
+        Assert.Equal(HttpStatusCode.Redirect, (await r.Browser.Client.PostAsync(endpoint, new FormUrlEncodedContent(fields))).StatusCode);
+        await r.Db.CheckoutOrders.ExecuteUpdateAsync(s => s.SetProperty(o => o.ExpiresAtUtc, DateTime.UtcNow.AddMinutes(-1)));
+        page = await r.Browser.Client.GetStringAsync(url); Assert.DoesNotContain("img.vietqr.io", page); Assert.DoesNotContain("PreparePayment", page);
+        Assert.Equal(HttpStatusCode.Conflict, (await r.Browser.Client.PostAsync(endpoint, new FormUrlEncodedContent(fields))).StatusCode);
+        await r.Db.CheckoutOrders.ExecuteUpdateAsync(s => s.SetProperty(o => o.ExpiresAtUtc, order.ExpiresAtUtc));
+        r.Db.PaymentTransactions.Add(new() { CheckoutOrderId = order.Id, Provider = "Test", ProviderTransactionId = "received-only", Amount = order.PayableAmount, OccurredAtUtc = DateTime.UtcNow });
+        await r.Db.SaveChangesAsync();
+        page = await r.Browser.Client.GetStringAsync(url); Assert.DoesNotContain("img.vietqr.io", page); Assert.DoesNotContain("PreparePayment", page);
+    }
+
     private static string Hidden(string html, string name)
     {
         var match = Regex.Match(html, "name=\""+name+"\"[^>]*value=\"([^\"]*)\"");
@@ -109,11 +182,11 @@ public sealed class CheckoutHttpTests
         public AppDbContext Db => scope.ServiceProvider.GetRequiredService<AppDbContext>();
         public TestApplication App => app; public TestBrowser Browser => browser;
         public string Buyer = ""; public int CourseId;
-        public static async Task<Rig> CreateAsync()
+        public static async Task<Rig> CreateAsync(BankTransferOptions? bankTransfer = null)
         {
             var data = await AdminUserSqlServerTests.SqlDatabase.CreateAsync(); var scope = data.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var app = new TestApplication(sqlConnection: db.Database.GetConnectionString()); var browser = app.CreateBrowser();
+            var app = new TestApplication(sqlConnection: db.Database.GetConnectionString(), bankTransfer: bankTransfer); var browser = app.CreateBrowser();
             var rig = new Rig(data, scope, app, browser);
             rig.Buyer = await app.CreateUserAsync("buyer@example.test", "Student");
             var issuer = await app.CreateUserAsync("issuer@example.test", "Instructor");

@@ -14,6 +14,7 @@ public sealed class BankTransferOptions
     public string BankBin { get; set; } = "";
     public string AccountNumber { get; set; } = "";
     public string AccountName { get; set; } = "";
+    public string QrTemplate { get; set; } = "";
 }
 public interface ICheckoutPaymentService
 {
