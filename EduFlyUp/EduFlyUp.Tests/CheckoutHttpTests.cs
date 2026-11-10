@@ -43,7 +43,7 @@ public sealed class CheckoutHttpTests
         var detail = await r.Browser.Client.GetAsync(response.Headers.Location); var text = await detail.Content.ReadAsStringAsync();
         Assert.True(detail.Headers.CacheControl?.NoStore); Assert.Contains("200.000", text);
         Assert.Contains("&lt;script&gt;course&lt;/script&gt;", text); Assert.DoesNotContain("<script>course</script>", text);
-        Assert.Contains("Thanh toán trực tuyến chưa mở", WebUtility.HtmlDecode(text));
+        Assert.Contains("Chưa mở thanh toán", WebUtility.HtmlDecode(text));
         // Mở lại từ trang khóa học bằng key mới cũng về chính đơn Pending hiện có.
         var next = await r.Browser.Client.GetStringAsync($"/Checkout/Create?courseId={r.CourseId}");
         fields["SubmissionKey"] = Hidden(next, "SubmissionKey"); fields["__RequestVerificationToken"] = Hidden(next, "__RequestVerificationToken");

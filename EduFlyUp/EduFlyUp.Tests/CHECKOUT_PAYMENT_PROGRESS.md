@@ -120,3 +120,9 @@ Nguồn đối chiếu cho bước QR/webhook tiếp theo: [Quick Link VietQR](h
 Kiểm thử mới: 7 ca SQL thật và 4 unit cho snapshot, cấu hình tắt/thiếu/sai, quyền/account/role, stale, gửi đồng thời, tranh chấp với coupon, rollback, unique reference/đơn và nâng cấp schema giữ đơn cũ.
 
 Kết quả ngày 07/11/2026: **292/292 test ứng dụng đạt, không bỏ qua**, chạy SQL qua TCP và tuần tự giữa các lớp như phần 4. EF xác nhận model khớp migration. Chỉ kiểm tra database fixture GUID riêng; chưa cập nhật database nhóm hoặc chạy demo QR/webhook trên trình duyệt ở bước backend này.
+
+## Tinh gọn giao diện checkout (10/11/2026)
+
+Rút ngắn hướng dẫn và nhãn nút ở trang tạo/chi tiết đơn. Tổng tiền nổi bật; chỉ hiển thị giá gốc và phần giảm khi có giảm giá. Mã đơn và hạn đơn vẫn đầy đủ trong mục mở rộng “Thông tin đơn”. Giữ nhãn cho trình đọc màn hình khi gạch giá gốc, trạng thái đơn và thông báo chưa mở thanh toán. Không thay đổi xử lý đơn/coupon hoặc bật nhận tiền.
+
+Kiểm tra: build Release và 5/5 kiểm thử CheckoutHttpTests với Razor/Identity/SQL Server thật đạt, không bỏ qua. Chưa kiểm tra trực quan trên trình duyệt ở lượt tinh gọn này. Bước chức năng kế tiếp vẫn là hiển thị QR từ thông tin đã chốt, sau đó xác thực webhook.
