@@ -1,0 +1,95 @@
+@model EduFlyUp.Web.Models.Quiz.QuizCreateEditViewModel
+@{
+    var isEdit = Model.Id > 0;
+}
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post">
+    @Html.AntiForgeryToken()
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="Id" />
+    }
+    <input type="hidden" asp-for="CourseId" />
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 mb-4" role="alert"></div>
+
+    <div class="mb-4">
+        <label asp-for="Title" class="form-label fw-bold">
+            Tiêu đề đề thi <span class="text-danger">*</span>
+        </label>
+        <input asp-for="Title" class="form-control form-control-lg rounded-3" placeholder="Ví dụ: Bài kiểm tra đánh giá năng lực cuối khóa..." autofocus />
+        <span asp-validation-for="Title" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-4">
+        <label asp-for="Description" class="form-label fw-bold">
+            Mô tả / Hướng dẫn làm bài
+        </label>
+        <textarea asp-for="Description" class="form-control rounded-3" rows="3" placeholder="Mô tả nội dung bài thi, lưu ý cho học viên khi làm bài..."></textarea>
+        <span asp-validation-for="Description" class="text-danger small"></span>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label asp-for="DurationMinutes" class="form-label fw-bold">
+                <i class="bi bi-clock-history me-1 text-primary"></i>Thời gian làm bài (Phút) <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+                <input asp-for="DurationMinutes" type="number" min="1" max="300" class="form-control rounded-start-3" />
+                <span class="input-group-text bg-light text-muted rounded-end-3">phút</span>
+            </div>
+            <div class="form-text small">Thời gian cho phép làm bài: từ 1 đến 300 phút.</div>
+            <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="PassingScorePercentage" class="form-label fw-bold">
+                <i class="bi bi-percent me-1 text-warning-emphasis"></i>Điểm sàn đạt yêu cầu (%) <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+                <input asp-for="PassingScorePercentage" type="number" min="1" max="100" class="form-control rounded-start-3" />
+                <span class="input-group-text bg-light text-muted rounded-end-3">%</span>
+            </div>
+            <div class="form-text small">Tỷ lệ trả lời đúng để tính là đạt: từ 1% đến 100%.</div>
+            <span asp-validation-for="PassingScorePercentage" class="text-danger small"></span>
+        </div>
+    </div>
+
+    <div class="card mb-4 brand-hero-banner rounded-4 shadow-xs">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="me-3">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="bi bi-cpu-fill fs-5 text-primary"></i>
+                        <h6 class="fw-bold mb-0 text-dark">Chế độ thi thích ứng (CAT)</h6>
+                        <span class="badge badge-brand-soft rounded-pill" style="font-size: 0.72rem;">Thích ứng thông minh</span>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        Khi kích hoạt, hệ thống sẽ tự động điều chỉnh độ khó của câu hỏi tiếp theo dựa trên kết quả trả lời từng câu của học viên.
+                    </p>
+                </div>
+                <div class="form-check form-switch fs-4 mb-0">
+                    <input asp-for="IsCAT" class="form-check-input" type="checkbox" role="switch" id="catModeSwitch" style="cursor: pointer;" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center @(isEdit ? "justify-content-between" : "justify-content-end") pt-3 border-top">
+        @if (isEdit)
+        {
+            <a asp-action="ManageQuestions" asp-route-id="@Model.Id" class="btn btn-soft-brand rounded-pill px-3 py-2">
+                <i class="bi bi-list-check me-1"></i>Quản lý câu hỏi trong đề
+            </a>
+        }
+        <div class="d-flex align-items-center gap-2">
+            <a asp-action="Index" asp-route-courseId="@Model.CourseId" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+                <i class="bi bi-arrow-left me-1"></i>Hủy bỏ
+            </a>
+            <button type="submit" class="btn btn-brand rounded-pill px-5 py-2 fw-semibold shadow-glow">
+                <i class="bi bi-check-circle-fill me-1"></i>@(isEdit ? "Lưu thay đổi" : "Tạo đề thi")
+            </button>
+        </div>
+    </div>
+</form>
+

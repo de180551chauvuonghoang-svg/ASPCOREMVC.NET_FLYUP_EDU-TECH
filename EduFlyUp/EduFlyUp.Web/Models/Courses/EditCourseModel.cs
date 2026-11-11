@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using EduFlyUp.BusinessObjects;
 
 namespace EduFlyUp.Web.Models.Courses;
@@ -38,6 +38,13 @@ public class EditCourseModel
     [Display(Name = "Cấp độ")]
     public CourseLevel Level { get; set; } = CourseLevel.Beginner;
 
+    [StringLength(100, ErrorMessage = "Danh mục tối đa 100 ký tự.")]
+    [Display(Name = "Danh mục")]
+    public string Category { get; set; } = string.Empty;
+
     [Display(Name = "Công khai khóa học")]
     public bool IsPublished { get; set; }
+
+    public bool CanDelete { get; set; } = true;
+    public string? DeleteDisabledReason { get; set; }
 }

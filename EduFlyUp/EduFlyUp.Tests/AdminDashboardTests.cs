@@ -100,6 +100,7 @@ public sealed class AdminDashboardTests
         db.Courses.AddRange(Enumerable.Range(1, 3).Select(i => new Course
         {
             Id = i, Title = "Course " + i, InstructorId = "owner@example.test", IsPublished = i != 3,
+            Status = i != 3 ? CourseStatus.Approved : CourseStatus.PendingApproval,
             Lessons = Enumerable.Range(1, i == 1 ? 3 : 1).Select(j => new Lesson { Title = "Lesson " + j }).ToList()
         }));
         await db.SaveChangesAsync();

@@ -45,9 +45,22 @@ namespace EduFlyUp.DataAccess
             stored.ThumbnailUrl = course.ThumbnailUrl;
             stored.Price = course.Price;
             stored.Level = course.Level;
+            stored.Category = course.Category;
             // Instructor content edits must never write a stale publication flag,
             // even when an Admin hides the course concurrently.
-            if (includePublication) stored.IsPublished = course.IsPublished;
+            if (includePublication)
+            {
+                stored.IsPublished = course.IsPublished;
+                if (course.IsPublished)
+                {
+                    stored.Status = CourseStatus.Approved;
+                    stored.RejectionReason = null;
+                }
+                else if (stored.Status is CourseStatus.Approved or CourseStatus.PendingApproval)
+                {
+                    stored.Status = CourseStatus.Rejected;
+                }
+            }
             await context.SaveChangesAsync();
         }
 
@@ -64,6 +77,34 @@ namespace EduFlyUp.DataAccess
             var lessons = course?.Lessons.ToList() ?? [];
             if (course != null)
             {
+                if (course.IsPublished)
+                {
+                    throw new InvalidOperationException("Không thể xóa khóa học đang công khai mở bán. Vui lòng lưu trữ hoặc ẩn khóa học trước khi xóa.");
+                }
+
+                if (await context.Enrollments.AnyAsync(e => e.CourseId == id))
+                {
+                    throw new InvalidOperationException("Không thể xóa khóa học đã có học viên ghi danh. Vui lòng sử dụng tính năng Lưu trữ để bảo toàn quyền học cho học viên cũ.");
+                }
+
+                var courseCoupons = await context.Coupons.Where(cp => cp.CourseId == id).ToListAsync();
+                if (courseCoupons.Any(cp => cp.UsedCount > 0))
+                {
+                    throw new InvalidOperationException("Không thể xóa khóa học do đã có mã giảm giá được sử dụng trong đơn hàng.");
+                }
+                if (courseCoupons.Count > 0)
+                {
+                    context.Coupons.RemoveRange(courseCoupons);
+                }
+
+                var quizQuestions = await context.QuizQuestions
+                    .Where(qq => qq.Quiz.CourseId == id || qq.Question.CourseId == id)
+                    .ToListAsync();
+                if (quizQuestions.Count > 0)
+                {
+                    context.QuizQuestions.RemoveRange(quizQuestions);
+                }
+
                 context.Courses.Remove(course);
                 await context.SaveChangesAsync();
             }

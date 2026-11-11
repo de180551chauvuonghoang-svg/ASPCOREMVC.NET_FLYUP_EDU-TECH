@@ -8,7 +8,8 @@ public interface IAdminCourseRepository
 {
     Task<AdminCoursePage> SearchAsync(AdminCourseQuery query);
     Task<AdminCourseDetail?> GetDetailAsync(int id);
-    Task<bool> SetPublicationAsync(int id, bool published);
+    Task<bool> SetPublicationAsync(int id, bool published, string? reason = null);
+    Task<bool> RejectCourseAsync(int id, string reason);
 }
 
 // Scoped context: SQL filtering/paging and publication-only updates share the
@@ -37,6 +38,15 @@ public sealed class AdminCourseRepository(AppDbContext context) : IAdminCourseRe
         }
         if (query.Level.HasValue) courses = courses.Where(c => c.Level == query.Level.Value);
         if (query.IsPublished.HasValue) courses = courses.Where(c => c.IsPublished == query.IsPublished.Value);
+        if (query.Status.HasValue)
+        {
+            courses = query.Status.Value switch
+            {
+                CourseStatus.Approved => courses.Where(c => c.IsPublished),
+                CourseStatus.Rejected => courses.Where(c => !c.IsPublished && (c.Status == CourseStatus.Rejected || c.Status == CourseStatus.Approved)),
+                _ => courses.Where(c => !c.IsPublished && c.Status == query.Status.Value)
+            };
+        }
         return courses;
     }
 
@@ -50,7 +60,7 @@ public sealed class AdminCourseRepository(AppDbContext context) : IAdminCourseRe
             orderby course.CreatedAt descending, course.Id descending
             select new AdminCourseRow(course.Id, course.Title, course.InstructorId,
                 owner == null ? null : owner.FullName, owner == null ? null : owner.Email,
-                course.Level, course.Price, course.IsPublished, course.CreatedAt, course.Lessons.Count);
+                course.Level, course.Price, course.IsPublished, course.CreatedAt, course.Lessons.Count, course.Status, course.RejectionReason);
     }
 
     internal static IQueryable<AdminInstructorOption> InstructorQuery(AppDbContext context)
@@ -76,13 +86,59 @@ public sealed class AdminCourseRepository(AppDbContext context) : IAdminCourseRe
         return new AdminCourseDetail(course, owner?.FullName, owner?.Email);
     }
 
-    public async Task<bool> SetPublicationAsync(int id, bool published)
+    public async Task<bool> SetPublicationAsync(int id, bool published, string? reason = null)
     {
-        var course = await context.Courses.FindAsync(id);
+        var course = await context.Courses.Include(c => c.Lessons).FirstOrDefaultAsync(c => c.Id == id);
         if (course is null) return false;
-        course.IsPublished = published;
+        if (published)
+        {
+            if (course.Lessons.Count == 0) return false;
+            if (course.Status is CourseStatus.Draft or CourseStatus.Archived) return false;
+
+            course.IsPublished = true;
+            course.Status = CourseStatus.Approved;
+            course.RejectionReason = null;
+        }
+        else
+        {
+            course.IsPublished = false;
+            if (course.Status is CourseStatus.Approved or CourseStatus.PendingApproval)
+            {
+                course.Status = CourseStatus.Rejected;
+            }
+
+            var normalized = NormalizeReason(reason);
+            if (normalized is not null)
+            {
+                course.RejectionReason = normalized;
+            }
+        }
         // Tracked scalar update: preserve content, owner, lessons and enrollments.
         await context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<bool> RejectCourseAsync(int id, string reason)
+    {
+        var normalized = NormalizeReason(reason);
+        if (normalized is null) return false;
+
+        var course = await context.Courses.FirstOrDefaultAsync(c => c.Id == id);
+        if (course is null) return false;
+        if (course.Status is CourseStatus.Draft or CourseStatus.Archived) return false;
+
+        course.IsPublished = false;
+        course.Status = CourseStatus.Rejected;
+        course.RejectionReason = normalized;
+
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+    private static string? NormalizeReason(string? reason)
+    {
+        var trimmed = reason?.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed)) return null;
+        return trimmed.Length > 500 ? trimmed[..500] : trimmed;
     }
 }

@@ -58,52 +58,34 @@ namespace EduFlyUp.DataAccess
         public async Task DeleteAsync(int id)
         {
             using var context = new AppDbContext();
+            await using var transaction = await context.Database.BeginTransactionAsync();
             var quiz = await context.Quizzes
                 .Include(q => q.QuizQuestions)
                 .FirstOrDefaultAsync(q => q.Id == id);
 
             if (quiz != null)
             {
+                if (await context.QuizAttempts.AnyAsync(a => a.QuizId == id))
+                {
+                    throw new InvalidOperationException("Không thể xóa đề thi đã có học viên tham gia làm bài.");
+                }
+
+                if (quiz.QuizQuestions.Any())
+                {
+                    context.QuizQuestions.RemoveRange(quiz.QuizQuestions);
+                }
+
                 context.Quizzes.Remove(quiz);
                 await context.SaveChangesAsync();
             }
-        }
 
-        public async Task AddQuestionToQuizAsync(int quizId, int questionId, int order = 1)
-        {
-            using var context = new AppDbContext();
-            var exists = await context.QuizQuestions
-                .AnyAsync(qq => qq.QuizId == quizId && qq.QuestionId == questionId);
-
-            if (!exists)
-            {
-                var quizQuestion = new QuizQuestion
-                {
-                    QuizId = quizId,
-                    QuestionId = questionId,
-                    Order = order
-                };
-                await context.QuizQuestions.AddAsync(quizQuestion);
-                await context.SaveChangesAsync();
-            }
-        }
-
-        public async Task RemoveQuestionFromQuizAsync(int quizId, int questionId)
-        {
-            using var context = new AppDbContext();
-            var item = await context.QuizQuestions
-                .FirstOrDefaultAsync(qq => qq.QuizId == quizId && qq.QuestionId == questionId);
-
-            if (item != null)
-            {
-                context.QuizQuestions.Remove(item);
-                await context.SaveChangesAsync();
-            }
+            await transaction.CommitAsync();
         }
 
         public async Task SetQuestionsForQuizAsync(int quizId, IEnumerable<int> questionIds)
         {
             using var context = new AppDbContext();
+            await using var transaction = await context.Database.BeginTransactionAsync();
             var existingItems = await context.QuizQuestions
                 .Where(qq => qq.QuizId == quizId)
                 .ToListAsync();
@@ -122,6 +104,7 @@ namespace EduFlyUp.DataAccess
             }
 
             await context.SaveChangesAsync();
+            await transaction.CommitAsync();
         }
 
         public async Task<int> CountByCourseIdAsync(int courseId)

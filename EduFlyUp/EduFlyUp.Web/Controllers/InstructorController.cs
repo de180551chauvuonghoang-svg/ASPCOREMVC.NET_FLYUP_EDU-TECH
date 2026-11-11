@@ -1,4 +1,5 @@
 using EduFlyUp.BusinessObjects;
+using EduFlyUp.Repositories;
 using EduFlyUp.Services;
 using EduFlyUp.Web.Models.Instructor;
 using Microsoft.AspNetCore.Authorization;
@@ -8,21 +9,29 @@ using System.Security.Claims;
 namespace EduFlyUp.Web.Controllers;
 
 [Authorize(Roles = "Admin,Instructor")]
-public class InstructorController : Controller
+public class InstructorController : ManagedCourseControllerBase
 {
     private readonly ICourseService _courseService;
     private readonly ICourseAccessService _courseAccess;
     private readonly ILessonService _lessonService;
     private readonly EduFlyUp.Web.Storage.LessonFileCleanup _fileCleanup;
     private readonly IInstructorStudentService _students;
+    private readonly IEnrollmentRepository _enrollments;
 
-    public InstructorController(ICourseService courseService, ICourseAccessService courseAccess, ILessonService lessonService, EduFlyUp.Web.Storage.LessonFileCleanup fileCleanup, IInstructorStudentService students)
+    public InstructorController(
+        ICourseService courseService,
+        ICourseAccessService courseAccess,
+        ILessonService lessonService,
+        EduFlyUp.Web.Storage.LessonFileCleanup fileCleanup,
+        IInstructorStudentService students,
+        IEnrollmentRepository enrollments)
     {
         _courseService = courseService;
         _courseAccess = courseAccess;
         _lessonService = lessonService;
         _fileCleanup = fileCleanup;
         _students = students;
+        _enrollments = enrollments;
     }
 
     // GET: /Instructor/Dashboard or /Instructor
@@ -54,15 +63,15 @@ public class InstructorController : Controller
         {
             if (Enum.TryParse<CourseStatus>(status, true, out var parsedStatus))
             {
-                filtered = filtered.Where(c => c.Status == parsedStatus);
+                filtered = filtered.Where(c => c.GetEffectiveStatus() == parsedStatus);
             }
             else if (status.Equals("published", StringComparison.OrdinalIgnoreCase))
             {
-                filtered = filtered.Where(c => c.Status == CourseStatus.Approved || c.IsPublished);
+                filtered = filtered.Where(c => c.GetEffectiveStatus() == CourseStatus.Approved);
             }
             else if (status.Equals("draft", StringComparison.OrdinalIgnoreCase))
             {
-                filtered = filtered.Where(c => c.Status == CourseStatus.Draft || !c.IsPublished);
+                filtered = filtered.Where(c => c.GetEffectiveStatus() == CourseStatus.Draft);
             }
         }
 
@@ -75,11 +84,11 @@ public class InstructorController : Controller
 
         // Statistics
         ViewBag.TotalCourses = instructorCourses.Count;
-        ViewBag.ApprovedCourses = instructorCourses.Count(c => c.Status == CourseStatus.Approved || c.IsPublished);
-        ViewBag.PendingApprovalCourses = instructorCourses.Count(c => c.Status == CourseStatus.PendingApproval);
-        ViewBag.DraftCourses = instructorCourses.Count(c => c.Status == CourseStatus.Draft && !c.IsPublished);
-        ViewBag.RejectedCourses = instructorCourses.Count(c => c.Status == CourseStatus.Rejected);
-        ViewBag.ArchivedCourses = instructorCourses.Count(c => c.Status == CourseStatus.Archived);
+        ViewBag.ApprovedCourses = instructorCourses.Count(c => c.GetEffectiveStatus() == CourseStatus.Approved);
+        ViewBag.PendingApprovalCourses = instructorCourses.Count(c => c.GetEffectiveStatus() == CourseStatus.PendingApproval);
+        ViewBag.DraftCourses = instructorCourses.Count(c => c.GetEffectiveStatus() == CourseStatus.Draft);
+        ViewBag.RejectedCourses = instructorCourses.Count(c => c.GetEffectiveStatus() == CourseStatus.Rejected);
+        ViewBag.ArchivedCourses = instructorCourses.Count(c => c.GetEffectiveStatus() == CourseStatus.Archived);
         ViewBag.TotalLessons = instructorCourses.Sum(c => c.Lessons?.Count ?? 0);
         if (!isAdmin)
         {
@@ -89,6 +98,7 @@ public class InstructorController : Controller
         }
 
         ViewBag.Categories = (await _courseService.GetCategoriesAsync()).ToList();
+        ViewBag.CourseEnrollmentCounts = await _enrollments.GetCourseEnrollmentCountsAsync(instructorCourses.Select(c => c.Id));
 
         ViewBag.CurrentSearch = search;
         ViewBag.CurrentLevel = level;
@@ -105,116 +115,44 @@ public class InstructorController : Controller
     // POST: /Instructor/SubmitApproval/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SubmitApproval(int id)
-    {
-        var course = await _courseService.GetCourseByIdAsync(id);
-        if (course == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy khóa học.";
-            return RedirectToAction(nameof(Dashboard));
-        }
-
-        if (!_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền gửi duyệt khóa học này.";
-            return RedirectToAction(nameof(Dashboard));
-        }
-
-        var (success, message) = await _courseService.SubmitCourseForApprovalAsync(id, course.InstructorId);
-        if (success)
-        {
-            TempData["SuccessMessage"] = message;
-        }
-        else
-        {
-            TempData["ErrorMessage"] = message;
-        }
-
-        return RedirectToAction(nameof(Dashboard));
-    }
+    public Task<IActionResult> SubmitApproval(int id)
+        => ExecuteCourseWorkflowActionAsync(id, _courseService.SubmitCourseForApprovalAsync, "Bạn không có quyền gửi duyệt khóa học này.");
 
     // POST: /Instructor/Archive/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Archive(int id)
-    {
-        var course = await _courseService.GetCourseByIdAsync(id);
-        if (course == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy khóa học.";
-            return RedirectToAction(nameof(Dashboard));
-        }
-
-        if (!_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền thao tác trên khóa học này.";
-            return RedirectToAction(nameof(Dashboard));
-        }
-
-        var (success, message) = await _courseService.ArchiveCourseAsync(id, course.InstructorId);
-        if (success)
-        {
-            TempData["SuccessMessage"] = message;
-        }
-        else
-        {
-            TempData["ErrorMessage"] = message;
-        }
-
-        return RedirectToAction(nameof(Dashboard));
-    }
+    public Task<IActionResult> Archive(int id)
+        => ExecuteCourseWorkflowActionAsync(id, _courseService.ArchiveCourseAsync, "Bạn không có quyền thao tác trên khóa học này.");
 
     // POST: /Instructor/Unarchive/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Unarchive(int id)
+    public Task<IActionResult> Unarchive(int id)
+        => ExecuteCourseWorkflowActionAsync(id, _courseService.UnarchiveCourseAsync, "Bạn không có quyền thao tác trên khóa học này.");
+
+    private async Task<IActionResult> ExecuteCourseWorkflowActionAsync(
+        int id,
+        Func<int, string, Task<(bool Success, string Message)>> workflowAction,
+        string unauthorizedMessage)
     {
-        var course = await _courseService.GetCourseByIdAsync(id);
-        if (course == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy khóa học.";
-            return RedirectToAction(nameof(Dashboard));
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, id, unauthorizedMessage);
+        if (errorResult != null || course == null) return errorResult!;
 
-        if (!_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền thao tác trên khóa học này.";
-            return RedirectToAction(nameof(Dashboard));
-        }
-
-        var (success, message) = await _courseService.UnarchiveCourseAsync(id, course.InstructorId);
-        if (success)
-        {
-            TempData["SuccessMessage"] = message;
-        }
-        else
-        {
-            TempData["ErrorMessage"] = message;
-        }
-
+        var (success, message) = await workflowAction(id, course.InstructorId);
+        TempData[success ? "SuccessMessage" : "ErrorMessage"] = message;
         return RedirectToAction(nameof(Dashboard));
     }
 
     // ==========================================
-    // KHỐI 2: QUẢN LÝ GIÁO TRÌNH & BÀI GIẢNG (CURRICULUM BUILDER - UC-21, UC-24)
+    // KHỐI 2: QUẢN LÝ GIÁO TRÌNH & BÀI GIẢNG
     // ==========================================
 
     // GET: /Instructor/Curriculum/5
     [HttpGet]
     public async Task<IActionResult> Curriculum(int id)
     {
-        var course = await _courseService.GetCourseByIdAsync(id);
-        if (course == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy khóa học.";
-            return RedirectToAction(nameof(Dashboard));
-        }
-
-        if (!_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền quản lý khóa học này.";
-            return RedirectToAction(nameof(Dashboard));
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, id, "Bạn không có quyền quản lý khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         var lessons = (await _lessonService.GetLessonsByCourseIdAsync(id))
             .OrderBy(l => l.Order)
@@ -231,6 +169,7 @@ public class InstructorController : Controller
             Sections = sections
         };
 
+        ViewBag.HasActiveEnrollments = await _enrollments.HasActiveCourseEnrollmentsAsync(course.Id);
         return View(model);
     }
 
@@ -239,18 +178,8 @@ public class InstructorController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateLesson(LessonInputModel model)
     {
-        var course = await _courseService.GetCourseByIdAsync(model.CourseId);
-        if (course == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy khóa học.";
-            return RedirectToAction(nameof(Dashboard));
-        }
-
-        if (!_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền thao tác trên khóa học này.";
-            return RedirectToAction(nameof(Dashboard));
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, model.CourseId, "Bạn không có quyền thao tác trên khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         if (!ModelState.IsValid)
         {
@@ -294,12 +223,8 @@ public class InstructorController : Controller
             return RedirectToAction(nameof(Curriculum), new { id = model.CourseId });
         }
 
-        var course = await _courseService.GetCourseByIdAsync(lesson.CourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền chỉnh sửa bài giảng của khóa học này.";
-            return RedirectToAction(nameof(Dashboard));
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, lesson.CourseId, "Bạn không có quyền chỉnh sửa bài giảng của khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         if (!ModelState.IsValid)
         {
@@ -341,11 +266,29 @@ public class InstructorController : Controller
             return RedirectToAction(nameof(Curriculum), new { id = courseId });
         }
 
-        var course = await _courseService.GetCourseByIdAsync(lesson.CourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, lesson.CourseId, "Bạn không có quyền xóa bài giảng của khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
+
+        var targetCourseId = course.Id;
+        var existingLessons = (await _lessonService.GetLessonsByCourseIdAsync(targetCourseId)).ToList();
+        if (existingLessons.Count <= 1)
         {
-            TempData["ErrorMessage"] = "Bạn không có quyền xóa bài giảng của khóa học này.";
-            return RedirectToAction(nameof(Dashboard));
+            var hasActiveEnrollments = await _enrollments.HasActiveCourseEnrollmentsAsync(targetCourseId);
+            string? blockReason = course.IsPublished
+                ? "Không thể xóa bài giảng duy nhất của khóa học đang công khai mở bán. Vui lòng lưu trữ (tạm ẩn) khóa học trước khi điều chỉnh."
+                : course.Status == CourseStatus.PendingApproval
+                    ? "Không thể xóa bài giảng duy nhất khi khóa học đang chờ Admin duyệt."
+                    : hasActiveEnrollments
+                        ? "Không thể xóa bài giảng duy nhất vì khóa học đã có học viên ghi danh đang học tập."
+                        : course.Status == CourseStatus.Archived
+                            ? "Không thể xóa bài giảng duy nhất của khóa học đang lưu trữ. Hãy thêm bài giảng mới trước khi xóa bài giảng này."
+                            : null;
+
+            if (blockReason != null)
+            {
+                TempData["ErrorMessage"] = blockReason;
+                return RedirectToAction(nameof(Curriculum), new { id = targetCourseId });
+            }
         }
 
         try
@@ -359,6 +302,6 @@ public class InstructorController : Controller
             TempData["ErrorMessage"] = "Không thể xóa bài giảng này do có dữ liệu tiến độ học tập hoặc ràng buộc liên quan.";
         }
 
-        return RedirectToAction(nameof(Curriculum), new { id = courseId });
+        return RedirectToAction(nameof(Curriculum), new { id = targetCourseId });
     }
 }

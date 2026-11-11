@@ -13,7 +13,7 @@
 </div>
 <form asp-action="Courses" method="get" class="card card-modern p-4 mb-4">
     <div class="row g-3 align-items-end">
-        <div class="col-lg-4"><label for="search" class="form-label">Tên khóa học</label><input id="search" name="Search" value="@filter.Search" maxlength="200" class="form-control" placeholder="Nhập tiêu đề khóa học" /></div>
+        <div class="col-lg-3"><label for="search" class="form-label">Tên khóa học</label><input id="search" name="Search" value="@filter.Search" maxlength="200" class="form-control" placeholder="Nhập tiêu đề khóa học" /></div>
         <div class="col-lg-3"><label for="instructor" class="form-label">Giảng viên sở hữu</label>
             <select id="instructor" name="Instructor" class="form-select"><option value="">Tất cả</option>
                 @if (!string.IsNullOrEmpty(filter.Instructor) && !result.Instructors.Any(i => string.Equals(i.UserName, filter.Instructor, StringComparison.OrdinalIgnoreCase)))
@@ -28,7 +28,24 @@
                 { <option value="@((int)level)" selected="@(filter.Level == level)">@level</option> }
             </select>
         </div>
-        <div class="col-lg-3"><label for="published" class="form-label">Trạng thái</label>
+        <div class="col-lg-2"><label for="status" class="form-label">Trạng thái duyệt</label>
+            <select id="status" name="Status" class="form-select"><option value="">Tất cả</option>
+                @foreach (var status in Enum.GetValues<CourseStatus>())
+                {
+                    var statusLabel = status switch
+                    {
+                        CourseStatus.Draft => "Bản nháp",
+                        CourseStatus.PendingApproval => "Chờ duyệt",
+                        CourseStatus.Approved => "Đã duyệt",
+                        CourseStatus.Rejected => "Bị từ chối / Đã ẩn",
+                        CourseStatus.Archived => "GV đã lưu trữ",
+                        _ => status.ToString()
+                    };
+                    <option value="@((int)status)" selected="@(filter.Status == status)">@statusLabel</option>
+                }
+            </select>
+        </div>
+        <div class="col-lg-2"><label for="published" class="form-label">Hiển thị</label>
             <select id="published" name="IsPublished" class="form-select"><option value="">Tất cả</option><option value="true" selected="@(filter.IsPublished == true)">Công khai</option><option value="false" selected="@(filter.IsPublished == false)">Ẩn / chưa công khai</option></select>
         </div>
         <div class="col-12 d-flex gap-2"><button class="btn btn-brand" type="submit">Áp dụng bộ lọc</button><a asp-action="Courses" class="btn btn-outline-secondary">Xóa bộ lọc</a></div>
@@ -47,12 +64,50 @@
                 <td><a asp-action="CourseDetails" asp-route-id="@course.Id" class="fw-semibold">@course.Title</a><div class="small text-muted">#@course.Id · @course.CreatedAt.ToString("dd/MM/yyyy")</div></td>
                 <td><div>@(string.IsNullOrWhiteSpace(course.InstructorName) ? (string.IsNullOrEmpty(course.InstructorId) ? "Chưa gán giảng viên" : course.InstructorId) : course.InstructorName)</div><small class="text-muted">@(course.InstructorEmail ?? course.InstructorId)</small></td>
                 <td>@course.Level</td><td>@(course.Price == 0 ? "Miễn phí" : course.Price.ToString("N0") + " VNĐ")</td><td>@course.LessonCount</td>
-                <td><span class="badge @(course.IsPublished ? "bg-success" : "bg-secondary")">@(course.IsPublished ? "Công khai" : "Ẩn / chưa công khai")</span></td>
                 <td>
-                    <form asp-action="@(course.IsPublished ? "DisableCourse" : "EnableCourse")" asp-route-id="@course.Id" method="post" onsubmit="@(course.IsPublished ? "return confirm('Ẩn khóa học này? Học viên đã ghi danh hợp lệ vẫn giữ quyền học.');" : null)">
-                        @Html.AntiForgeryToken()<input type="hidden" name="returnUrl" value="@returnUrl" />
-                        <button type="submit" class="btn btn-sm @(course.IsPublished ? "btn-outline-warning" : "btn-outline-success")">@(course.IsPublished ? "Ẩn khóa học" : "Công khai")</button>
-                    </form>
+                    <partial name="_CourseStatusBadge" model="(course.Status, course.IsPublished, course.RejectionReason, true)" />
+                    @if (!course.IsPublished && course.Status is CourseStatus.Rejected or CourseStatus.Approved && !string.IsNullOrWhiteSpace(course.RejectionReason))
+                    {
+                        <div class="small text-danger mt-1" style="max-width: 240px;">Lý do: @course.RejectionReason</div>
+                    }
+                </td>
+                <td>
+                    @if (course.IsPublished)
+                    {
+                        <form asp-action="DisableCourse" asp-route-id="@course.Id" method="post" onsubmit="return confirm('Ẩn khóa học này? Học viên đã ghi danh hợp lệ vẫn giữ quyền học.');">
+                            @Html.AntiForgeryToken()<input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <button type="submit" class="btn btn-sm btn-outline-warning">Ẩn khóa học</button>
+                        </form>
+                    }
+                    else if (course.Status == CourseStatus.PendingApproval)
+                    {
+                        <div class="d-flex flex-wrap gap-1">
+                            @if (course.LessonCount > 0)
+                            {
+                                <form asp-action="EnableCourse" asp-route-id="@course.Id" method="post">
+                                    @Html.AntiForgeryToken()<input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <button type="submit" class="btn btn-sm btn-success">Duyệt & Công khai</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Khóa học chưa có bài giảng nào, không thể công khai">Thiếu bài giảng</button>
+                            }
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectCourseModal" data-reject-url="@Url.Action("RejectCourse", "Admin", new { id = course.Id })" data-course-title="@course.Title">Từ chối</button>
+                        </div>
+                    }
+                    else if (course.Status == CourseStatus.Draft)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Khóa học đang soạn thảo, giảng viên chưa gửi yêu cầu phê duyệt">Đang soạn nháp</button>
+                    }
+                    else if (course.Status == CourseStatus.Archived)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Khóa học do giảng viên chủ động lưu trữ">GV đã lưu trữ</button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Khóa học đang bị từ chối hoặc ẩn, chờ giảng viên cập nhật và gửi duyệt lại">Chờ GV gửi lại</button>
+                    }
                 </td>
             </tr>
         }
@@ -63,10 +118,47 @@
 {
     <nav class="mt-4" aria-label="Phân trang khóa học"><ul class="pagination flex-wrap">
         @if (result.Page > 1)
-        { <li class="page-item"><a class="page-link" asp-action="Courses" asp-route-Search="@filter.Search" asp-route-Instructor="@filter.Instructor" asp-route-Level="@filter.Level" asp-route-IsPublished="@filter.IsPublished" asp-route-Page="@(result.Page - 1)">Trước</a></li> }
+        { <li class="page-item"><a class="page-link" asp-action="Courses" asp-route-Search="@filter.Search" asp-route-Instructor="@filter.Instructor" asp-route-Level="@filter.Level" asp-route-Status="@filter.Status" asp-route-IsPublished="@filter.IsPublished" asp-route-Page="@(result.Page - 1)">Trước</a></li> }
         @for (var page = Math.Max(1, result.Page - 2); page <= Math.Min(result.TotalPages, result.Page + 2); page++)
-        { <li class="page-item @(page == result.Page ? "active" : "")"><a class="page-link" aria-current="@(page == result.Page ? "page" : null)" asp-action="Courses" asp-route-Search="@filter.Search" asp-route-Instructor="@filter.Instructor" asp-route-Level="@filter.Level" asp-route-IsPublished="@filter.IsPublished" asp-route-Page="@(page)">@(page)</a></li> }
+        { <li class="page-item @(page == result.Page ? "active" : "")"><a class="page-link" aria-current="@(page == result.Page ? "page" : null)" asp-action="Courses" asp-route-Search="@filter.Search" asp-route-Instructor="@filter.Instructor" asp-route-Level="@filter.Level" asp-route-Status="@filter.Status" asp-route-IsPublished="@filter.IsPublished" asp-route-Page="@(page)">@(page)</a></li> }
         @if (result.Page < result.TotalPages)
-        { <li class="page-item"><a class="page-link" asp-action="Courses" asp-route-Search="@filter.Search" asp-route-Instructor="@filter.Instructor" asp-route-Level="@filter.Level" asp-route-IsPublished="@filter.IsPublished" asp-route-Page="@(result.Page + 1)">Sau</a></li> }
+        { <li class="page-item"><a class="page-link" asp-action="Courses" asp-route-Search="@filter.Search" asp-route-Instructor="@filter.Instructor" asp-route-Level="@filter.Level" asp-route-Status="@filter.Status" asp-route-IsPublished="@filter.IsPublished" asp-route-Page="@(result.Page + 1)">Sau</a></li> }
     </ul></nav>
+}
+<div class="modal fade" id="rejectCourseModal" tabindex="-1" aria-labelledby="rejectCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="rejectCourseForm" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectCourseModalLabel">Từ chối phê duyệt khóa học</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Khóa học: <strong id="rejectCourseTitle"></strong></p>
+                    <label for="rejectReasonInput" class="form-label">Lý do từ chối <span class="text-danger">*</span></label>
+                    <textarea id="rejectReasonInput" name="rejectionReason" class="form-control" rows="3" maxlength="500" required placeholder="Nhập lý do chi tiết để giảng viên chỉnh sửa và gửi duyệt lại..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger">Xác nhận từ chối</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        document.getElementById('rejectCourseModal')?.addEventListener('show.bs.modal', function (event) {
+            const trigger = event.relatedTarget;
+            if (!trigger) return;
+            const form = document.getElementById('rejectCourseForm');
+            const titleEl = document.getElementById('rejectCourseTitle');
+            const reasonEl = document.getElementById('rejectReasonInput');
+            if (form) form.action = trigger.getAttribute('data-reject-url') || '';
+            if (titleEl) titleEl.textContent = trigger.getAttribute('data-course-title') || '';
+            if (reasonEl) reasonEl.value = '';
+        });
+    </script>
 }

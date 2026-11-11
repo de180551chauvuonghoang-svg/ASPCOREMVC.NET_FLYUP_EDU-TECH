@@ -23,12 +23,6 @@ namespace EduFlyUp.Repositories
         public async Task DeleteAsync(int id) =>
             await QuizDAO.Instance.DeleteAsync(id);
 
-        public async Task AddQuestionToQuizAsync(int quizId, int questionId, int order = 1) =>
-            await QuizDAO.Instance.AddQuestionToQuizAsync(quizId, questionId, order);
-
-        public async Task RemoveQuestionFromQuizAsync(int quizId, int questionId) =>
-            await QuizDAO.Instance.RemoveQuestionFromQuizAsync(quizId, questionId);
-
         public async Task SetQuestionsForQuizAsync(int quizId, IEnumerable<int> questionIds) =>
             await QuizDAO.Instance.SetQuestionsForQuizAsync(quizId, questionIds);
 

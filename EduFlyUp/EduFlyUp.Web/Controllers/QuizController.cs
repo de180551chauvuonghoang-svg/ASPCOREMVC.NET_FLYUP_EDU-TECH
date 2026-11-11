@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EduFlyUp.Web.Controllers;
 
 [Authorize(Roles = "Admin,Instructor")]
-public class QuizController : Controller
+public class QuizController : ManagedCourseControllerBase
 {
     private readonly IQuizService _quizService;
     private readonly ICourseService _courseService;
@@ -26,31 +26,13 @@ public class QuizController : Controller
         _questionService = questionService;
     }
 
-    // ==========================================
-    // 1. DANH SÁCH ĐỀ THI CỦA KHÓA HỌC (UC-32)
-    // ==========================================
+    // 1. DANH SÁCH ĐỀ THI CỦA KHÓA HỌC
     // GET: /Quiz?courseId=1
     [HttpGet]
     public async Task<IActionResult> Index(int courseId)
     {
-        if (courseId <= 0)
-        {
-            TempData["ErrorMessage"] = "Mã khóa học không hợp lệ.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        var course = await _courseService.GetCourseByIdAsync(courseId);
-        if (course == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy khóa học.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        if (!_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền quản lý đề thi của khóa học này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, courseId, "Bạn không có quyền quản lý đề thi của khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         var quizzes = (await _quizService.GetQuizzesByCourseIdAsync(courseId)).ToList();
 
@@ -72,31 +54,13 @@ public class QuizController : Controller
         return View(viewModel);
     }
 
-    // ==========================================
-    // 2. TẠO ĐỀ THI MỚI (UC-32.1)
-    // ==========================================
+    // 2. TẠO ĐỀ THI MỚI
     // GET: /Quiz/Create?courseId=1
     [HttpGet]
     public async Task<IActionResult> Create(int courseId)
     {
-        if (courseId <= 0)
-        {
-            TempData["ErrorMessage"] = "Mã khóa học không hợp lệ.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        var course = await _courseService.GetCourseByIdAsync(courseId);
-        if (course == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy khóa học.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        if (!_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền tạo đề thi cho khóa học này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, courseId, "Bạn không có quyền tạo đề thi cho khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         var model = new QuizCreateEditViewModel
         {
@@ -115,18 +79,8 @@ public class QuizController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(QuizCreateEditViewModel model)
     {
-        var course = await _courseService.GetCourseByIdAsync(model.CourseId);
-        if (course == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy khóa học tương ứng.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        if (!_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền tạo đề thi cho khóa học này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, model.CourseId, "Bạn không có quyền tạo đề thi cho khóa học này.", notFoundMessage: "Không tìm thấy khóa học tương ứng.");
+        if (errorResult != null || course == null) return errorResult!;
 
         if (!ModelState.IsValid)
         {
@@ -156,32 +110,13 @@ public class QuizController : Controller
         return RedirectToAction(nameof(Index), new { courseId = model.CourseId });
     }
 
-    // ==========================================
-    // 3. CHỈNH SỬA CẤU HÌNH ĐỀ THI (UC-32.2)
-    // ==========================================
+    // 3. CHỈNH SỬA CẤU HÌNH ĐỀ THI
     // GET: /Quiz/Edit/5
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        if (id <= 0)
-        {
-            TempData["ErrorMessage"] = "Mã đề thi không hợp lệ.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        var quiz = await _quizService.GetQuizByIdAsync(id);
-        if (quiz == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy đề thi cần chỉnh sửa.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        var course = await _courseService.GetCourseByIdAsync(quiz.CourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền chỉnh sửa đề thi này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (quiz, course, errorResult) = await AuthorizeManagedQuizAsync(id, "Không tìm thấy đề thi cần chỉnh sửa.", "Bạn không có quyền chỉnh sửa đề thi này.");
+        if (errorResult != null || quiz == null || course == null) return errorResult!;
 
         var model = new QuizCreateEditViewModel
         {
@@ -203,25 +138,8 @@ public class QuizController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(QuizCreateEditViewModel model)
     {
-        if (model.Id <= 0)
-        {
-            TempData["ErrorMessage"] = "Mã đề thi không hợp lệ.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        var existingQuiz = await _quizService.GetQuizByIdAsync(model.Id);
-        if (existingQuiz == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy đề thi cần cập nhật.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        var course = await _courseService.GetCourseByIdAsync(existingQuiz.CourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền chỉnh sửa đề thi này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (existingQuiz, course, errorResult) = await AuthorizeManagedQuizAsync(model.Id, "Không tìm thấy đề thi cần cập nhật.", "Bạn không có quyền chỉnh sửa đề thi này.");
+        if (errorResult != null || existingQuiz == null || course == null) return errorResult!;
 
         if (!ModelState.IsValid)
         {
@@ -247,9 +165,7 @@ public class QuizController : Controller
         return RedirectToAction(nameof(Index), new { courseId = existingQuiz.CourseId });
     }
 
-    // ==========================================
-    // 4. XÓA ĐỀ THI (UC-32.3)
-    // ==========================================
+    // 4. XÓA ĐỀ THI
     // POST: /Quiz/Delete/5
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -269,24 +185,19 @@ public class QuizController : Controller
         }
 
         var targetCourseId = quiz.CourseId;
-        var course = await _courseService.GetCourseByIdAsync(targetCourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền xóa đề thi của khóa học này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, targetCourseId, "Bạn không có quyền xóa đề thi của khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         try
         {
             var success = await _quizService.DeleteQuizAsync(id);
-            if (success)
-            {
-                TempData["SuccessMessage"] = $"Đã xóa đề thi '{quiz.Title}' thành công.";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Không thể xóa đề thi này.";
-            }
+            TempData[success ? "SuccessMessage" : "ErrorMessage"] = success
+                ? $"Đã xóa đề thi '{quiz.Title}' thành công."
+                : "Không thể xóa đề thi này.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
         }
         catch (Exception)
         {
@@ -296,32 +207,13 @@ public class QuizController : Controller
         return RedirectToAction(nameof(Index), new { courseId = targetCourseId });
     }
 
-    // ==========================================
     // 5. GÁN CÂU HỎI VÀO ĐỀ THI (MANAGE QUESTIONS)
-    // ==========================================
     // GET: /Quiz/ManageQuestions/5
     [HttpGet]
     public async Task<IActionResult> ManageQuestions(int id)
     {
-        if (id <= 0)
-        {
-            TempData["ErrorMessage"] = "Mã đề thi không hợp lệ.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        var quiz = await _quizService.GetQuizWithQuestionsAsync(id);
-        if (quiz == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy đề thi.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        var course = await _courseService.GetCourseByIdAsync(quiz.CourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền quản lý câu hỏi của đề thi này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (quiz, course, errorResult) = await AuthorizeManagedQuizAsync(id, "Không tìm thấy đề thi.", "Bạn không có quyền quản lý câu hỏi của đề thi này.", includeQuestions: true);
+        if (errorResult != null || quiz == null || course == null) return errorResult!;
 
         var allCourseQuestions = (await _questionService.GetQuestionsByCourseIdAsync(quiz.CourseId))
             .OrderBy(q => q.CreatedAt)
@@ -353,36 +245,50 @@ public class QuizController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ManageQuestions(int id, List<int>? selectedQuestionIds)
     {
-        if (id <= 0)
-        {
-            TempData["ErrorMessage"] = "Mã đề thi không hợp lệ.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (quiz, course, errorResult) = await AuthorizeManagedQuizAsync(id, "Không tìm thấy đề thi.", "Bạn không có quyền quản lý câu hỏi của đề thi này.");
+        if (errorResult != null || quiz == null || course == null) return errorResult!;
 
-        var quiz = await _quizService.GetQuizByIdAsync(id);
-        if (quiz == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy đề thi.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var distinctQuestionIds = selectedQuestionIds?
+            .Where(qId => qId > 0)
+            .Distinct()
+            .ToList() ?? new List<int>();
 
-        var course = await _courseService.GetCourseByIdAsync(quiz.CourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền quản lý câu hỏi của đề thi này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        selectedQuestionIds ??= new List<int>();
-
-        var result = await _quizService.AssignQuestionsToQuizAsync(id, selectedQuestionIds);
+        var result = await _quizService.AssignQuestionsToQuizAsync(id, distinctQuestionIds);
         if (result.Success)
         {
-            TempData["SuccessMessage"] = $"Đã cập nhật câu hỏi cho đề thi '{quiz.Title}' thành công ({selectedQuestionIds.Count} câu hỏi).";
+            TempData["SuccessMessage"] = $"Đã cập nhật câu hỏi cho đề thi '{quiz.Title}' thành công ({distinctQuestionIds.Count} câu hỏi).";
             return RedirectToAction(nameof(Index), new { courseId = quiz.CourseId });
         }
 
         TempData["ErrorMessage"] = result.Message;
         return RedirectToAction(nameof(ManageQuestions), new { id });
+    }
+
+    private async Task<(Quiz? Quiz, Course? Course, IActionResult? ErrorResult)> AuthorizeManagedQuizAsync(
+        int quizId,
+        string notFoundQuizMessage,
+        string unauthorizedMessage,
+        bool includeQuestions = false)
+    {
+        if (quizId <= 0)
+        {
+            TempData["ErrorMessage"] = "Mã đề thi không hợp lệ.";
+            return (null, null, RedirectToAction("Dashboard", "Instructor"));
+        }
+
+        var quiz = includeQuestions
+            ? await _quizService.GetQuizWithQuestionsAsync(quizId)
+            : await _quizService.GetQuizByIdAsync(quizId);
+
+        if (quiz == null)
+        {
+            TempData["ErrorMessage"] = notFoundQuizMessage;
+            return (null, null, RedirectToAction("Dashboard", "Instructor"));
+        }
+
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, quiz.CourseId, unauthorizedMessage);
+        if (errorResult != null || course == null) return (null, null, errorResult);
+
+        return (quiz, course, null);
     }
 }

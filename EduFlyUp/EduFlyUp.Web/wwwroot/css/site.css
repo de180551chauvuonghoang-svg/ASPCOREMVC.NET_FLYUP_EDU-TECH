@@ -1226,3 +1226,55 @@ a.btn-brand:hover,
     }
 }
 
+/* ==========================================================================
+   INSTRUCTOR & PORTAL SHARED UTILITIES (Unified Brand Indigo-Violet Palette)
+   ========================================================================== */
+.shadow-xs {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+}
+
+.tracking-wider {
+    letter-spacing: 0.06em !important;
+}
+
+.brand-hero-banner {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.09) 0%, rgba(124, 58, 237, 0.08) 100%) !important;
+    border: 1px solid rgba(79, 70, 229, 0.14) !important;
+}
+
+.btn-soft-brand {
+    color: var(--brand-primary) !important;
+    background-color: rgba(79, 70, 229, 0.09) !important;
+    border: 1px solid rgba(79, 70, 229, 0.2) !important;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-soft-brand:hover {
+    background-color: var(--brand-primary) !important;
+    border-color: var(--brand-primary) !important;
+    color: #ffffff !important;
+}
+
+.badge-brand-soft {
+    color: var(--brand-primary) !important;
+    background-color: rgba(79, 70, 229, 0.1) !important;
+    border: 1px solid rgba(79, 70, 229, 0.2) !important;
+}
+
+.icon-circle-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    transition: all 0.18s ease;
+}
+
+.icon-circle-btn:hover {
+    transform: translateY(-1px);
+}
+
+

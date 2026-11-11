@@ -11,8 +11,6 @@ namespace EduFlyUp.Services
         Task<(bool Success, string Message, Quiz? Data)> CreateQuizAsync(Quiz quiz);
         Task<(bool Success, string Message)> UpdateQuizAsync(Quiz quiz);
         Task<bool> DeleteQuizAsync(int id);
-        Task<(bool Success, string Message)> AddQuestionToQuizAsync(int quizId, int questionId, int order = 1);
-        Task<bool> RemoveQuestionFromQuizAsync(int quizId, int questionId);
         Task<(bool Success, string Message)> AssignQuestionsToQuizAsync(int quizId, IEnumerable<int> questionIds);
         Task<int> GetTotalQuizzesCountByCourseIdAsync(int courseId);
     }
@@ -76,35 +74,6 @@ namespace EduFlyUp.Services
             return true;
         }
 
-        public async Task<(bool Success, string Message)> AddQuestionToQuizAsync(int quizId, int questionId, int order = 1)
-        {
-            var quiz = await _quizRepository.GetByIdAsync(quizId);
-            if (quiz == null)
-            {
-                return (false, "Không tìm thấy đề thi.");
-            }
-
-            var question = await _questionRepository.GetByIdAsync(questionId);
-            if (question == null)
-            {
-                return (false, "Không tìm thấy câu hỏi.");
-            }
-
-            if (quiz.CourseId != question.CourseId)
-            {
-                return (false, "Câu hỏi và đề thi phải thuộc cùng một khóa học.");
-            }
-
-            await _quizRepository.AddQuestionToQuizAsync(quizId, questionId, order);
-            return (true, "Đã thêm câu hỏi vào đề thi thành công.");
-        }
-
-        public async Task<bool> RemoveQuestionFromQuizAsync(int quizId, int questionId)
-        {
-            await _quizRepository.RemoveQuestionFromQuizAsync(quizId, questionId);
-            return true;
-        }
-
         public async Task<(bool Success, string Message)> AssignQuestionsToQuizAsync(int quizId, IEnumerable<int> questionIds)
         {
             var quiz = await _quizRepository.GetByIdAsync(quizId);
@@ -113,17 +82,17 @@ namespace EduFlyUp.Services
                 return (false, "Không tìm thấy đề thi.");
             }
 
-            var idsList = questionIds.ToList();
-            if (idsList.Any())
+            var distinctIds = questionIds.Where(id => id > 0).Distinct().ToList();
+            if (distinctIds.Any())
             {
-                var questions = await _questionRepository.GetByIdsAsync(idsList);
-                if (questions.Any(q => q.CourseId != quiz.CourseId))
+                var questions = (await _questionRepository.GetByIdsAsync(distinctIds)).ToList();
+                if (questions.Count != distinctIds.Count || questions.Any(q => q.CourseId != quiz.CourseId))
                 {
-                    return (false, "Tất cả câu hỏi được chọn phải thuộc về khóa học này.");
+                    return (false, "Một số câu hỏi được chọn không tồn tại hoặc không thuộc khóa học này.");
                 }
             }
 
-            await _quizRepository.SetQuestionsForQuizAsync(quizId, idsList);
+            await _quizRepository.SetQuestionsForQuizAsync(quizId, distinctIds);
             return (true, "Cập nhật danh sách câu hỏi trong đề thi thành công.");
         }
 

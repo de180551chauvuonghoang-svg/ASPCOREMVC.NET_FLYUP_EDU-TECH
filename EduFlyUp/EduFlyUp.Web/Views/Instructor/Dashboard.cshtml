@@ -1,28 +1,28 @@
-@model IEnumerable<EduFlyUp.BusinessObjects.Course>
+@using EduFlyUp.BusinessObjects
+@model IEnumerable<Course>
 
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Studio Giảng Viên - Creator Hub";
+    ViewData["Title"] = "Kênh Giảng Viên - EduFlyUp";
     var isAdmin = (bool)(ViewBag.IsAdmin ?? false);
     var categories = (ViewBag.Categories as IEnumerable<string>) ?? Enumerable.Empty<string>();
 }
 
-
-<!-- Instructor Studio Hero Banner -->
-<div class="card card-modern p-4 p-md-5 mb-5 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);">
+<!-- Hero Banner -->
+<div class="card card-modern brand-hero-banner p-4 p-md-5 mb-4 border-0 shadow-sm rounded-4">
     <div class="row align-items-center">
         <div class="col-lg-8">
-            <div class="d-inline-flex align-items-center gap-2 mb-3">
-                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-bold">
-                    <i class="bi bi-mortarboard-fill me-1"></i>Kênh Giảng Viên (Creator Studio)
+            <div class="d-inline-flex align-items-center gap-2 mb-3 flex-wrap">
+                <span class="badge badge-brand-soft px-3 py-2 rounded-pill fw-bold">
+                    <i class="bi bi-mortarboard-fill me-1"></i>Kênh Giảng Viên
                 </span>
                 <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill shadow-xs">
                     <i class="bi bi-person-circle text-primary me-1"></i>@User.Identity?.Name
                 </span>
             </div>
-            <h1 class="display-6 fw-bold mb-2 text-dark">Studio Sáng Tạo Giảng Viên</h1>
+            <h1 class="display-6 fw-bold mb-2 text-dark">Quản Lý Khóa Học Giảng Viên</h1>
             <p class="text-secondary mb-0 fs-6" style="max-width: 650px;">
-                Quản lý lộ trình đào tạo, gửi duyệt xuất bản bài giảng và theo dõi chi tiết các khóa học do bạn phụ trách.
+                Biên soạn giáo trình, quản lý ngân hàng câu hỏi, gửi duyệt xuất bản và theo dõi tình hình học tập trên từng khóa học.
             </p>
         </div>
         <div class="col-lg-4 text-lg-end mt-4 mt-lg-0 d-flex flex-wrap gap-2 justify-content-lg-end">
@@ -39,9 +39,9 @@
 </div>
 
 <!-- 4 Key Instructor Metric Cards -->
-<div class="row g-3 g-md-4 mb-5">
+<div class="row g-3 g-md-4 mb-4">
     <div class="col-6 col-lg-3">
-        <div class="card card-modern p-4 border-start border-primary border-4 shadow-sm h-100">
+        <div class="card card-modern p-4 border-start border-primary border-4 shadow-sm h-100 rounded-4">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted small fw-semibold text-uppercase tracking-wider">Khóa học của tôi</span>
@@ -55,10 +55,10 @@
     </div>
 
     <div class="col-6 col-lg-3">
-        <div class="card card-modern p-4 border-start border-success border-4 shadow-sm h-100">
+        <div class="card card-modern p-4 border-start border-success border-4 shadow-sm h-100 rounded-4">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <span class="text-muted small fw-semibold text-uppercase tracking-wider">Đã duyệt / Mở bán</span>
+                    <span class="text-muted small fw-semibold text-uppercase tracking-wider">Đang mở bán</span>
                     <h2 class="fw-bold text-success mt-1 mb-0">@ViewBag.ApprovedCourses</h2>
                 </div>
                 <div class="bg-success-subtle p-3 rounded-circle text-success fs-3">
@@ -69,7 +69,7 @@
     </div>
 
     <div class="col-6 col-lg-3">
-        <div class="card card-modern p-4 border-start border-warning border-4 shadow-sm h-100">
+        <div class="card card-modern p-4 border-start border-warning border-4 shadow-sm h-100 rounded-4">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted small fw-semibold text-uppercase tracking-wider">Chờ Admin duyệt</span>
@@ -83,7 +83,7 @@
     </div>
 
     <div class="col-6 col-lg-3">
-        <div class="card card-modern p-4 border-start border-info border-4 shadow-sm h-100">
+        <div class="card card-modern p-4 border-start border-info border-4 shadow-sm h-100 rounded-4">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted small fw-semibold text-uppercase tracking-wider">Tổng bài giảng</span>
@@ -97,16 +97,7 @@
     </div>
 </div>
 
-<!-- Search & Filter Controls (UC-20) -->
-@if (!isAdmin && ViewData["EnrollmentSummary"] is EduFlyUp.BusinessObjects.InstructorEnrollmentSummary enrollmentSummary)
-{
-    <partial name="_EnrollmentSummary" model="enrollmentSummary" />
-}
-@if (!isAdmin && ViewData["PopularCourses"] is IReadOnlyList<EduFlyUp.BusinessObjects.InstructorPopularCourse> popularCourses)
-{
-    <partial name="_PopularCourses" model="popularCourses" />
-}
-
+<!-- Search & Filter Controls -->
 <div class="card card-modern p-3 mb-4 shadow-sm border-0 rounded-4">
     <form method="get" asp-action="Dashboard" class="row g-2 align-items-center">
         <div class="col-md-4">
@@ -129,19 +120,19 @@
         <div class="col-md-2">
             <select name="level" class="form-select rounded-pill" onchange="this.form.submit()">
                 <option value="">Tất cả cấp độ</option>
-                <option value="Beginner" selected="@(ViewBag.CurrentLevel == "Beginner")">Beginner (Cơ bản)</option>
-                <option value="Intermediate" selected="@(ViewBag.CurrentLevel == "Intermediate")">Intermediate (Trung bình)</option>
-                <option value="Advanced" selected="@(ViewBag.CurrentLevel == "Advanced")">Advanced (Nâng cao)</option>
+                <option value="Beginner" selected="@(ViewBag.CurrentLevel == "Beginner")">Cơ bản</option>
+                <option value="Intermediate" selected="@(ViewBag.CurrentLevel == "Intermediate")">Trung bình</option>
+                <option value="Advanced" selected="@(ViewBag.CurrentLevel == "Advanced")">Nâng cao</option>
             </select>
         </div>
         <div class="col-md-2">
             <select name="status" class="form-select rounded-pill" onchange="this.form.submit()">
                 <option value="">Tất cả trạng thái</option>
                 <option value="Draft" selected="@(ViewBag.CurrentStatus == "Draft")">Bản nháp</option>
-                <option value="PendingApproval" selected="@(ViewBag.CurrentStatus == "PendingApproval")">Chờ duyệt (Pending)</option>
-                <option value="Approved" selected="@(ViewBag.CurrentStatus == "Approved")">Đã duyệt (Approved)</option>
-                <option value="Rejected" selected="@(ViewBag.CurrentStatus == "Rejected")">Bị từ chối (Rejected)</option>
-                <option value="Archived" selected="@(ViewBag.CurrentStatus == "Archived")">Đã lưu trữ (Archived)</option>
+                <option value="PendingApproval" selected="@(ViewBag.CurrentStatus == "PendingApproval")">Chờ duyệt</option>
+                <option value="Approved" selected="@(ViewBag.CurrentStatus == "Approved")">Đang mở bán</option>
+                <option value="Rejected" selected="@(ViewBag.CurrentStatus == "Rejected")">Bị từ chối</option>
+                <option value="Archived" selected="@(ViewBag.CurrentStatus == "Archived")">Đã lưu trữ</option>
             </select>
         </div>
         <div class="col-md-2 d-flex gap-2">
@@ -155,14 +146,14 @@
     </form>
 </div>
 
-<!-- Courses Management Table (UC-20, UC-22, UC-23) -->
+<!-- Courses Management Table -->
 <div class="card card-modern shadow-sm overflow-hidden border-0 rounded-4 mb-5">
     <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
         <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
             <i class="bi bi-mortarboard-fill text-primary"></i>
-            <span>Danh Sách Khóa Học Của Giảng Viên</span>
+            <span>Danh Sách Khóa Học</span>
         </h5>
-        <span id="courseCountBadge" class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold">
+        <span id="courseCountBadge" class="badge badge-brand-soft rounded-pill px-3 py-2 fw-semibold">
             @Model.Count() khóa học
         </span>
     </div>
@@ -176,7 +167,7 @@
                     <th scope="col" class="py-3">Cấp độ</th>
                     <th scope="col" class="py-3">Học phí</th>
                     <th scope="col" class="py-3">Bài giảng</th>
-                    <th scope="col" class="py-3">Trạng thái duyệt</th>
+                    <th scope="col" class="py-3">Trạng thái</th>
                     <th scope="col" class="py-3">Ngày tạo</th>
                     <th scope="col" class="text-end pe-4 py-3">Thao tác</th>
                 </tr>
@@ -189,7 +180,7 @@
                             <div class="py-4">
                                 <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
                                 <h6 class="fw-bold text-dark mb-1">Chưa có khóa học nào phù hợp</h6>
-                                <p class="text-muted small mb-3">Bắt đầu chia sẻ kiến thức bằng cách tạo khóa học mới của bạn ngay hôm nay!</p>
+                                <p class="text-muted small mb-3">Bắt đầu chia sẻ kiến thức bằng cách tạo khóa học mới ngay hôm nay.</p>
                                 <a asp-controller="Courses" asp-action="Create" class="btn btn-brand btn-sm rounded-pill px-4 py-2">
                                     <i class="bi bi-plus-lg me-1"></i>Tạo khóa học mới
                                 </a>
@@ -199,40 +190,49 @@
                 }
                 else
                 {
+                    var enrollmentCounts = ViewBag.CourseEnrollmentCounts as Dictionary<int, int>;
                     @foreach (var c in Model)
                     {
+                        var effectiveStatus = c.GetEffectiveStatus();
+                        var enrollmentCount = enrollmentCounts != null && enrollmentCounts.TryGetValue(c.Id, out var count)
+                            ? count
+                            : (c.Enrollments?.Count ?? 0);
+
                         <tr class="course-row" data-title="@c.Title" data-desc="@c.Description">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center gap-3">
-                                    <img src="@(string.IsNullOrEmpty(c.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=100&auto=format&fit=crop&q=80" : c.ThumbnailUrl)" 
-                                         alt="@c.Title" 
-                                         class="rounded-3 object-fit-cover shadow-xs" 
+                                    <img src="@(string.IsNullOrEmpty(c.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=100&auto=format&fit=crop&q=80" : c.ThumbnailUrl)"
+                                         alt="@c.Title"
+                                         class="rounded-3 object-fit-cover shadow-xs"
                                          style="width: 56px; height: 42px;"
                                          onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=100&auto=format&fit=crop&q=80';" />
                                     <div>
                                         <a asp-controller="Courses" asp-action="Details" asp-route-id="@c.Id" class="fw-bold text-dark text-decoration-none hover-primary d-block">
                                             @c.Title
                                         </a>
-                                        <span class="text-muted small">ID: #@c.Id • @c.InstructorId</span>
+                                        @if (isAdmin)
+                                        {
+                                            <span class="text-muted small">@c.InstructorId</span>
+                                        }
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <span class="badge bg-light text-dark border px-2 py-1">
+                                <span class="badge bg-light text-dark border px-2 py-1 fw-normal">
                                     <i class="bi bi-tag me-1 text-muted"></i>@(string.IsNullOrEmpty(c.Category) ? "Chung" : c.Category)
                                 </span>
                             </td>
                             <td>
                                 @switch (c.Level)
                                 {
-                                    case EduFlyUp.BusinessObjects.CourseLevel.Beginner:
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">Cơ bản</span>
+                                    case CourseLevel.Beginner:
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-medium">Cơ bản</span>
                                         break;
-                                    case EduFlyUp.BusinessObjects.CourseLevel.Intermediate:
-                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1">Trung bình</span>
+                                    case CourseLevel.Intermediate:
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 fw-medium">Trung bình</span>
                                         break;
-                                    case EduFlyUp.BusinessObjects.CourseLevel.Advanced:
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1">Nâng cao</span>
+                                    case CourseLevel.Advanced:
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 fw-medium">Nâng cao</span>
                                         break;
                                 }
                             </td>
@@ -252,39 +252,12 @@
                                 </span>
                             </td>
                             <td>
-                                @switch (c.Status)
+                                <partial name="_CourseStatusBadge" model="(c.Status, c.IsPublished, c.RejectionReason, false)" />
+                                @if (effectiveStatus == CourseStatus.Rejected && !string.IsNullOrWhiteSpace(c.RejectionReason))
                                 {
-                                    case EduFlyUp.BusinessObjects.CourseStatus.Approved:
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
-                                            <i class="bi bi-check-circle me-1"></i>Đã duyệt (Mở bán)
-                                        </span>
-                                        break;
-                                    case EduFlyUp.BusinessObjects.CourseStatus.PendingApproval:
-                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1">
-                                            <i class="bi bi-hourglass-split me-1"></i>Chờ Admin duyệt
-                                        </span>
-                                        break;
-                                    case EduFlyUp.BusinessObjects.CourseStatus.Rejected:
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1" title="Khóa học bị từ chối">
-                                            <i class="bi bi-x-circle me-1"></i>Bị từ chối
-                                        </span>
-                                        @if (!string.IsNullOrWhiteSpace(c.RejectionReason))
-                                        {
-                                            <div class="small text-danger mt-1" style="max-width: 200px;">
-                                                <i class="bi bi-chat-left-dots me-1"></i><strong>Lý do:</strong> @c.RejectionReason
-                                            </div>
-                                        }
-                                        break;
-                                    case EduFlyUp.BusinessObjects.CourseStatus.Archived:
-                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-1">
-                                            <i class="bi bi-archive me-1"></i>Đã lưu trữ
-                                        </span>
-                                        break;
-                                    default:
-                                        <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">
-                                            <i class="bi bi-file-earmark-lock me-1"></i>Bản nháp
-                                        </span>
-                                        break;
+                                    <div class="small text-danger mt-1" style="max-width: 220px;">
+                                        <i class="bi bi-chat-left-dots me-1"></i><strong>Lý do:</strong> @c.RejectionReason
+                                    </div>
                                 }
                             </td>
                             <td class="text-muted small">
@@ -292,77 +265,90 @@
                             </td>
                             <td class="text-end pe-4">
                                 <div class="d-inline-flex gap-1 align-items-center">
-                                    <!-- Xem chi tiết -->
-                                    <a asp-controller="Courses" asp-action="Details" asp-route-id="@c.Id" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" title="Xem chi tiết">
+                                    <a asp-controller="Courses" asp-action="Details" asp-route-id="@c.Id" class="btn btn-outline-secondary btn-sm icon-circle-btn" title="Xem trang khóa học">
                                         <i class="bi bi-eye"></i>
                                     </a>
-
-                                    <!-- Chỉnh sửa -->
-                                    <a asp-controller="Courses" asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1" title="Chỉnh sửa thông tin">
+                                    <a asp-controller="Courses" asp-action="Edit" asp-route-id="@c.Id" class="btn btn-outline-secondary btn-sm icon-circle-btn" title="Chỉnh sửa thông tin khóa học">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-
-                                    <!-- Quản lý Giáo trình & Bài giảng (UC-21) -->
-                                    <a asp-action="Curriculum" asp-route-id="@c.Id" class="btn btn-outline-success btn-sm rounded-pill px-2 py-1" title="Quản lý Giáo trình & Bài giảng (UC-21)">
+                                    <a asp-action="Curriculum" asp-route-id="@c.Id" class="btn btn-soft-brand btn-sm icon-circle-btn" title="Quản lý giáo trình và bài giảng">
                                         <i class="bi bi-collection-play"></i>
                                     </a>
-
-                                    <!-- Học viên và kết quả học tập (UC-35) -->
                                     @if (!isAdmin)
                                     {
-                                        <a asp-controller="InstructorStudents" asp-action="Index" asp-route-courseId="@c.Id" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" title="Học viên và kết quả học tập"><i class="bi bi-people"></i></a>
+                                        <a asp-controller="InstructorStudents" asp-action="Index" asp-route-courseId="@c.Id" class="btn btn-outline-secondary btn-sm icon-circle-btn" title="Danh sách học viên">
+                                            <i class="bi bi-people"></i>
+                                        </a>
                                     }
-
-                                    <!-- Ngân hàng câu hỏi trắc nghiệm (UC-31) -->
-                                    <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@c.Id" class="btn btn-outline-info btn-sm rounded-pill px-2 py-1" title="Ngân hàng câu hỏi trắc nghiệm (UC-31)">
+                                    <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@c.Id" class="btn btn-outline-secondary btn-sm icon-circle-btn" title="Ngân hàng câu hỏi">
                                         <i class="bi bi-patch-question"></i>
                                     </a>
-
-                                    <!-- Quản lý Đề thi & Khảo thí CAT (UC-32) -->
-                                    <a asp-controller="Quiz" asp-action="Index" asp-route-courseId="@c.Id" class="btn btn-outline-purple btn-sm rounded-pill px-2 py-1" style="color: #6f42c1; border-color: #6f42c1;" title="Quản lý Đề thi & Khảo thí CAT (UC-32)">
+                                    <a asp-controller="Quiz" asp-action="Index" asp-route-courseId="@c.Id" class="btn btn-outline-brand btn-sm icon-circle-btn" title="Đề thi và khảo thí CAT">
                                         <i class="bi bi-journal-check"></i>
                                     </a>
 
-                                    <!-- Nút Gửi duyệt (UC-22): Chỉ hiện khi là Draft hoặc Rejected -->
-                                    @if (c.Status == EduFlyUp.BusinessObjects.CourseStatus.Draft || c.Status == EduFlyUp.BusinessObjects.CourseStatus.Rejected)
+                                    <span class="vr mx-1 opacity-25"></span>
+
+                                    @if (!c.IsPublished && effectiveStatus is CourseStatus.Draft or CourseStatus.Rejected)
                                     {
                                         <form asp-action="SubmitApproval" asp-route-id="@c.Id" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-outline-success btn-sm rounded-pill px-2 py-1" title="Gửi duyệt khóa học (UC-22)" onclick="return confirm('Bạn có chắc chắn muốn gửi khóa học này để Admin kiểm duyệt không?');">
+                                            <button type="submit" class="btn btn-outline-success btn-sm icon-circle-btn" title="Gửi yêu cầu phê duyệt" onclick="return confirm('Gửi khóa học này để Quản trị viên kiểm duyệt?');">
                                                 <i class="bi bi-send-check"></i>
                                             </button>
                                         </form>
                                     }
 
-                                    <!-- Nút Lưu trữ (UC-23): Chỉ hiện khi Approved -->
-                                    @if (c.Status == EduFlyUp.BusinessObjects.CourseStatus.Approved)
+                                    @if (effectiveStatus == CourseStatus.Approved && c.IsPublished)
                                     {
                                         <form asp-action="Archive" asp-route-id="@c.Id" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" title="Lưu trữ / Tạm ẩn khóa học (UC-23)" onclick="return confirm('Bạn có chắc muốn lưu trữ / tạm ẩn khóa học này không? (Học viên cũ đã mua vẫn có thể học bình thường).');">
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm icon-circle-btn" title="Lưu trữ / tạm ẩn khóa học" onclick="return confirm('Lưu trữ / tạm ẩn khóa học này? Học viên đã ghi danh vẫn tiếp tục học bình thường.');">
                                                 <i class="bi bi-archive"></i>
                                             </button>
                                         </form>
                                     }
 
-                                    <!-- Nút Khôi phục (UC-23): Chỉ hiện khi Archived -->
-                                    @if (c.Status == EduFlyUp.BusinessObjects.CourseStatus.Archived)
+                                    @if (effectiveStatus == CourseStatus.Archived && !c.IsPublished)
                                     {
-                                        <form asp-action="Unarchive" asp-route-id="@c.Id" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-outline-info btn-sm rounded-pill px-2 py-1" title="Khôi phục / Mở lại khóa học" onclick="return confirm('Bạn có chắc muốn khôi phục và mở bán lại khóa học này không?');">
+                                        @if (c.Lessons != null && c.Lessons.Count > 0)
+                                        {
+                                            <form asp-action="Unarchive" asp-route-id="@c.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-soft-brand btn-sm icon-circle-btn" title="Gửi yêu cầu mở bán lại" onclick="return confirm('Khóa học sẽ chuyển về trạng thái Chờ duyệt trước khi mở bán lại. Tiếp tục?');">
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-outline-secondary btn-sm icon-circle-btn" disabled title="Cần ít nhất 1 bài giảng trước khi gửi yêu cầu mở bán lại">
                                                 <i class="bi bi-arrow-counterclockwise"></i>
+                                            </button>
+                                        }
+                                    }
+
+                                    @if (c.IsPublished)
+                                    {
+                                        <button type="button" class="btn btn-outline-secondary btn-sm icon-circle-btn" disabled title="Khóa học đang mở bán, cần Lưu trữ hoặc chờ Quản trị viên ẩn trước khi xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    }
+                                    else if (enrollmentCount > 0)
+                                    {
+                                        <button type="button" class="btn btn-outline-secondary btn-sm icon-circle-btn" disabled title="Khóa học đã có @enrollmentCount học viên ghi danh nên không thể xóa, chỉ có thể Lưu trữ">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <form asp-controller="Courses" asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa khóa học này không?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger btn-sm icon-circle-btn" title="Xóa khóa học">
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
                                     }
-
-                                    <!-- Xóa khóa học -->
-                                    <form asp-controller="Courses" asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa khóa học này không?');">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" title="Xóa">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -379,13 +365,22 @@
     </div>
 </div>
 
+<!-- Summary & Popular Courses (Below Management Table) -->
+@if (!isAdmin && ViewData["EnrollmentSummary"] is InstructorEnrollmentSummary enrollmentSummary)
+{
+    <partial name="_EnrollmentSummary" model="enrollmentSummary" />
+}
+@if (!isAdmin && ViewData["PopularCourses"] is IReadOnlyList<InstructorPopularCourse> popularCourses)
+{
+    <partial name="_PopularCourses" model="popularCourses" />
+}
+
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const searchInput = document.getElementById("instructorCourseSearch");
             if (!searchInput) return;
 
-            // Giữ focus và con trỏ ở cuối nếu ô tìm kiếm đang có giá trị
             if (searchInput.value) {
                 searchInput.focus();
                 const valLen = searchInput.value.length;
@@ -399,7 +394,6 @@
                 const rows = document.querySelectorAll(".course-row");
                 let matchCount = 0;
 
-                // 1. Lọc tức thì (0ms) trên client ngay khi gõ từng ký tự
                 rows.forEach(function (row) {
                     const title = (row.getAttribute("data-title") || "").toLowerCase();
                     const desc = (row.getAttribute("data-desc") || "").toLowerCase();
@@ -408,19 +402,16 @@
                     if (isMatch) matchCount++;
                 });
 
-                // Cập nhật số đếm trên badge
                 const badge = document.getElementById("courseCountBadge");
                 if (badge) {
                     badge.textContent = matchCount + " khóa học";
                 }
 
-                // Hiển thị thông báo nếu không có dòng nào khớp
                 const noResultRow = document.getElementById("liveSearchNoResultRow");
                 if (noResultRow) {
                     noResultRow.style.display = (rows.length > 0 && matchCount === 0) ? "" : "none";
                 }
 
-                // 2. Debounce tự động submit form để đồng bộ URL khi dừng gõ 600ms
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(function () {
                     searchInput.form.submit();

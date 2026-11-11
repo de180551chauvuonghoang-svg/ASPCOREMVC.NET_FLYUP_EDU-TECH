@@ -1,0 +1,46 @@
+@using EduFlyUp.BusinessObjects
+@model (CourseStatus Status, bool IsPublished, string? RejectionReason, bool IsAdminPortal)
+@{
+    var effectiveStatus = CourseStatusExtensions.GetEffectiveStatus(Model.Status, Model.IsPublished);
+    var isAdmin = Model.IsAdminPortal;
+}
+@if (effectiveStatus == CourseStatus.Approved)
+{
+    <span class="badge @(isAdmin ? "bg-success" : "bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1 fw-medium")"
+          title="Khóa học đã được duyệt và đang hiển thị cho học viên">
+        @if (!isAdmin) { <i class="bi bi-check-circle-fill me-1"></i> }
+        @(isAdmin ? "Công khai" : "Đang mở bán")
+    </span>
+}
+else if (effectiveStatus == CourseStatus.PendingApproval)
+{
+    <span class="badge @(isAdmin ? "bg-warning text-dark" : "bg-warning bg-opacity-10 text-warning-emphasis border border-warning border-opacity-25 rounded-pill px-3 py-1 fw-medium")"
+          title="Đang chờ quản trị viên xem xét phê duyệt">
+        @if (!isAdmin) { <i class="bi bi-hourglass-split me-1"></i> }
+        Chờ duyệt
+    </span>
+}
+else if (effectiveStatus == CourseStatus.Draft)
+{
+    <span class="badge @(isAdmin ? "bg-secondary" : "bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-3 py-1 fw-medium")"
+          title="Khóa học đang ở trạng thái bản nháp">
+        @if (!isAdmin) { <i class="bi bi-pencil-fill me-1"></i> }
+        Bản nháp
+    </span>
+}
+else if (effectiveStatus == CourseStatus.Archived)
+{
+    <span class="badge @(isAdmin ? "bg-dark" : "bg-dark bg-opacity-10 text-dark border border-dark border-opacity-25 rounded-pill px-3 py-1 fw-medium")"
+          title="Khóa học đã tạm ẩn khỏi danh mục tìm kiếm">
+        @if (!isAdmin) { <i class="bi bi-archive-fill me-1"></i> }
+        Đã lưu trữ
+    </span>
+}
+else
+{
+    <span class="badge @(isAdmin ? "bg-danger" : "bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3 py-1 fw-medium")"
+          title="@(string.IsNullOrWhiteSpace(Model.RejectionReason) ? "Khóa học đã bị từ chối hoặc tạm ẩn bởi quản trị viên" : $"Lý do: {Model.RejectionReason}")">
+        @if (!isAdmin) { <i class="bi bi-x-circle-fill me-1"></i> }
+        @(isAdmin ? "Đã ẩn / Từ chối" : "Bị từ chối")
+    </span>
+}

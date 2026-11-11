@@ -9,8 +9,9 @@ public sealed class AdminCourseFilter
     [StringLength(256)] public string? Instructor { get; set; }
     [EnumDataType(typeof(CourseLevel))] public CourseLevel? Level { get; set; }
     public bool? IsPublished { get; set; }
+    [EnumDataType(typeof(CourseStatus))] public CourseStatus? Status { get; set; }
     public int Page { get; set; } = 1;
-    public AdminCourseQuery ToQuery() => new(Search?.Trim(), Instructor?.Trim(), Level, IsPublished, Page);
+    public AdminCourseQuery ToQuery() => new(Search?.Trim(), Instructor?.Trim(), Level, IsPublished, Page, Status);
 }
 
 public sealed record AdminCourseListModel(AdminCourseQuery Filter, AdminCoursePage Result);

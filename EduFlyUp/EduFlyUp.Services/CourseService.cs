@@ -18,16 +18,19 @@ namespace EduFlyUp.Services
         Task<(bool Success, string Message)> SubmitCourseForApprovalAsync(int courseId, string instructorId);
         Task<(bool Success, string Message)> ArchiveCourseAsync(int courseId, string instructorId);
         Task<(bool Success, string Message)> UnarchiveCourseAsync(int courseId, string instructorId);
+        Task<(bool Allowed, string? Reason)> CanDeleteCourseAsync(int courseId);
         Task<IEnumerable<string>> GetCategoriesAsync();
     }
 
     public class CourseService : ICourseService
     {
         private readonly ICourseRepository _courseRepository;
+        private readonly IEnrollmentRepository? _enrollmentRepository;
 
-        public CourseService(ICourseRepository courseRepository)
+        public CourseService(ICourseRepository courseRepository, IEnrollmentRepository? enrollmentRepository = null)
         {
             _courseRepository = courseRepository;
+            _enrollmentRepository = enrollmentRepository;
         }
 
         public async Task<IEnumerable<Course>> GetAllCoursesAsync() => await _courseRepository.GetAllAsync();
@@ -76,6 +79,11 @@ namespace EduFlyUp.Services
                 return (false, "Khóa học này đang trong trạng thái chờ phê duyệt.");
             }
 
+            if (course.Status == CourseStatus.Approved && course.IsPublished)
+            {
+                return (false, "Khóa học này đã được phê duyệt và đang công khai.");
+            }
+
             if (course.Lessons == null || !course.Lessons.Any())
             {
                 return (false, "Khóa học phải có ít nhất 1 bài giảng trước khi gửi phê duyệt.");
@@ -104,6 +112,11 @@ namespace EduFlyUp.Services
                 return (false, "Khóa học này đã được lưu trữ trước đó.");
             }
 
+            if (course.Status != CourseStatus.Approved || !course.IsPublished)
+            {
+                return (false, "Chỉ có thể lưu trữ khóa học đang được phê duyệt và công khai.");
+            }
+
             await _courseRepository.UpdateStatusAsync(courseId, CourseStatus.Archived);
             return (true, "Đã lưu trữ / tạm ẩn khóa học thành công.");
         }
@@ -126,8 +139,38 @@ namespace EduFlyUp.Services
                 return (false, "Khóa học này không ở trạng thái lưu trữ.");
             }
 
-            await _courseRepository.UpdateStatusAsync(courseId, CourseStatus.Approved);
-            return (true, "Đã khôi phục và mở bán lại khóa học thành công.");
+            if (course.Lessons == null || !course.Lessons.Any())
+            {
+                return (false, "Khóa học phải có ít nhất 1 bài giảng trước khi gửi duyệt khôi phục mở bán.");
+            }
+
+            await _courseRepository.UpdateStatusAsync(courseId, CourseStatus.PendingApproval, string.Empty);
+            return (true, "Đã gửi yêu cầu khôi phục khóa học đến Admin. Vui lòng chờ phê duyệt để mở bán lại.");
+        }
+
+        public async Task<(bool Allowed, string? Reason)> CanDeleteCourseAsync(int courseId)
+        {
+            var course = await _courseRepository.GetByIdAsync(courseId);
+            if (course == null)
+            {
+                return (false, "Không tìm thấy khóa học.");
+            }
+
+            if (course.IsPublished)
+            {
+                return (false, "Không thể xóa khóa học đang công khai mở bán. Vui lòng lưu trữ hoặc ẩn khóa học trước khi xóa.");
+            }
+
+            var hasEnrollments = _enrollmentRepository != null
+                ? await _enrollmentRepository.HasCourseEnrollmentsAsync(courseId)
+                : course.Enrollments.Count > 0;
+
+            if (hasEnrollments)
+            {
+                return (false, "Không thể xóa khóa học đã có học viên ghi danh. Vui lòng sử dụng tính năng Lưu trữ (hoặc Ẩn khóa học) để ngừng tuyển sinh mà vẫn bảo toàn quyền học cho học viên cũ.");
+            }
+
+            return (true, null);
         }
 
         public async Task<IEnumerable<string>> GetCategoriesAsync() =>

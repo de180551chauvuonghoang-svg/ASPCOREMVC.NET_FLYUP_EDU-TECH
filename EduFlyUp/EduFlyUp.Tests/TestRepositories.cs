@@ -17,7 +17,8 @@ internal sealed class TestCourseRepository : ICourseRepository
         {
             Id = c.Id, Title = c.Title, Description = c.Description, Price = c.Price,
             Level = c.Level, ThumbnailUrl = c.ThumbnailUrl, InstructorId = c.InstructorId,
-            IsPublished = c.IsPublished, CreatedAt = c.CreatedAt, Lessons = c.Lessons.ToList()
+            IsPublished = c.IsPublished, Status = c.Status, Category = c.Category,
+            RejectionReason = c.RejectionReason, CreatedAt = c.CreatedAt, Lessons = c.Lessons.ToList()
         });
     }
     public Task<Course> AddAsync(Course course)
@@ -30,7 +31,10 @@ internal sealed class TestCourseRepository : ICourseRepository
     {
         PublicationUpdates++;
         CopyContent(course);
-        Courses.Single(c => c.Id == course.Id).IsPublished = course.IsPublished;
+        var stored = Courses.Single(c => c.Id == course.Id);
+        stored.IsPublished = course.IsPublished;
+        stored.Status = course.Status;
+        stored.RejectionReason = course.RejectionReason;
         return Task.CompletedTask;
     }
     public Task UpdateContentAsync(Course course)
@@ -48,6 +52,7 @@ internal sealed class TestCourseRepository : ICourseRepository
         stored.Price = course.Price;
         stored.Level = course.Level;
         stored.ThumbnailUrl = course.ThumbnailUrl;
+        stored.Category = course.Category;
     }
     public bool FailDeletes { get; set; }
     public Task<IReadOnlyList<Lesson>> DeleteAsync(int id)
@@ -98,6 +103,17 @@ internal sealed class TestEnrollmentRepository : IEnrollmentRepository
     {
         Enrollments.Add(enrollment);
         return Task.FromResult(enrollment);
+    }
+    public Task<bool> HasCourseEnrollmentsAsync(int courseId)
+        => Task.FromResult(Enrollments.Any(e => e.CourseId == courseId));
+    public Task<bool> HasActiveCourseEnrollmentsAsync(int courseId)
+        => Task.FromResult(Enrollments.Any(e => e.CourseId == courseId && (e.Status == EnrollmentStatus.Active || e.Status == EnrollmentStatus.Completed)));
+    public Task<Dictionary<int, int>> GetCourseEnrollmentCountsAsync(IEnumerable<int> courseIds)
+    {
+        var ids = courseIds.ToHashSet();
+        return Task.FromResult(Enrollments.Where(e => ids.Contains(e.CourseId))
+            .GroupBy(e => e.CourseId)
+            .ToDictionary(g => g.Key, g => g.Count()));
     }
 }
 
@@ -174,4 +190,125 @@ internal sealed class TestMaterialStorage : EduFlyUp.Web.Storage.ILessonMaterial
         if (FailDelete) throw new IOException("Test delete failure");
         Files.Remove(fileName);
     }
+}
+
+internal sealed class TestQuestionRepository : EduFlyUp.Repositories.IQuestionRepository
+{
+    public List<EduFlyUp.BusinessObjects.Question> Questions { get; } = [];
+    private int _nextId = 1;
+
+    public Task<IEnumerable<EduFlyUp.BusinessObjects.Question>> GetByCourseIdAsync(
+        int courseId,
+        EduFlyUp.BusinessObjects.QuestionDifficulty? difficulty = null,
+        string? search = null)
+    {
+        IEnumerable<EduFlyUp.BusinessObjects.Question> query = Questions.Where(q => q.CourseId == courseId);
+        if (difficulty.HasValue) query = query.Where(q => q.Difficulty == difficulty.Value);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var keyword = search.Trim();
+            query = query.Where(q => q.Content.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                || (q.Explanation?.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+        return Task.FromResult<IEnumerable<EduFlyUp.BusinessObjects.Question>>(query.ToList());
+    }
+
+    public Task<EduFlyUp.BusinessObjects.Question?> GetByIdAsync(int id)
+        => Task.FromResult(Questions.Find(q => q.Id == id));
+
+    public Task<EduFlyUp.BusinessObjects.Question> AddAsync(EduFlyUp.BusinessObjects.Question question)
+    {
+        if (question.Id == 0) question.Id = _nextId++;
+        Questions.Add(question);
+        return Task.FromResult(question);
+    }
+
+    public Task UpdateAsync(EduFlyUp.BusinessObjects.Question question, IEnumerable<EduFlyUp.BusinessObjects.QuestionOption> options)
+    {
+        var existing = Questions.Find(q => q.Id == question.Id);
+        if (existing is not null)
+        {
+            existing.Content = question.Content;
+            existing.Difficulty = question.Difficulty;
+            existing.Points = question.Points;
+            existing.Explanation = question.Explanation;
+            existing.Options = options.ToList();
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(int id)
+    {
+        Questions.RemoveAll(q => q.Id == id);
+        return Task.CompletedTask;
+    }
+
+    public Task<int> CountByCourseIdAsync(int courseId)
+        => Task.FromResult(Questions.Count(q => q.CourseId == courseId));
+
+    public Task<IEnumerable<EduFlyUp.BusinessObjects.Question>> GetByIdsAsync(IEnumerable<int> ids)
+    {
+        var set = ids.ToHashSet();
+        return Task.FromResult<IEnumerable<EduFlyUp.BusinessObjects.Question>>(Questions.Where(q => set.Contains(q.Id)).ToList());
+    }
+}
+
+internal sealed class TestQuizRepository : EduFlyUp.Repositories.IQuizRepository
+{
+    public List<EduFlyUp.BusinessObjects.Quiz> Quizzes { get; } = [];
+    private int _nextId = 1;
+
+    public Task<IEnumerable<EduFlyUp.BusinessObjects.Quiz>> GetByCourseIdAsync(int courseId)
+        => Task.FromResult<IEnumerable<EduFlyUp.BusinessObjects.Quiz>>(Quizzes.Where(q => q.CourseId == courseId).ToList());
+
+    public Task<EduFlyUp.BusinessObjects.Quiz?> GetByIdAsync(int id)
+        => Task.FromResult(Quizzes.Find(q => q.Id == id));
+
+    public Task<EduFlyUp.BusinessObjects.Quiz?> GetByIdWithQuestionsAsync(int id)
+        => Task.FromResult(Quizzes.Find(q => q.Id == id));
+
+    public Task<EduFlyUp.BusinessObjects.Quiz> AddAsync(EduFlyUp.BusinessObjects.Quiz quiz)
+    {
+        if (quiz.Id == 0) quiz.Id = _nextId++;
+        Quizzes.Add(quiz);
+        return Task.FromResult(quiz);
+    }
+
+    public Task UpdateAsync(EduFlyUp.BusinessObjects.Quiz quiz)
+    {
+        var existing = Quizzes.Find(q => q.Id == quiz.Id);
+        if (existing is not null)
+        {
+            existing.Title = quiz.Title;
+            existing.Description = quiz.Description;
+            existing.DurationMinutes = quiz.DurationMinutes;
+            existing.PassingScorePercentage = quiz.PassingScorePercentage;
+            existing.IsCAT = quiz.IsCAT;
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(int id)
+    {
+        Quizzes.RemoveAll(q => q.Id == id);
+        return Task.CompletedTask;
+    }
+
+    public Task SetQuestionsForQuizAsync(int quizId, IEnumerable<int> questionIds)
+    {
+        var quiz = Quizzes.Find(q => q.Id == quizId);
+        if (quiz is not null)
+        {
+            quiz.QuizQuestions = questionIds.Select((qId, idx) => new EduFlyUp.BusinessObjects.QuizQuestion
+            {
+                QuizId = quizId,
+                QuestionId = qId,
+                Order = idx + 1
+            }).ToList();
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task<int> CountByCourseIdAsync(int courseId)
+        => Task.FromResult(Quizzes.Count(q => q.CourseId == courseId));
 }

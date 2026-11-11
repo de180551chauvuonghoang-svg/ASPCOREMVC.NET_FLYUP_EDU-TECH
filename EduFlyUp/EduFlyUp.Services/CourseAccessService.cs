@@ -38,7 +38,7 @@ public sealed class CourseAccessService(IEnrollmentRepository enrollments) : ICo
     }
 
     public async Task<bool> CanViewCourseAsync(Course course, ClaimsPrincipal user)
-        => course.IsPublished || course.Status == CourseStatus.Approved || await CanLearnCourseAsync(course, user);
+        => course.IsPublished || await CanLearnCourseAsync(course, user);
 
     // Learning endpoints must use this method, not the public metadata rule above.
     public async Task<bool> CanLearnCourseAsync(Course course, ClaimsPrincipal user)
