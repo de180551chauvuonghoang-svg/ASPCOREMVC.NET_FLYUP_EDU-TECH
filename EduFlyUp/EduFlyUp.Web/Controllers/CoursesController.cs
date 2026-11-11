@@ -74,13 +74,37 @@ public class CoursesController : Controller
         return View(viewModel);
     }
 
+    private static readonly string[] DefaultCategories =
+    [
+        "Công nghệ thông tin",
+        "Lập trình C#",
+        "ASP.NET Core",
+        "Cơ sở dữ liệu",
+        "Frontend & UI",
+        "Kiến trúc phần mềm",
+        "Khác"
+    ];
+
+    private async Task PopulateCategorySuggestionsAsync()
+    {
+        var existing = await _courseService.GetCategoriesAsync();
+        ViewBag.Categories = DefaultCategories
+            .Concat(existing.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string NormalizeCategory(string? category)
+        => string.IsNullOrWhiteSpace(category) ? "Công nghệ thông tin" : category.Trim();
+
     // GET: /Courses/Create
     // Chỉ Admin và Instructor mới có quyền tạo khóa học mới
     [Authorize(Roles = "Admin,Instructor")]
     [HttpGet]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        return View(new CreateCourseModel { IsPublished = User.IsInRole("Admin") });
+        await PopulateCategorySuggestionsAsync();
+        return View(new CreateCourseModel { IsPublished = false, Category = "Công nghệ thông tin" });
     }
 
     // POST: /Courses/Create
@@ -91,8 +115,14 @@ public class CoursesController : Controller
     {
         if (string.IsNullOrWhiteSpace(User.Identity?.Name)) return Forbid();
 
+        if (User.IsInRole("Admin") && model.IsPublished)
+        {
+            ModelState.AddModelError(string.Empty, "Khóa học mới chưa có bài giảng nào nên chưa thể công khai ngay. Vui lòng tạo ở chế độ chưa công khai, thêm bài giảng rồi duyệt mở bán.");
+        }
+
         if (!ModelState.IsValid)
         {
+            await PopulateCategorySuggestionsAsync();
             return View(model);
         }
 
@@ -103,7 +133,9 @@ public class CoursesController : Controller
             ThumbnailUrl = model.ThumbnailUrl ?? string.Empty,
             Price = model.Price,
             Level = model.Level,
-            IsPublished = User.IsInRole("Admin") && model.IsPublished,
+            Category = NormalizeCategory(model.Category),
+            IsPublished = false,
+            Status = CourseStatus.Draft,
             InstructorId = User.Identity!.Name!
         };
 
@@ -111,7 +143,7 @@ public class CoursesController : Controller
 
         TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã được tạo thành công!";
         if (!User.IsInRole("Admin")) return RedirectToAction("Dashboard", "Instructor");
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction("Curriculum", "Instructor", new { id = course.Id });
     }
 
     // GET: /Courses/Edit/5
@@ -127,6 +159,8 @@ public class CoursesController : Controller
 
         if (!_courseAccess.CanManageCourse(course, User)) return Forbid();
 
+        await PopulateCategorySuggestionsAsync();
+        var (canDelete, deleteDisabledReason) = await _courseService.CanDeleteCourseAsync(id);
         var model = new EditCourseModel
         {
             Id = course.Id,
@@ -135,7 +169,10 @@ public class CoursesController : Controller
             ThumbnailUrl = course.ThumbnailUrl,
             Price = course.Price,
             Level = course.Level,
-            IsPublished = course.IsPublished
+            Category = course.Category,
+            IsPublished = course.IsPublished,
+            CanDelete = canDelete,
+            DeleteDisabledReason = deleteDisabledReason
         };
 
         return View(model);
@@ -165,15 +202,50 @@ public class CoursesController : Controller
             ModelState.Remove(nameof(model.IsPublished));
             model.IsPublished = course.IsPublished;
         }
+        else if (model.IsPublished && !course.IsPublished)
+        {
+            if (course.Lessons.Count == 0)
+            {
+                ModelState.AddModelError(string.Empty, "Không thể công khai khóa học chưa có bài giảng nào.");
+            }
+            else if (course.Status == CourseStatus.Draft)
+            {
+                ModelState.AddModelError(string.Empty, "Khóa học này đang là bản nháp, giảng viên chưa gửi yêu cầu phê duyệt.");
+            }
+            else if (course.Status == CourseStatus.Archived)
+            {
+                ModelState.AddModelError(string.Empty, "Khóa học này đã được giảng viên lưu trữ, không thể tự ý công khai.");
+            }
+        }
 
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid)
+        {
+            await PopulateCategorySuggestionsAsync();
+            var (canDelete, deleteDisabledReason) = await _courseService.CanDeleteCourseAsync(id);
+            model.CanDelete = canDelete;
+            model.DeleteDisabledReason = deleteDisabledReason;
+            return View(model);
+        }
 
         course.Title = model.Title;
         course.Description = model.Description;
         course.ThumbnailUrl = model.ThumbnailUrl ?? string.Empty;
         course.Price = model.Price;
         course.Level = model.Level;
-        if (User.IsInRole("Admin")) course.IsPublished = model.IsPublished;
+        course.Category = NormalizeCategory(model.Category);
+        if (User.IsInRole("Admin"))
+        {
+            course.IsPublished = model.IsPublished;
+            if (course.IsPublished)
+            {
+                course.Status = CourseStatus.Approved;
+                course.RejectionReason = null;
+            }
+            else if (course.Status is CourseStatus.Approved or CourseStatus.PendingApproval)
+            {
+                course.Status = CourseStatus.Rejected;
+            }
+        }
 
         if (User.IsInRole("Admin"))
             await _courseService.UpdateCourseAsync(course);
@@ -198,11 +270,23 @@ public class CoursesController : Controller
 
         if (!_courseAccess.CanManageCourse(course, User)) return Forbid();
 
+        var (allowed, reason) = await _courseService.CanDeleteCourseAsync(id);
+        if (!allowed)
+        {
+            TempData["ErrorMessage"] = reason ?? "Không thể xóa khóa học này.";
+            if (!User.IsInRole("Admin")) return RedirectToAction("Dashboard", "Instructor");
+            return RedirectToAction(nameof(Index));
+        }
+
         try
         {
             var deletedLessons = await _courseService.DeleteCourseAsync(id);
             foreach (var deleted in deletedLessons) _fileCleanup.DeleteFiles(deleted);
             TempData["SuccessMessage"] = $"Khóa học '{course.Title}' đã bị xóa.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
         }
         catch (Exception)
         {

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using EduFlyUp.BusinessObjects;
 
 namespace EduFlyUp.Web.Models.Courses;
@@ -19,7 +19,7 @@ public class CreateCourseModel
     [Display(Name = "Link ảnh bìa (Thumbnail URL)")]
     public string? ThumbnailUrl { get; set; }
 
-    [Range(0, 100000000, ErrorMessage = "Học phí phải từ 0 đến 100.000.000 VNĐ.")]
+    [Range(0, 5000000, ErrorMessage = "Học phí phải từ 0 đến 5.000.000 VNĐ.")]
     [Display(Name = "Học phí (VNĐ)")]
     public decimal Price { get; set; }
 
@@ -27,6 +27,10 @@ public class CreateCourseModel
     [Display(Name = "Cấp độ")]
     public CourseLevel Level { get; set; } = CourseLevel.Beginner;
 
+    [StringLength(100, ErrorMessage = "Danh mục tối đa 100 ký tự.")]
+    [Display(Name = "Danh mục")]
+    public string Category { get; set; } = string.Empty;
+
     [Display(Name = "Công khai khóa học ngay")]
-    public bool IsPublished { get; set; } = true;
+    public bool IsPublished { get; set; } = false;
 }

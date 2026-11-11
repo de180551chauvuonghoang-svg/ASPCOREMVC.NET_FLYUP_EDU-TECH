@@ -15,6 +15,7 @@ public sealed class AdminCourseTests
     private static Course Course(int id = 1, bool published = false) => new()
     {
         Id = id, Title = "Course " + id, InstructorId = "owner@example.test", IsPublished = published,
+        Status = published ? CourseStatus.Approved : CourseStatus.PendingApproval,
         Description = "Description to keep", ThumbnailUrl = "thumbnail.png", Price = 1200,
         Level = CourseLevel.Beginner, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
         Lessons = [new Lesson { Id = id, Title = "Lesson " + id, Content = "Private lesson content", VideoUrl = "video.mp4", Order = 1 }],
@@ -226,5 +227,43 @@ public sealed class AdminCourseTests
         Assert.Contains("/Account/Login", response.Headers.Location?.ToString());
         using var scope = app.Services.CreateScope();
         Assert.False((await scope.ServiceProvider.GetRequiredService<AppDbContext>().Courses.SingleAsync()).IsPublished);
+    }
+
+    [Fact]
+    public async Task Admin_publication_syncs_instructor_lifecycle_status_and_blocks_archive_republish_bypass()
+    {
+        using var app = new TestApplication();
+        await app.CreateUserAsync("admin@example.test", "Admin");
+        var pending = Course(1, published: false);
+        pending.Status = CourseStatus.PendingApproval;
+        await SeedAsync(app, pending);
+
+        using var scope = app.Services.CreateScope();
+        var adminCourses = scope.ServiceProvider.GetRequiredService<IAdminCourseService>();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var access = new CourseAccessService(app.Enrollments);
+        var guest = new ClaimsPrincipal(new ClaimsIdentity());
+
+        // 1. Admin enables PendingApproval course -> becomes Approved & Published
+        Assert.True(await adminCourses.SetPublicationAsync(1, true));
+        var stored = await db.Courses.AsNoTracking().SingleAsync(c => c.Id == 1);
+        Assert.True(stored.IsPublished);
+        Assert.Equal(CourseStatus.Approved, stored.Status);
+        Assert.True(await access.CanViewCourseAsync(stored, guest));
+
+        // 2. Admin disables Approved course -> becomes Rejected & Unpublished, guest cannot view details
+        Assert.True(await adminCourses.SetPublicationAsync(1, false));
+        stored = await db.Courses.AsNoTracking().SingleAsync(c => c.Id == 1);
+        Assert.False(stored.IsPublished);
+        Assert.Equal(CourseStatus.Rejected, stored.Status);
+        Assert.False(await access.CanViewCourseAsync(stored, guest));
+
+        // 3. Even if a legacy course has Status == Approved while IsPublished == false, guest cannot view and instructor cannot Archive
+        var legacy = new Course { Id = 2, InstructorId = "owner@example.test", IsPublished = false, Status = CourseStatus.Approved };
+        Assert.False(await access.CanViewCourseAsync(legacy, guest));
+        app.Courses.Courses.Add(legacy);
+        var courseService = new CourseService(app.Courses);
+        var archiveResult = await courseService.ArchiveCourseAsync(2, "owner@example.test");
+        Assert.False(archiveResult.Success);
     }
 }

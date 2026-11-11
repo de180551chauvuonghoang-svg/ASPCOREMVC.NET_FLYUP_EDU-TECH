@@ -21,7 +21,8 @@ public sealed class CourseViewTests
             var response = await browser.Client.GetAsync(path);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var html = await response.Content.ReadAsStringAsync();
-            Assert.Equal(canPublish, html.Contains("name=\"IsPublished\""));
+            var expectedPublishToggle = path.Contains("Edit", StringComparison.Ordinal) && canPublish;
+            Assert.Equal(expectedPublishToggle, html.Contains("name=\"IsPublished\""));
             var depth = 0;
             foreach (Match tag in Regex.Matches(html, "</?form\\b[^>]*>", RegexOptions.IgnoreCase))
             {

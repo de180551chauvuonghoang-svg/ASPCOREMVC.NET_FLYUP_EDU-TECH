@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EduFlyUp.Web.Controllers;
 
 [Authorize(Roles = "Admin,Instructor")]
-public class QuestionBankController : Controller
+public class QuestionBankController : ManagedCourseControllerBase
 {
     private readonly ICourseService _courseService;
     private readonly ICourseAccessService _courseAccess;
@@ -23,31 +23,13 @@ public class QuestionBankController : Controller
         _questionService = questionService;
     }
 
-    // ==========================================
-    // 1. DANH SÁCH CÂU HỎI THEO KHÓA HỌC (UC-31)
-    // ==========================================
+    // 1. DANH SÁCH CÂU HỎI THEO KHÓA HỌC
     // GET: /QuestionBank?courseId=1&difficulty=Easy&search=keyword
     [HttpGet]
     public async Task<IActionResult> Index(int courseId, string? difficulty, string? search)
     {
-        if (courseId <= 0)
-        {
-            TempData["ErrorMessage"] = "Mã khóa học không hợp lệ.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        var course = await _courseService.GetCourseByIdAsync(courseId);
-        if (course == null)
-        {
-            TempData["ErrorMessage"] = "Không tìm thấy khóa học.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        if (!_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền quản lý ngân hàng câu hỏi của khóa học này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, courseId, "Bạn không có quyền quản lý ngân hàng câu hỏi của khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         QuestionDifficulty? parsedDifficulty = null;
         if (!string.IsNullOrWhiteSpace(difficulty) && Enum.TryParse<QuestionDifficulty>(difficulty, true, out var d))
@@ -71,25 +53,13 @@ public class QuestionBankController : Controller
         return View(viewModel);
     }
 
-    // ==========================================
-    // 2. TẠO CÂU HỎI MỚI (UC-31.1)
-    // ==========================================
+    // 2. TẠO CÂU HỎI MỚI
     // GET: /QuestionBank/Create?courseId=1
     [HttpGet]
     public async Task<IActionResult> Create(int courseId)
     {
-        if (courseId <= 0)
-        {
-            TempData["ErrorMessage"] = "Mã khóa học không hợp lệ.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
-
-        var course = await _courseService.GetCourseByIdAsync(courseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền thêm câu hỏi cho khóa học này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, courseId, "Bạn không có quyền thêm câu hỏi cho khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         // Tạo sẵn 4 phương án mẫu A, B, C, D
         var model = new QuestionCreateEditViewModel
@@ -116,47 +86,14 @@ public class QuestionBankController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(QuestionCreateEditViewModel model)
     {
-        var course = await _courseService.GetCourseByIdAsync(model.CourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền thao tác trên khóa học này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, model.CourseId, "Bạn không có quyền thao tác trên khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         model.Course = course;
-
+        var entityOptions = ExtractAndValidateOptions(model, questionId: null);
         if (!ModelState.IsValid)
         {
-            var firstError = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage;
-            TempData["ErrorMessage"] = string.IsNullOrEmpty(firstError) ? "Dữ liệu nhập không hợp lệ." : firstError;
             return View(model);
-        }
-
-        // Lọc các phương án hợp lệ và gán đúng IsCorrect theo CorrectOptionIndex
-        var validOptions = model.Options
-            .Where(o => !string.IsNullOrWhiteSpace(o.Text))
-            .ToList();
-
-        if (validOptions.Count < 2)
-        {
-            TempData["ErrorMessage"] = "Câu hỏi trắc nghiệm phải có ít nhất 2 phương án đáp án không được để trống.";
-            return View(model);
-        }
-
-        var chosenIndex = model.CorrectOptionIndex;
-        var selectedOpt = (chosenIndex >= 0 && chosenIndex < model.Options.Count) 
-            ? model.Options[chosenIndex] 
-            : null;
-
-        var entityOptions = validOptions.Select((o, idx) => new QuestionOption
-        {
-            Text = o.Text.Trim(),
-            IsCorrect = (selectedOpt != null ? o == selectedOpt : idx == 0)
-        }).ToList();
-
-        if (!entityOptions.Any(o => o.IsCorrect))
-        {
-            entityOptions[0].IsCorrect = true;
         }
 
         var question = new Question
@@ -172,7 +109,7 @@ public class QuestionBankController : Controller
         var (success, message, _) = await _questionService.CreateQuestionAsync(question, entityOptions);
         if (!success)
         {
-            TempData["ErrorMessage"] = message;
+            ModelState.AddModelError(string.Empty, message);
             return View(model);
         }
 
@@ -180,9 +117,7 @@ public class QuestionBankController : Controller
         return RedirectToAction(nameof(Index), new { courseId = model.CourseId });
     }
 
-    // ==========================================
-    // 3. CHỈNH SỬA CÂU HỎI (UC-31.2)
-    // ==========================================
+    // 3. CHỈNH SỬA CÂU HỎI
     // GET: /QuestionBank/Edit/5
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
@@ -194,12 +129,8 @@ public class QuestionBankController : Controller
             return RedirectToAction("Dashboard", "Instructor");
         }
 
-        var course = await _courseService.GetCourseByIdAsync(question.CourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền chỉnh sửa câu hỏi này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, question.CourseId, "Bạn không có quyền chỉnh sửa câu hỏi này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         var optionsList = question.Options.OrderBy(o => o.Id).ToList();
         var correctIdx = optionsList.FindIndex(o => o.IsCorrect);
@@ -244,48 +175,15 @@ public class QuestionBankController : Controller
             return RedirectToAction("Dashboard", "Instructor");
         }
 
-        var course = await _courseService.GetCourseByIdAsync(existing.CourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền chỉnh sửa câu hỏi của khóa học này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, existing.CourseId, "Bạn không có quyền chỉnh sửa câu hỏi của khóa học này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         model.Course = course;
-
+        model.CourseId = existing.CourseId;
+        var entityOptions = ExtractAndValidateOptions(model, questionId: model.Id);
         if (!ModelState.IsValid)
         {
-            var firstError = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage;
-            TempData["ErrorMessage"] = string.IsNullOrEmpty(firstError) ? "Dữ liệu nhập không hợp lệ." : firstError;
             return View(model);
-        }
-
-        var validOptions = model.Options
-            .Where(o => !string.IsNullOrWhiteSpace(o.Text))
-            .ToList();
-
-        if (validOptions.Count < 2)
-        {
-            TempData["ErrorMessage"] = "Câu hỏi trắc nghiệm phải có ít nhất 2 phương án đáp án không được để trống.";
-            return View(model);
-        }
-
-        var chosenIndex = model.CorrectOptionIndex;
-        var selectedOpt = (chosenIndex >= 0 && chosenIndex < model.Options.Count) 
-            ? model.Options[chosenIndex] 
-            : null;
-
-        var entityOptions = validOptions.Select((o, idx) => new QuestionOption
-        {
-            Id = o.Id,
-            QuestionId = model.Id,
-            Text = o.Text.Trim(),
-            IsCorrect = (selectedOpt != null ? o == selectedOpt : idx == 0)
-        }).ToList();
-
-        if (!entityOptions.Any(o => o.IsCorrect))
-        {
-            entityOptions[0].IsCorrect = true;
         }
 
         existing.Content = model.Content.Trim();
@@ -297,7 +195,7 @@ public class QuestionBankController : Controller
         var (success, message) = await _questionService.UpdateQuestionAsync(existing, entityOptions);
         if (!success)
         {
-            TempData["ErrorMessage"] = message;
+            ModelState.AddModelError(string.Empty, message);
             return View(model);
         }
 
@@ -305,9 +203,7 @@ public class QuestionBankController : Controller
         return RedirectToAction(nameof(Index), new { courseId = existing.CourseId });
     }
 
-    // ==========================================
-    // 4. XÓA CÂU HỎI (UC-31.3)
-    // ==========================================
+    // 4. XÓA CÂU HỎI
     // POST: /QuestionBank/Delete
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -320,24 +216,15 @@ public class QuestionBankController : Controller
             return RedirectToAction(nameof(Index), new { courseId });
         }
 
-        var course = await _courseService.GetCourseByIdAsync(question.CourseId);
-        if (course == null || !_courseAccess.CanManageCourse(course, User))
-        {
-            TempData["ErrorMessage"] = "Bạn không có quyền xóa câu hỏi này.";
-            return RedirectToAction("Dashboard", "Instructor");
-        }
+        var (course, errorResult) = await AuthorizeManagedCourseAsync(_courseService, _courseAccess, question.CourseId, "Bạn không có quyền xóa câu hỏi này.");
+        if (errorResult != null || course == null) return errorResult!;
 
         try
         {
             var success = await _questionService.DeleteQuestionAsync(id);
-            if (success)
-            {
-                TempData["SuccessMessage"] = "Đã xóa câu hỏi khỏi ngân hàng câu hỏi thành công.";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Không thể xóa câu hỏi này.";
-            }
+            TempData[success ? "SuccessMessage" : "ErrorMessage"] = success
+                ? "Đã xóa câu hỏi khỏi ngân hàng câu hỏi thành công."
+                : "Không thể xóa câu hỏi này.";
         }
         catch (Exception)
         {
@@ -345,5 +232,38 @@ public class QuestionBankController : Controller
         }
 
         return RedirectToAction(nameof(Index), new { courseId = question.CourseId });
+    }
+
+    private List<QuestionOption> ExtractAndValidateOptions(QuestionCreateEditViewModel model, int? questionId)
+    {
+        var validOptions = model.Options
+            .Where(o => !string.IsNullOrWhiteSpace(o.Text))
+            .ToList();
+
+        if (validOptions.Count < 2)
+        {
+            ModelState.AddModelError(string.Empty, "Câu hỏi trắc nghiệm phải có ít nhất 2 phương án đáp án không được để trống.");
+            return new List<QuestionOption>();
+        }
+
+        var chosenIndex = model.CorrectOptionIndex;
+        var selectedOpt = chosenIndex >= 0 && chosenIndex < model.Options.Count
+            ? model.Options[chosenIndex]
+            : null;
+
+        var entityOptions = validOptions.Select((o, idx) => new QuestionOption
+        {
+            Id = questionId.HasValue ? o.Id : 0,
+            QuestionId = questionId ?? 0,
+            Text = o.Text.Trim(),
+            IsCorrect = selectedOpt != null ? o == selectedOpt : idx == 0
+        }).ToList();
+
+        if (!entityOptions.Any(o => o.IsCorrect))
+        {
+            entityOptions[0].IsCorrect = true;
+        }
+
+        return entityOptions;
     }
 }

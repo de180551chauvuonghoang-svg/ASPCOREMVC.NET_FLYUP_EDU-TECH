@@ -7,7 +7,8 @@ public interface IAdminCourseService
 {
     Task<AdminCoursePage> SearchAsync(AdminCourseQuery query);
     Task<AdminCourseDetail?> GetDetailAsync(int id);
-    Task<bool> SetPublicationAsync(int id, bool published);
+    Task<bool> SetPublicationAsync(int id, bool published, string? reason = null);
+    Task<bool> RejectCourseAsync(int id, string reason);
 }
 
 public sealed class AdminCourseService(IAdminCourseRepository repository) : IAdminCourseService
@@ -17,5 +18,6 @@ public sealed class AdminCourseService(IAdminCourseRepository repository) : IAdm
         Search = query.Search?.Trim(), Instructor = query.Instructor?.Trim(), Page = Math.Max(1, query.Page)
     });
     public Task<AdminCourseDetail?> GetDetailAsync(int id) => repository.GetDetailAsync(id);
-    public Task<bool> SetPublicationAsync(int id, bool published) => repository.SetPublicationAsync(id, published);
+    public Task<bool> SetPublicationAsync(int id, bool published, string? reason = null) => repository.SetPublicationAsync(id, published, reason);
+    public Task<bool> RejectCourseAsync(int id, string reason) => repository.RejectCourseAsync(id, reason);
 }

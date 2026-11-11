@@ -48,6 +48,7 @@ namespace EduFlyUp.DataAccess
         public async Task UpdateAsync(Question question, IEnumerable<QuestionOption> options)
         {
             using var context = new AppDbContext();
+            await using var transaction = await context.Database.BeginTransactionAsync();
             var existingQuestion = await context.Questions
                 .Include(q => q.Options)
                 .FirstOrDefaultAsync(q => q.Id == question.Id);
@@ -58,6 +59,7 @@ namespace EduFlyUp.DataAccess
                 existingQuestion.Difficulty = question.Difficulty;
                 existingQuestion.Explanation = question.Explanation;
                 existingQuestion.Points = question.Points;
+                existingQuestion.UpdatedAt = DateTime.UtcNow;
 
                 // Remove existing options and add updated options
                 context.QuestionOptions.RemoveRange(existingQuestion.Options);
@@ -74,11 +76,14 @@ namespace EduFlyUp.DataAccess
 
                 await context.SaveChangesAsync();
             }
+
+            await transaction.CommitAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
             using var context = new AppDbContext();
+            await using var transaction = await context.Database.BeginTransactionAsync();
             var question = await context.Questions
                 .Include(q => q.Options)
                 .Include(q => q.QuizQuestions)
@@ -93,6 +98,8 @@ namespace EduFlyUp.DataAccess
                 context.Questions.Remove(question);
                 await context.SaveChangesAsync();
             }
+
+            await transaction.CommitAsync();
         }
 
         public async Task<int> CountByCourseIdAsync(int courseId)

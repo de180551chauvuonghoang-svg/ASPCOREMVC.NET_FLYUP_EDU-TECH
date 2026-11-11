@@ -10,8 +10,6 @@ namespace EduFlyUp.Repositories
         Task<Quiz> AddAsync(Quiz quiz);
         Task UpdateAsync(Quiz quiz);
         Task DeleteAsync(int id);
-        Task AddQuestionToQuizAsync(int quizId, int questionId, int order = 1);
-        Task RemoveQuestionFromQuizAsync(int quizId, int questionId);
         Task SetQuestionsForQuizAsync(int quizId, IEnumerable<int> questionIds);
         Task<int> CountByCourseIdAsync(int courseId);
     }

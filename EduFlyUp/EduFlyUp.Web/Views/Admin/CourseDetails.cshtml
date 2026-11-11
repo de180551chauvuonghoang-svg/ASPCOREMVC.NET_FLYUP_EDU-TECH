@@ -7,10 +7,48 @@
 <a asp-action="Courses" class="btn btn-outline-secondary mb-4">Về danh sách khóa học</a>
 <div class="card card-modern p-4 mb-4">
     <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
-        <div><h1 class="h3 fw-bold">@course.Title</h1><span class="badge @(course.IsPublished ? "bg-success" : "bg-secondary")">@(course.IsPublished ? "Công khai" : "Ẩn / chưa công khai")</span></div>
-        <form asp-action="@(course.IsPublished ? "DisableCourse" : "EnableCourse")" asp-route-id="@course.Id" method="post" onsubmit="@(course.IsPublished ? "return confirm('Ẩn khóa học này? Học viên đã ghi danh hợp lệ vẫn giữ quyền học.');" : null)">
-            @Html.AntiForgeryToken()<button type="submit" class="btn @(course.IsPublished ? "btn-outline-warning" : "btn-success")">@(course.IsPublished ? "Ẩn khóa học" : "Công khai khóa học")</button>
-        </form>
+        <div>
+            <h1 class="h3 fw-bold">@course.Title</h1>
+            <partial name="_CourseStatusBadge" model="(course.Status, course.IsPublished, course.RejectionReason, true)" />
+        </div>
+        <div>
+            @if (course.IsPublished)
+            {
+                <form asp-action="DisableCourse" asp-route-id="@course.Id" method="post" class="d-flex flex-wrap gap-2 align-items-center" onsubmit="return confirm('Ẩn khóa học này? Học viên đã ghi danh hợp lệ vẫn giữ quyền học.');">
+                    @Html.AntiForgeryToken()
+                    <input type="text" name="rejectionReason" maxlength="500" class="form-control form-control-sm" style="min-width: 240px;" placeholder="Lý do ẩn khóa học (không bắt buộc)" aria-label="Lý do ẩn khóa học" />
+                    <button type="submit" class="btn btn-outline-warning">Ẩn khóa học</button>
+                </form>
+            }
+            else if (course.Status == CourseStatus.PendingApproval)
+            {
+                <div class="d-flex flex-wrap gap-2">
+                    @if (course.Lessons.Count > 0)
+                    {
+                        <form asp-action="EnableCourse" asp-route-id="@course.Id" method="post">
+                            @Html.AntiForgeryToken()<button type="submit" class="btn btn-success">Duyệt & Công khai khóa học</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-secondary" disabled title="Khóa học chưa có bài giảng nào, không thể công khai">Chưa đủ điều kiện duyệt</button>
+                    }
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectCourseModal">Từ chối</button>
+                </div>
+            }
+            else if (course.Status == CourseStatus.Draft)
+            {
+                <button type="button" class="btn btn-secondary" disabled title="Khóa học đang soạn thảo, giảng viên chưa gửi yêu cầu phê duyệt">Đang soạn nháp</button>
+            }
+            else if (course.Status == CourseStatus.Archived)
+            {
+                <button type="button" class="btn btn-secondary" disabled title="Khóa học do giảng viên chủ động lưu trữ">GV đã lưu trữ</button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-secondary" disabled title="Khóa học đang bị từ chối hoặc ẩn, chờ giảng viên cập nhật và gửi duyệt lại">Chờ GV gửi lại</button>
+            }
+        </div>
     </div>
     <dl class="row mt-4 mb-0">
         <dt class="col-sm-3">Giảng viên sở hữu</dt><dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.InstructorName) ? (string.IsNullOrEmpty(course.InstructorId) ? "Chưa gán giảng viên" : course.InstructorId) : Model.InstructorName)<div class="small text-muted">@(Model.InstructorEmail ?? course.InstructorId)</div></dd>
@@ -18,8 +56,38 @@
         <dt class="col-sm-3">Học phí</dt><dd class="col-sm-9">@(course.Price == 0 ? "Miễn phí" : course.Price.ToString("N0") + " VNĐ")</dd>
         <dt class="col-sm-3">Ngày tạo (UTC)</dt><dd class="col-sm-9">@course.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
         <dt class="col-sm-3">Mô tả</dt><dd class="col-sm-9" style="white-space: pre-wrap; overflow-wrap: anywhere;">@(string.IsNullOrWhiteSpace(course.Description) ? "Chưa có mô tả." : course.Description)</dd>
+        @if (!string.IsNullOrWhiteSpace(course.RejectionReason))
+        {
+            <dt class="col-sm-3 text-danger">Lý do từ chối / ẩn</dt>
+            <dd class="col-sm-9 text-danger" style="white-space: pre-wrap; overflow-wrap: anywhere;">@course.RejectionReason</dd>
+        }
     </dl>
 </div>
+@if (course.Status == CourseStatus.PendingApproval && !course.IsPublished)
+{
+    <div class="modal fade" id="rejectCourseModal" tabindex="-1" aria-labelledby="rejectCourseModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="RejectCourse" asp-route-id="@course.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rejectCourseModalLabel">Từ chối phê duyệt khóa học</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">Khóa học: <strong>@course.Title</strong></p>
+                        <label for="detailRejectReason" class="form-label">Lý do từ chối <span class="text-danger">*</span></label>
+                        <textarea id="detailRejectReason" name="rejectionReason" class="form-control" rows="3" maxlength="500" required placeholder="Nhập lý do chi tiết để giảng viên chỉnh sửa và gửi duyệt lại..."></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger">Xác nhận từ chối</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
 <h2 class="h4 mb-3">Nội dung bài học (@course.Lessons.Count)</h2>
 @if (course.Lessons.Count == 0)
 { <div class="alert alert-light border">Khóa học chưa có bài học.</div> }

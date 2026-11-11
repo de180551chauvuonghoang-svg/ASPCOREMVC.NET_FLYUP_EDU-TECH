@@ -143,6 +143,7 @@ public sealed class LessonMaterialTests
         using var app = new TestApplication(storage);
         Seed(app);
         SeedMaterial(app, storage);
+        app.Courses.Courses.Single().IsPublished = false;
         app.Courses.Courses.Single().Lessons.Add(app.Lessons.Lessons.Single());
         app.Lessons.FailUpdates = fail;
         app.Courses.FailDeletes = fail;

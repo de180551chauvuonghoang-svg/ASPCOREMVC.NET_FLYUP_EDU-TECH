@@ -1,13 +1,14 @@
 namespace EduFlyUp.BusinessObjects;
 
 public sealed record AdminCourseQuery(string? Search = null, string? Instructor = null,
-    CourseLevel? Level = null, bool? IsPublished = null, int Page = 1);
+    CourseLevel? Level = null, bool? IsPublished = null, int Page = 1, CourseStatus? Status = null);
 
 public sealed record AdminInstructorOption(string UserName, string DisplayName);
 
 public sealed record AdminCourseRow(int Id, string Title, string InstructorId,
     string? InstructorName, string? InstructorEmail, CourseLevel Level, decimal Price,
-    bool IsPublished, DateTime CreatedAt, int LessonCount);
+    bool IsPublished, DateTime CreatedAt, int LessonCount, CourseStatus Status = CourseStatus.Draft,
+    string? RejectionReason = null);
 
 public sealed record AdminCoursePage(IReadOnlyList<AdminCourseRow> Items,
     IReadOnlyList<AdminInstructorOption> Instructors, int TotalCount, int Page, int PageSize)

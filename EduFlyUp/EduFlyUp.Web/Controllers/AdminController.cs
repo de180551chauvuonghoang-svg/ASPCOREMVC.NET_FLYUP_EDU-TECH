@@ -52,13 +52,70 @@ public class AdminController : Controller
         => SetPublication(id, true, returnUrl);
 
     [HttpPost, ValidateAntiForgeryToken]
-    public Task<IActionResult> DisableCourse([FromRoute] int id, string? returnUrl = null)
-        => SetPublication(id, false, returnUrl);
+    public Task<IActionResult> DisableCourse([FromRoute] int id, string? rejectionReason = null, string? returnUrl = null)
+        => SetPublication(id, false, returnUrl, rejectionReason);
 
-    private async Task<IActionResult> SetPublication(int id, bool published, string? returnUrl)
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectCourse([FromRoute] int id, string? rejectionReason = null, string? returnUrl = null)
     {
-        if (!await _adminCourses.SetPublicationAsync(id, published)) return NotFound();
+        var detail = await _adminCourses.GetDetailAsync(id);
+        if (detail is null) return NotFound();
+
+        if (ValidateMutableCourseState(detail.Course) is string error)
+        {
+            TempData["ErrorMessage"] = error;
+            return RedirectAfterCourseAction(id, returnUrl);
+        }
+
+        if (string.IsNullOrWhiteSpace(rejectionReason))
+        {
+            TempData["ErrorMessage"] = "Vui lòng nhập lý do từ chối khóa học để giảng viên biết cách chỉnh sửa.";
+            return RedirectAfterCourseAction(id, returnUrl);
+        }
+
+        if (!await _adminCourses.RejectCourseAsync(id, rejectionReason)) return NotFound();
+        TempData["SuccessMessage"] = "Đã từ chối khóa học và gửi lý do phản hồi cho giảng viên.";
+        return RedirectAfterCourseAction(id, returnUrl);
+    }
+
+    private async Task<IActionResult> SetPublication(int id, bool published, string? returnUrl, string? rejectionReason = null)
+    {
+        var detail = await _adminCourses.GetDetailAsync(id);
+        if (detail is null) return NotFound();
+
+        if (published)
+        {
+            if (detail.Course.Lessons.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Không thể công khai khóa học chưa có bài giảng nào.";
+                return RedirectAfterCourseAction(id, returnUrl);
+            }
+
+            if (ValidateMutableCourseState(detail.Course, forPublication: true) is string error)
+            {
+                TempData["ErrorMessage"] = error;
+                return RedirectAfterCourseAction(id, returnUrl);
+            }
+        }
+
+        if (!await _adminCourses.SetPublicationAsync(id, published, rejectionReason)) return NotFound();
         TempData["SuccessMessage"] = published ? "Đã công khai khóa học." : "Đã ẩn khóa học. Nội dung và ghi danh được giữ nguyên.";
+        return RedirectAfterCourseAction(id, returnUrl);
+    }
+
+    private static string? ValidateMutableCourseState(Course course, bool forPublication = false)
+    {
+        if (course.Status == CourseStatus.Draft)
+            return "Khóa học này đang là bản nháp, giảng viên chưa gửi yêu cầu phê duyệt.";
+        if (course.Status == CourseStatus.Archived)
+            return forPublication
+                ? "Khóa học này đã được giảng viên lưu trữ, không thể tự ý công khai."
+                : "Khóa học này đã được giảng viên lưu trữ.";
+        return null;
+    }
+
+    private IActionResult RedirectAfterCourseAction(int id, string? returnUrl)
+    {
         if (Url.IsLocalUrl(returnUrl)) return LocalRedirect(returnUrl!);
         return RedirectToAction(nameof(CourseDetails), new { id });
     }

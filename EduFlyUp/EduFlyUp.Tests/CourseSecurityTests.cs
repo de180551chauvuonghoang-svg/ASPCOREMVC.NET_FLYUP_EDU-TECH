@@ -95,7 +95,10 @@ public sealed class CourseSecurityTests
     public async Task Admin_can_edit_another_owners_course_and_control_publication()
     {
         using var app = new TestApplication();
-        app.Courses.Courses.Add(Course());
+        var course = Course();
+        course.Status = CourseStatus.PendingApproval;
+        course.Lessons.Add(new Lesson { Id = 1, CourseId = 1, Title = "Lesson 1", Order = 1 });
+        app.Courses.Courses.Add(course);
         await app.CreateUserAsync("admin@example.test", "Admin");
         using var browser = app.CreateBrowser();
         await TestApplication.LoginAsync(browser, "admin@example.test");

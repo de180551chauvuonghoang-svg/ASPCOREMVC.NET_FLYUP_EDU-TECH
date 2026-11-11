@@ -27,5 +27,32 @@ namespace EduFlyUp.DataAccess
             await context.SaveChangesAsync();
             return enrollment;
         }
+
+        public async Task<bool> HasCourseEnrollmentsAsync(int courseId)
+        {
+            using var context = new AppDbContext();
+            return await context.Enrollments.AnyAsync(e => e.CourseId == courseId);
+        }
+
+        public async Task<bool> HasActiveCourseEnrollmentsAsync(int courseId)
+        {
+            using var context = new AppDbContext();
+            return await context.Enrollments.AnyAsync(e =>
+                e.CourseId == courseId &&
+                (e.Status == EnrollmentStatus.Active || e.Status == EnrollmentStatus.Completed));
+        }
+
+        public async Task<Dictionary<int, int>> GetCourseEnrollmentCountsAsync(IEnumerable<int> courseIds)
+        {
+            var ids = courseIds.Distinct().ToList();
+            if (ids.Count == 0) return new Dictionary<int, int>();
+
+            using var context = new AppDbContext();
+            return await context.Enrollments
+                .Where(e => ids.Contains(e.CourseId))
+                .GroupBy(e => e.CourseId)
+                .Select(g => new { CourseId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.CourseId, x => x.Count);
+        }
     }
 }

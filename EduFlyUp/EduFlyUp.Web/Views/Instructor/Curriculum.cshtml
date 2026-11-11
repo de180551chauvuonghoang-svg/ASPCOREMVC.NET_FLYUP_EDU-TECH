@@ -3,6 +3,7 @@
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Quản lý Giáo trình - " + Model.Course.Title;
+    var effectiveStatus = Model.Course.GetEffectiveStatus();
 }
 
 <!-- Breadcrumb & Back button -->
@@ -10,7 +11,7 @@
     <ol class="breadcrumb mb-0">
         <li class="breadcrumb-item">
             <a asp-action="Dashboard" class="text-decoration-none">
-                <i class="bi bi-mortarboard-fill me-1"></i>Studio Giảng Viên
+                <i class="bi bi-mortarboard-fill me-1"></i>Kênh Giảng Viên
             </a>
         </li>
         <li class="breadcrumb-item active text-truncate" style="max-width: 400px;" aria-current="page">
@@ -20,42 +21,15 @@
 </nav>
 
 <!-- Course Header Banner -->
-<div class="card card-modern p-4 p-md-5 mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);">
+<div class="card card-modern brand-hero-banner p-4 p-md-5 mb-4 border-0 shadow-sm rounded-4">
     <div class="row align-items-center">
         <div class="col-lg-8">
             <div class="d-inline-flex align-items-center gap-2 mb-3 flex-wrap">
-                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold">
-                    <i class="bi bi-journal-code me-1"></i>Curriculum Builder (UC-21)
+                <span class="badge badge-brand-soft px-3 py-2 rounded-pill fw-bold">
+                    <i class="bi bi-journal-code me-1"></i>Giáo Trình Khóa Học
                 </span>
 
-                @switch (Model.Course.Status)
-                {
-                    case EduFlyUp.BusinessObjects.CourseStatus.Approved:
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2">
-                            <i class="bi bi-check-circle me-1"></i>Đã duyệt (Mở bán)
-                        </span>
-                        break;
-                    case EduFlyUp.BusinessObjects.CourseStatus.PendingApproval:
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2">
-                            <i class="bi bi-hourglass-split me-1"></i>Chờ Admin duyệt
-                        </span>
-                        break;
-                    case EduFlyUp.BusinessObjects.CourseStatus.Rejected:
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2">
-                            <i class="bi bi-x-circle me-1"></i>Bị từ chối
-                        </span>
-                        break;
-                    case EduFlyUp.BusinessObjects.CourseStatus.Archived:
-                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-2">
-                            <i class="bi bi-archive me-1"></i>Đã lưu trữ
-                        </span>
-                        break;
-                    default:
-                        <span class="badge bg-light text-secondary border rounded-pill px-3 py-2">
-                            <i class="bi bi-file-earmark-lock me-1"></i>Bản nháp
-                        </span>
-                        break;
-                }
+                <partial name="_CourseStatusBadge" model="(Model.Course.Status, Model.Course.IsPublished, Model.Course.RejectionReason, false)" />
 
                 <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs">
                     <i class="bi bi-tag-fill text-muted me-1"></i>@(string.IsNullOrEmpty(Model.Course.Category) ? "Chung" : Model.Course.Category)
@@ -76,17 +50,17 @@
                 <i class="bi bi-plus-circle-fill fs-5"></i>
                 <span>Thêm bài giảng mới</span>
             </button>
-            <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-info rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" title="Ngân hàng câu hỏi trắc nghiệm (UC-31)">
+            <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-brand rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" title="Ngân hàng câu hỏi trắc nghiệm">
                 <i class="bi bi-patch-question-fill"></i>
                 <span>Ngân hàng câu hỏi</span>
             </a>
-            <a asp-controller="Quiz" asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-purple rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" style="color: #6f42c1; border-color: #6f42c1;" title="Quản lý Đề thi & Khảo thí CAT (UC-32)">
+            <a asp-controller="Quiz" asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-brand rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" title="Quản lý đề thi và khảo thí CAT">
                 <i class="bi bi-journal-check"></i>
                 <span>Đề thi & CAT</span>
             </a>
             <a asp-action="Dashboard" class="btn btn-outline-secondary rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2">
                 <i class="bi bi-arrow-left"></i>
-                <span>Về Studio</span>
+                <span>Về trang khóa học</span>
             </a>
             <a asp-controller="Courses" asp-action="Details" asp-route-id="@Model.Course.Id" target="_blank" class="btn btn-outline-brand rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" title="Xem trang khóa học như học viên">
                 <i class="bi bi-eye"></i>
@@ -95,6 +69,25 @@
         </div>
     </div>
 </div>
+
+@if (effectiveStatus == EduFlyUp.BusinessObjects.CourseStatus.Rejected && !string.IsNullOrWhiteSpace(Model.Course.RejectionReason))
+{
+    <div class="alert alert-danger border-0 shadow-sm rounded-4 p-4 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <div class="fw-bold mb-1"><i class="bi bi-exclamation-octagon-fill me-2"></i>Khóa học bị từ chối / đang tạm ẩn</div>
+            <div class="small">Lý do từ Quản trị viên: <strong>@Model.Course.RejectionReason</strong></div>
+        </div>
+        @if (Model.Lessons.Any())
+        {
+            <form asp-action="SubmitApproval" asp-route-id="@Model.Course.Id" method="post" class="mb-0">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-brand btn-sm rounded-pill px-3 py-2 fw-semibold" onclick="return confirm('Gửi lại khóa học này để Quản trị viên kiểm duyệt?');">
+                    <i class="bi bi-send-check me-1"></i>Gửi duyệt lại
+                </button>
+            </form>
+        }
+    </div>
+}
 
 <!-- 4 Key Curriculum Stats Cards -->
 <div class="row g-3 g-md-4 mb-4">
@@ -171,7 +164,7 @@ else
             <div class="accordion-item card card-modern border-0 shadow-sm rounded-4 overflow-hidden">
                 <h2 class="accordion-header bg-white" id="heading_@sectionIndex">
                     <div class="d-flex align-items-center justify-content-between p-3 px-md-4 w-100 flex-wrap gap-2">
-                        <button class="accordion-button collapsed shadow-none p-0 bg-transparent flex-grow-1 text-dark fw-bold fs-6 d-flex align-items-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#@sectionId" aria-expanded="true" aria-controls="@sectionId" style="width: auto;">
+                        <button class="accordion-button shadow-none p-0 bg-transparent flex-grow-1 text-dark fw-bold fs-6 d-flex align-items-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#@sectionId" aria-expanded="true" aria-controls="@sectionId" style="width: auto;">
                             <i class="bi bi-folder2-open text-primary fs-5"></i>
                             <span>@sectionName</span>
                             <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 ms-2 font-monospace small">
@@ -282,7 +275,7 @@ else
                                                     }
                                                     @if (!string.IsNullOrWhiteSpace(lesson.MaterialUrl))
                                                     {
-                                                        <a href="@lesson.MaterialUrl" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" title="Tải học liệu đính kèm (UC-24)">
+                                                        <a href="@lesson.MaterialUrl" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" title="Tải học liệu đính kèm">
                                                             <i class="bi bi-file-earmark-arrow-down me-1"></i>@(string.IsNullOrWhiteSpace(lesson.AttachmentName) ? "Tài liệu" : lesson.AttachmentName)
                                                         </a>
                                                         <form asp-controller="LessonMaterials" asp-action="Replace" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center" data-confirm-message="Thay thế tài liệu hiện tại bằng file đã chọn?">
@@ -321,14 +314,36 @@ else
                                                     </button>
 
                                                     <!-- Xóa bài giảng -->
-                                                    <form asp-action="DeleteLesson" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài giảng &quot;@Html.Raw(JavaScriptEncoder.Default.Encode(lesson.Title))&quot; không?');">
-                                                        @Html.AntiForgeryToken()
-                                                        <input type="hidden" name="id" value="@lesson.Id" />
-                                                        <input type="hidden" name="courseId" value="@Model.Course.Id" />
-                                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" title="Xóa bài giảng">
+                                                    @{
+                                                        var hasActiveEnrollments = ViewBag.HasActiveEnrollments is true;
+                                                        var isLastProtectedLesson = Model.Lessons.Count() <= 1 &&
+                                                            (Model.Course.IsPublished
+                                                             || Model.Course.Status == EduFlyUp.BusinessObjects.CourseStatus.PendingApproval
+                                                             || Model.Course.Status == EduFlyUp.BusinessObjects.CourseStatus.Archived
+                                                             || hasActiveEnrollments);
+                                                    }
+                                                    @if (isLastProtectedLesson)
+                                                    {
+                                                        var deleteBlockReason = Model.Course.IsPublished
+                                                            ? "Không thể xóa bài giảng cuối cùng khi khóa học đang mở bán"
+                                                            : hasActiveEnrollments
+                                                                ? "Không thể xóa bài giảng cuối cùng khi khóa học đã có học viên đang học hoặc đã hoàn thành"
+                                                                : "Không thể xóa bài giảng cuối cùng ở trạng thái hiện tại";
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" disabled title="@deleteBlockReason">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
-                                                    </form>
+                                                    }
+                                                    else
+                                                    {
+                                                        <form asp-action="DeleteLesson" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài giảng &quot;@Html.Raw(JavaScriptEncoder.Default.Encode(lesson.Title))&quot; không?');">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="id" value="@lesson.Id" />
+                                                            <input type="hidden" name="courseId" value="@Model.Course.Id" />
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" title="Xóa bài giảng">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    }
                                                 </div>
                                             </td>
                                         </tr>
@@ -431,7 +446,7 @@ else
                             </div>
                         </div>
 
-                        <!-- Học liệu đính kèm (UC-24) -->
+                        <!-- Học liệu đính kèm -->
                         <div class="col-md-6">
                             <label for="lessonMaterialUrl" class="form-label fw-bold small text-secondary">
                                 Link tài liệu đính kèm (Slide / PDF / Source Code)
@@ -607,7 +622,6 @@ else
         // 3. Mở xem thử video
         function openVideoPreview(url, title) {
             if (!url) {
-                alert("Bài giảng này chưa có link video!");
                 return;
             }
 

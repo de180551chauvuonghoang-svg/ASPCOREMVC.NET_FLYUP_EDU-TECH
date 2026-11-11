@@ -14,7 +14,7 @@
             </li>
             <li class="breadcrumb-item">
                 <a asp-controller="Instructor" asp-action="Dashboard" class="text-decoration-none text-muted">
-                    Studio Giảng viên
+                    Kênh Giảng Viên
                 </a>
             </li>
             <li class="breadcrumb-item">
@@ -29,13 +29,13 @@
     </nav>
 
     <!-- Quiz Header Banner -->
-    <div class="card card-modern p-4 mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(111, 66, 193, 0.08) 0%, rgba(79, 70, 229, 0.08) 100%);">
+    <div class="card card-modern brand-hero-banner p-4 mb-4 border-0 shadow-sm rounded-4">
         <div class="row align-items-center">
             <div class="col-lg-8">
                 <div class="d-inline-flex align-items-center gap-2 mb-2 flex-wrap">
                     @if (Model.Quiz.IsCAT)
                     {
-                        <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background-color: #6f42c1; color: white;">
+                        <span class="badge badge-brand-soft rounded-pill px-3 py-2 fw-semibold">
                             <i class="bi bi-cpu-fill me-1"></i>Chế độ CAT Thích ứng
                         </span>
                     }
@@ -60,11 +60,11 @@
             </div>
 
             <div class="col-lg-4 text-lg-end mt-3 mt-lg-0 d-flex flex-wrap gap-2 justify-content-lg-end">
-                <a asp-action="Edit" asp-route-id="@Model.Quiz.Id" class="btn btn-outline-warning rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2" title="Chỉnh sửa cấu hình đề">
+                <a asp-action="Edit" asp-route-id="@Model.Quiz.Id" class="btn btn-outline-brand rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2" title="Chỉnh sửa cấu hình đề">
                     <i class="bi bi-pencil"></i>
                     <span>Cấu hình đề</span>
                 </a>
-                <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@Model.Course.Id" target="_blank" class="btn btn-outline-info rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2" title="Mở ngân hàng câu hỏi trong tab mới">
+                <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@Model.Course.Id" target="_blank" class="btn btn-outline-brand rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2" title="Mở ngân hàng câu hỏi trong tab mới">
                     <i class="bi bi-patch-question-fill"></i>
                     <span>Ngân hàng câu hỏi</span>
                 </a>
@@ -104,7 +104,7 @@
                                 Dễ: <strong id="statEasy">0</strong>
                             </span>
                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">
-                                Vừa: <strong id="statMedium">0</strong>
+                                Trung bình: <strong id="statMedium">0</strong>
                             </span>
                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">
                                 Khó: <strong id="statHard">0</strong>
@@ -138,7 +138,7 @@
                                                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0 small mb-1">Dễ</span>
                                                         break;
                                                     case EduFlyUp.BusinessObjects.QuestionDifficulty.Medium:
-                                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0 small mb-1">Vừa</span>
+                                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0 small mb-1">Trung bình</span>
                                                         break;
                                                     case EduFlyUp.BusinessObjects.QuestionDifficulty.Hard:
                                                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0 small mb-1">Khó</span>
@@ -210,7 +210,7 @@
                                 <div class="btn-group w-100" role="group" id="difficultyFilterGroup">
                                     <button type="button" class="btn btn-sm btn-outline-secondary active" data-filter="all">Tất cả</button>
                                     <button type="button" class="btn btn-sm btn-outline-success" data-filter="Easy">Dễ</button>
-                                    <button type="button" class="btn btn-sm btn-outline-warning" data-filter="Medium">Vừa</button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning" data-filter="Medium">Trung bình</button>
                                     <button type="button" class="btn btn-sm btn-outline-danger" data-filter="Hard">Khó</button>
                                 </div>
                             </div>
@@ -238,7 +238,7 @@
                                                        value="@q.Id" 
                                                        id="chk_@q.Id" 
                                                        @(isChecked ? "checked" : "") 
-                                                       onchange="onQuestionCheckChanged(this, @q.Id, '@q.Difficulty', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(q.Content))', @(q.Options?.Count ?? 0))" />
+                                                       onchange="onQuestionCheckChanged(this, @q.Id, '@q.Difficulty', '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(q.Content))', @(q.Options?.Count ?? 0))" />
                                             </div>
 
                                             <div class="flex-grow-1">
@@ -247,23 +247,20 @@
                                                     {
                                                         case EduFlyUp.BusinessObjects.QuestionDifficulty.Easy:
                                                             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
-                                                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Dễ (Easy)
+                                                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Dễ
                                                             </span>
                                                             break;
                                                         case EduFlyUp.BusinessObjects.QuestionDifficulty.Medium:
                                                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">
-                                                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Vừa (Medium)
+                                                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Trung bình
                                                             </span>
                                                             break;
                                                         case EduFlyUp.BusinessObjects.QuestionDifficulty.Hard:
                                                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">
-                                                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Khó (Hard)
+                                                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Khó
                                                             </span>
                                                             break;
                                                     }
-                                                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 small">
-                                                        ID: #@q.Id
-                                                    </span>
                                                     <span class="text-muted small ms-auto">
                                                         @(q.Options?.Count ?? 0) phương án
                                                     </span>
@@ -336,7 +333,6 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
-    .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .transition-all { transition: all 0.2s ease-in-out; }
 </style>
 }
@@ -352,7 +348,9 @@
         if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
-        return div.innerHTML;
+        return div.innerHTML
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // 1. Khi check hoặc uncheck câu hỏi ở cột phải
@@ -391,7 +389,7 @@
         if (difficulty === 'Easy') {
             badgeHtml = '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0 small mb-1">Dễ</span>';
         } else if (difficulty === 'Medium') {
-            badgeHtml = '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0 small mb-1">Vừa</span>';
+            badgeHtml = '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0 small mb-1">Trung bình</span>';
         } else {
             badgeHtml = '<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0 small mb-1">Khó</span>';
         }

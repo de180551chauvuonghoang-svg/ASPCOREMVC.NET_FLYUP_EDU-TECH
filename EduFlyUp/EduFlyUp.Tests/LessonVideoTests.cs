@@ -132,6 +132,8 @@ public sealed class LessonVideoTests
         var videos = new TestVideoStorage();
         using var app = new TestApplication(videoStorage: videos);
         Seed(app);
+        app.Courses.Courses.Single().IsPublished = false;
+        app.Courses.Courses.Single().Status = CourseStatus.Archived;
         var name = new string('a', 32) + ".mp4";
         videos.Files[name] = Mp4Header;
         app.Lessons.Lessons.Single().VideoUrl = "/LessonVideos/Stream/1/" + name;

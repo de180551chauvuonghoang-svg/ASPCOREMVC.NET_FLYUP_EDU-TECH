@@ -14,7 +14,7 @@
             </li>
             <li class="breadcrumb-item">
                 <a asp-controller="Instructor" asp-action="Dashboard" class="text-decoration-none text-muted">
-                    Studio Giảng viên
+                    Kênh Giảng Viên
                 </a>
             </li>
             <li class="breadcrumb-item active text-truncate" style="max-width: 250px;" aria-current="page">
@@ -27,12 +27,12 @@
     </nav>
 
     <!-- Course & Quiz Header Banner -->
-    <div class="card card-modern p-4 p-md-5 mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(111, 66, 193, 0.08) 0%, rgba(79, 70, 229, 0.08) 100%);">
+    <div class="card card-modern brand-hero-banner p-4 p-md-5 mb-4 border-0 shadow-sm rounded-4">
         <div class="row align-items-center">
             <div class="col-lg-7">
                 <div class="d-inline-flex align-items-center gap-2 mb-3 flex-wrap">
-                    <span class="badge bg-purple-subtle text-purple border border-purple-subtle px-3 py-2 rounded-pill fw-bold" style="background-color: rgba(111, 66, 193, 0.12); color: #6f42c1;">
-                        <i class="bi bi-award-fill me-1"></i>Quiz Management & CAT Engine (UC-32)
+                    <span class="badge badge-brand-soft px-3 py-2 rounded-pill fw-bold">
+                        <i class="bi bi-award-fill me-1"></i>Đề Thi & Khảo Thí CAT
                     </span>
                     <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-xs">
                         <i class="bi bi-tag-fill text-muted me-1"></i>@(string.IsNullOrEmpty(Model.Course.Category) ? "Chung" : Model.Course.Category)
@@ -42,9 +42,9 @@
                     </span>
                 </div>
 
-                <h1 class="h3 fw-bold mb-2 text-dark">Hệ thống Đề thi & Khảo thí Thích ứng</h1>
+                <h1 class="h3 fw-bold mb-2 text-dark">Hệ Thống Đề Thi & Khảo Thí Thích Ứng</h1>
                 <p class="text-secondary mb-0 fs-6" style="max-width: 650px;">
-                    Thiết lập các bài kiểm tra trắc nghiệm, cấu hình thời gian làm bài, điểm sàn đạt yêu cầu và kích hoạt thuật toán thích ứng CAT (Computer Adaptive Testing).
+                    Thiết lập các bài kiểm tra trắc nghiệm, cấu hình thời gian làm bài, điểm đạt yêu cầu và chế độ thi thích ứng (CAT).
                 </p>
             </div>
 
@@ -53,7 +53,7 @@
                     <i class="bi bi-plus-circle-fill fs-5"></i>
                     <span>Tạo đề thi mới</span>
                 </a>
-                <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-info rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" title="Ngân hàng câu hỏi trắc nghiệm (UC-31)">
+                <a asp-controller="QuestionBank" asp-action="Index" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-brand rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2" title="Ngân hàng câu hỏi trắc nghiệm">
                     <i class="bi bi-patch-question-fill"></i>
                     <span>Ngân hàng câu hỏi</span>
                 </a>
@@ -63,7 +63,7 @@
                 </a>
                 <a asp-controller="Instructor" asp-action="Dashboard" class="btn btn-outline-secondary rounded-pill px-3 py-3 d-inline-flex align-items-center gap-2">
                     <i class="bi bi-arrow-left"></i>
-                    <span>Studio</span>
+                    <span>Khóa học</span>
                 </a>
             </div>
         </div>
@@ -72,7 +72,7 @@
     <!-- 4 Key Quiz Metrics Cards -->
     <div class="row g-3 g-md-4 mb-4">
         <div class="col-6 col-lg-3">
-            <div class="card card-modern p-3 p-md-4 border-start border-primary border-4 shadow-sm h-100">
+            <div class="card card-modern p-3 p-md-4 border-start border-primary border-4 shadow-sm h-100 rounded-4">
                 <span class="text-muted small fw-semibold text-uppercase tracking-wider">Tổng số đề thi</span>
                 <div class="d-flex align-items-baseline gap-2 mt-1">
                     <h2 class="fw-bold text-primary mb-0">@Model.TotalQuizzes</h2>
@@ -82,10 +82,10 @@
         </div>
 
         <div class="col-6 col-lg-3">
-            <div class="card card-modern p-3 p-md-4 border-start border-4 shadow-sm h-100" style="border-left-color: #6f42c1 !important;">
+            <div class="card card-modern p-3 p-md-4 border-start border-4 shadow-sm h-100 rounded-4" style="border-left-color: var(--brand-secondary) !important;">
                 <span class="text-muted small fw-semibold text-uppercase tracking-wider">Đề thích ứng CAT</span>
                 <div class="d-flex align-items-baseline gap-2 mt-1">
-                    <h2 class="fw-bold mb-0" style="color: #6f42c1;">@Model.AdaptiveQuizzes</h2>
+                    <h2 class="fw-bold mb-0" style="color: var(--brand-secondary);">@Model.AdaptiveQuizzes</h2>
                     <span class="text-muted small">đề kích hoạt CAT</span>
                 </div>
             </div>
@@ -151,8 +151,8 @@
                                 <tr class="quiz-row" data-title="@quiz.Title" data-desc="@quiz.Description">
                                     <td class="ps-4 py-3">
                                         <div class="d-flex align-items-center gap-3">
-                                            <div class="rounded-3 d-flex align-items-center justify-content-center shadow-xs" 
-                                                 style="width: 44px; height: 44px; background: @(quiz.IsCAT ? "linear-gradient(135deg, #6f42c1, #4f46e5)" : "linear-gradient(135deg, #0d6efd, #0dcaf0)"); color: white;">
+                                            <div class="rounded-3 d-flex align-items-center justify-content-center shadow-xs"
+                                                 style="width: 44px; height: 44px; background: @(quiz.IsCAT ? "var(--brand-gradient)" : "linear-gradient(135deg, #0ea5e9, #3b82f6)"); color: white;">
                                                 <i class="bi @(quiz.IsCAT ? "bi-cpu" : "bi-journal-text") fs-5"></i>
                                             </div>
                                             <div>
@@ -182,7 +182,7 @@
                                     <td>
                                         @if (quiz.IsCAT)
                                         {
-                                            <span class="badge rounded-pill px-3 py-2 fw-semibold border" style="background-color: rgba(111, 66, 193, 0.12); color: #6f42c1; border-color: rgba(111, 66, 193, 0.25) !important;" title="Computer Adaptive Testing (3PL IRT Model)">
+                                            <span class="badge badge-brand-soft rounded-pill px-3 py-2 fw-semibold" title="Thi thích ứng theo năng lực (CAT)">
                                                 <i class="bi bi-lightning-charge-fill me-1"></i>CAT Thích ứng
                                             </span>
                                         }
@@ -202,20 +202,17 @@
 
                                     <td class="text-end pe-4 py-3">
                                         <div class="d-inline-flex gap-1 align-items-center">
-                                            <!-- Quản lý câu hỏi trong đề -->
-                                            <a asp-action="ManageQuestions" asp-route-id="@quiz.Id" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" title="Quản lý câu hỏi trong đề (Assign Questions)">
+                                            <a asp-action="ManageQuestions" asp-route-id="@quiz.Id" class="btn btn-soft-brand btn-sm rounded-pill px-3 py-1" title="Quản lý câu hỏi trong đề">
                                                 <i class="bi bi-list-check me-1"></i>Câu hỏi
                                             </a>
 
-                                            <!-- Sửa thông tin đề -->
-                                            <a asp-action="Edit" asp-route-id="@quiz.Id" class="btn btn-outline-warning btn-sm rounded-pill px-2 py-1" title="Chỉnh sửa cấu hình đề thi (UC-32.2)">
+                                            <a asp-action="Edit" asp-route-id="@quiz.Id" class="btn btn-outline-secondary btn-sm icon-circle-btn" title="Chỉnh sửa cấu hình đề thi">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
 
-                                            <!-- Xóa đề thi (UC-32.3) -->
                                             <form asp-action="Delete" asp-route-id="@quiz.Id" asp-route-courseId="@Model.Course.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đề thi này không?');">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" title="Xóa đề thi (UC-32.3)">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm icon-circle-btn" title="Xóa đề thi">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
@@ -239,7 +236,7 @@
                 <!-- Empty State -->
                 <div class="text-center py-5 px-3">
                     <div class="mb-3">
-                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center badge-brand-soft" style="width: 80px; height: 80px;">
                             <i class="bi bi-journal-plus fs-1"></i>
                         </div>
                     </div>

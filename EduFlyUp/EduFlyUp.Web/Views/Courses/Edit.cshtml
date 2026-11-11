@@ -1,4 +1,4 @@
-﻿@model EduFlyUp.Web.Models.Courses.EditCourseModel
+@model EduFlyUp.Web.Models.Courses.EditCourseModel
 
 @{
     ViewData["Title"] = "Chỉnh sửa khóa học";
@@ -13,7 +13,7 @@
                 </a>
                 <div>
                     <h3 class="fw-bold mb-0">Chỉnh Sửa Khóa Học</h3>
-                    <p class="text-muted small mb-0">ID: @Model.Id</p>
+                    <p class="text-muted small mb-0">Cập nhật thông tin và cấu hình khóa học của bạn.</p>
                 </div>
             </div>
 
@@ -38,7 +38,7 @@
                 </div>
 
                 <div class="row g-3 mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label asp-for="Price" class="form-label fw-semibold"></label>
                         <div class="input-group">
                             <input asp-for="Price" type="number" class="form-control rounded-start-3" />
@@ -47,10 +47,25 @@
                         <span asp-validation-for="Price" class="text-danger small"></span>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label asp-for="Level" class="form-label fw-semibold"></label>
                         <select asp-for="Level" asp-items="Html.GetEnumSelectList<EduFlyUp.BusinessObjects.CourseLevel>()" class="form-select rounded-3"></select>
                         <span asp-validation-for="Level" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Category" class="form-label fw-semibold"></label>
+                        <input asp-for="Category" list="categoryOptions" class="form-control rounded-3" placeholder="VD: Lập trình C#..." />
+                        <datalist id="categoryOptions">
+                            @if (ViewBag.Categories is IEnumerable<string> categories)
+                            {
+                                @foreach (var cat in categories)
+                                {
+                                    <option value="@cat"></option>
+                                }
+                            }
+                        </datalist>
+                        <span asp-validation-for="Category" class="text-danger small"></span>
                     </div>
                 </div>
 
@@ -73,9 +88,18 @@
                 }
 
                 <div class="d-flex justify-content-between align-items-center">
-                    <button type="submit" form="delete-course-form" class="btn btn-outline-danger btn-sm">
-                        <i class="bi bi-trash me-1"></i>Xóa khóa học
-                    </button>
+                    @if (Model.CanDelete)
+                    {
+                        <button type="submit" form="delete-course-form" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i>Xóa khóa học
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled title="@Model.DeleteDisabledReason">
+                            <i class="bi bi-trash me-1"></i>Không thể xóa
+                        </button>
+                    }
 
                     <div class="d-flex gap-2">
                         <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary px-4">Hủy bỏ</a>
@@ -85,10 +109,13 @@
                     </div>
                 </div>
             </form>
-            <form id="delete-course-form" asp-action="Delete" asp-route-id="@Model.Id" method="post"
-                  onsubmit="return confirm('Bạn có chắc muốn xóa khóa học này không?')">
-                @Html.AntiForgeryToken()
-            </form>
+            @if (Model.CanDelete)
+            {
+                <form id="delete-course-form" asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                      onsubmit="return confirm('Bạn có chắc muốn xóa khóa học này không?')">
+                    @Html.AntiForgeryToken()
+                </form>
+            }
         </div>
     </div>
 </div>
