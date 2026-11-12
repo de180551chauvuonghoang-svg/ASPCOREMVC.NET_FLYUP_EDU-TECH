@@ -140,3 +140,11 @@ Cấu hình `Payments:BankTransfer` cần Enabled, BankBin, AccountNumber, Accou
 Chưa có webhook Casso hoặc xác nhận đã thu tiền; chưa tăng UsedCount, ghi danh khóa có phí hay bật nguồn doanh thu Instructor. Không cập nhật database nhóm hoặc thay đổi schema ở phần này.
 
 Xác nhận ngày 10/11/2026: **296/296 test đạt, 0 bỏ qua**, gồm 3 HTTP/SQL mới và 1 unit cho QR. Build Release không lỗi/cảnh báo. Sau chỉnh bố cục tổng tiền, build lại Web và kiểm tra trực quan trên demo Kestrel/SQL riêng: đăng nhập Student, tạo đơn 200.000 VND, áp QRDEMO20 còn 160.000 VND, tạo QR và mở thông tin chuyển khoản. Ảnh VietQR đã tải, form coupon đã ẩn. SQL đối chiếu đúng intent 160.000, đơn vẫn Pending, giao dịch/enrollment của người mua/UsedCount đều 0. Demo vượt 8 nhóm regression và đã dừng server; ảnh cục bộ `.admin-demo/checkout-qr-proof.png` không commit. Không chuyển tiền hoặc dùng tài khoản ngân hàng thật.
+
+## Phần 6a: xác thực dữ liệu webhook Casso V2 (12/11/2026)
+
+`CassoWebhookVerifier` kiểm tra header `X-Casso-Signature` bằng HMAC-SHA512 trên timestamp và toàn bộ JSON đã sắp xếp theo mẫu chính thức. Hàm so sánh chữ ký theo thời gian cố định, từ chối JSON trùng khóa và giới hạn đầu vào 32 KiB. [Mẫu chữ ký Casso V2](https://github.com/CassoHQ/casso-webhook-v2-verify-signature).
+
+Dữ liệu đã xác thực giữ nguyên dấu số tiền và số 0 đầu tài khoản. Thời gian đầy đủ của ngân hàng được đọc theo UTC+7. Giao dịch chỉ có ngày trả về thời điểm rỗng để bước đối chiếu không tự suy ra giờ. Mẫu thử của Casso có ID 0, nên bước xử lý đơn sau này cần loại ID thử trước khi ghi nhận thanh toán.
+
+Đã chạy 11 kiểm thử xác thực, gồm chữ ký mẫu công khai và các ca sửa số tiền, sai khóa, JSON trùng trường và dữ liệu giao dịch không hợp lệ. Endpoint sẽ gọi bộ xác thực khi có luồng đối chiếu và lưu giao dịch. Bước đó dùng ID của Casso để chống ghi nhận trùng khi nhận lại thông báo. [Hướng dẫn nhận và chống trùng webhook](https://developer.casso.vn/webhook/thiet-lap-webhook-thu-cong).
