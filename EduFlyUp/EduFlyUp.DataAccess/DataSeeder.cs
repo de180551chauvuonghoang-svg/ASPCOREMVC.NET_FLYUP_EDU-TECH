@@ -8,7 +8,10 @@ namespace EduFlyUp.DataAccess
     {
         public static async Task SeedAsync(AppDbContext context)
         {
-            await context.Database.MigrateAsync();
+            if (context.Database.ProviderName?.Contains("SqlServer", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                await context.Database.MigrateAsync();
+            }
 
             if (await context.Courses.AnyAsync()) return;
 
