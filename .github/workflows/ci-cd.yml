@@ -53,3 +53,4 @@ jobs:
         run: railway up --service ASPCOREMVC.NET_FLYUP_EDU-TECH --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
