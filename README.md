@@ -160,6 +160,7 @@ Khi người dùng thực hiện một thao tác trên trình duyệt (ví dụ:
 ## 🗺️ Lộ trình các Phase triển khai
 
 ### [Phase 1 — Nền tảng & Cấu trúc N-Tier Solution](./docs/phase1/phase1-guide.md)
+
 - [x] Tạo Solution theo chuẩn 5 Layer: `BusinessObjects`, `DataAccess`, `Repositories`, `Services`, `Web`.
 - [x] Định nghĩa Entities (`Course`, `Lesson`, `Enrollment`, `ApplicationUser`) và Enums.
 - [x] Xây dựng `AppDbContext`, Fluent API Configurations, Migrations.
@@ -171,6 +172,7 @@ Khi người dùng thực hiện một thao tác trên trình duyệt (ví dụ:
 ---
 
 ### [Phase 2 — ASP.NET Core MVC Hiện Đại & ViewModels](./docs/phase2/phase2-guide.md)
+
 - [x] Thiết lập Master Layout hiện đại với font Inter, Glassmorphism header, Modern dark footer.
 - [x] Xây dựng `ViewModels` chống tấn công *Over-posting Attack* (`CourseCreateViewModel`, `CourseEditViewModel`, `CourseItemViewModel`).
 - [x] Xây dựng `CoursesController` thực hiện đầy đủ luồng CRUD gọi thông qua `CourseService`.
@@ -182,6 +184,7 @@ Khi người dùng thực hiện một thao tác trên trình duyệt (ví dụ:
 ---
 
 ### [Phase 3 — Authentication, Authorization & Interactive UI](./docs/phase3/phase3-guide.md)
+
 - [x] Tích hợp ASP.NET Core Identity với `ApplicationUser` tùy biến.
 - [x] Cấu hình Cookie Authentication an toàn (HttpOnly, SameSite, Anti-Forgery Token).
 - [x] Hệ thống phân quyền theo Role (`Admin`, `Teacher`, `Student`).
@@ -209,12 +212,15 @@ Khi người dùng thực hiện một thao tác trên trình duyệt (ví dụ:
 ## 🚀 Hướng dẫn Cài đặt & Chạy dự án
 
 ### 1. Yêu cầu môi trường
+
 - .NET 8.0 SDK trở lên.
 - Visual Studio 2022 (với workload *ASP.NET and web development*) hoặc Visual Studio Code / Rider.
 - Microsoft SQL Server (LocalDB hoặc SQL Server Express).
 
 ### 2. Cấu hình Chuỗi kết nối Database
+
 Mở file [appsettings.json](file:///c:/Users/RinHeo/Desktop/baitapprn/EduFlyUp/EduFlyUp.Web/appsettings.json) trong dự án `EduFlyUp.Web`, kiểm tra chuỗi kết nối:
+
 ```json
 {
   "ConnectionStrings": {
@@ -224,7 +230,9 @@ Mở file [appsettings.json](file:///c:/Users/RinHeo/Desktop/baitapprn/EduFlyUp/
 ```
 
 ### 3. Cập nhật Database & Khởi chạy ứng dụng
+
 Mở terminal tại thư mục gốc của project:
+
 ```powershell
 # Chuyển vào thư mục solution
 cd EduFlyUp
@@ -233,11 +241,13 @@ cd EduFlyUp
 dotnet build
 
 # Chạy ứng dụng Web (database và dữ liệu mẫu sẽ tự động được khởi tạo tại lần chạy đầu tiên)
-dotnet run --project .\EduFlyUp.Web\EduFlyUp.Web.csproj
+dotnet run --project .\EduFlyUp.Web\EduFlyUp.Web.csproj --launch-profile "https"
 ```
 
 ### 4. Tài khoản mặc định để thử nghiệm
+
 Khi ứng dụng khởi chạy lần đầu, `DataSeeder` sẽ tự động tạo tài khoản quản trị:
+
 - **Tài khoản (Email):** `admin@eduflyup.vn`
 - **Mật khẩu:** `Admin@123`
 - **Vai trò (Role):** `Admin` (truy cập được vào `/Admin/Dashboard`)

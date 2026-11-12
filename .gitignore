@@ -54,6 +54,12 @@ docs/
 
 # Cloudflare Tunnel binary
 cloudflared.exe
+ngrok.exe
+
+# Environment files
+.env
+.env.*
+
 # Local SQL demo sessions contain generated test-only passwords and process logs.
 /.admin-demo/
 

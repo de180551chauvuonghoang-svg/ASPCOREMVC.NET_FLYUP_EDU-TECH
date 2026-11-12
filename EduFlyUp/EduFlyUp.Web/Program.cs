@@ -6,7 +6,11 @@ using EduFlyUp.Web.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
+// Tải biến môi trường từ file .env
+DotNetEnv.Env.TraversePath().Load();
+
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Cấu hình riêng từng máy; biến môi trường và tham số dòng lệnh vẫn ưu tiên cao nhất.
 if (builder.Environment.IsDevelopment())
@@ -74,7 +78,7 @@ builder.Services.AddScoped<IAdminUserService, AdminUserService>();
 builder.Services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 
-// 4. Cấu hình Cookie Authentication
+// 4. Cấu hình Cookie Authentication & External Logins
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";              // Redirect khi chưa đăng nhập
@@ -83,6 +87,23 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
 });
+
+// Cấu hình Google Authentication (ưu tiên đọc từ biến môi trường / .env)
+var googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")
+    ?? builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET")
+    ?? builder.Configuration["Authentication:Google:ClientSecret"];
+
+if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddGoogle(options =>
+        {
+            options.ClientId = googleClientId;
+            options.ClientSecret = googleClientSecret;
+        });
+}
+
 
 // ──────────────── Build App ────────────────
 var app = builder.Build();
