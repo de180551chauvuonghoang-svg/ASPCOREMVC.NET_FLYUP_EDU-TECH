@@ -169,7 +169,28 @@ forwardedOptions.KnownNetworks.Clear();
 forwardedOptions.KnownProxies.Clear();
 app.UseForwardedHeaders(forwardedOptions);
 
+// Sửa lỗi Cookie SameSite/Secure cho OAuth sau reverse proxy
+app.UseCookiePolicy(new CookiePolicyOptions
+{
+    MinimumSameSitePolicy = SameSiteMode.Unspecified,
+    OnAppendCookie = cookieContext =>
+    {
+        if (cookieContext.CookieOptions.SameSite == SameSiteMode.None)
+        {
+            cookieContext.CookieOptions.Secure = true;
+        }
+    },
+    OnDeleteCookie = cookieContext =>
+    {
+        if (cookieContext.CookieOptions.SameSite == SameSiteMode.None)
+        {
+            cookieContext.CookieOptions.Secure = true;
+        }
+    }
+});
+
 if (!app.Environment.IsDevelopment())
+
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
