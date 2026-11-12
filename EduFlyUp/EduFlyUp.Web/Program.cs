@@ -26,12 +26,42 @@ builder.Services.AddScoped<EduFlyUp.Web.Storage.ILessonMaterialStorage, EduFlyUp
 builder.Services.AddScoped<EduFlyUp.Web.Storage.LessonFileCleanup>();
 builder.Services.AddScoped<EduFlyUp.Web.Storage.ILessonVideoStorage, EduFlyUp.Web.Storage.LessonVideoStorage>();
 
-// 1. Cấu hình DbContext kết nối SQL Server
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+// 1. Cấu hình DbContext kết nối Đa Nền Tảng (Tự động chuyển đổi SQL Server & PostgreSQL)
+var rawConn = Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
     ?? "Server=DESKTOP-IJV2BTH\\SQLEXPRESS;Database=EduFlyUpDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    // Nhận diện PostgreSQL (Railway cấp DATABASE_URL dạng postgres:// hoặc chuỗi chứa Host=...)
+    if (rawConn.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+        rawConn.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) ||
+        rawConn.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
+        rawConn.Contains("Username=", StringComparison.OrdinalIgnoreCase) ||
+        rawConn.Contains("Port=5432", StringComparison.OrdinalIgnoreCase))
+    {
+        var npgsqlConn = rawConn;
+        if (rawConn.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+            rawConn.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        {
+            // Chuyển URI postgres://user:pass@host:port/db sang connection string của Npgsql
+            var uri = new Uri(rawConn);
+            var userInfo = uri.UserInfo.Split(':');
+            var user = userInfo[0];
+            var pass = userInfo.Length > 1 ? userInfo[1] : "";
+            var db = uri.AbsolutePath.TrimStart('/');
+            npgsqlConn = $"Host={uri.Host};Port={(uri.Port > 0 ? uri.Port : 5432)};Database={db};Username={user};Password={pass};SSL Mode=Prefer;Trust Server Certificate=true;";
+        }
+        options.UseNpgsql(npgsqlConn);
+    }
+    else
+    {
+        // SQL Server cho môi trường Local
+        options.UseSqlServer(rawConn);
+    }
+});
+
 
 // 2. Cấu hình ASP.NET Core Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
