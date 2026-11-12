@@ -1,0 +1,117 @@
+@model CheckoutDetail
+@using System.Globalization
+@using EduFlyUp.Web.Models.Checkout
+@inject Microsoft.Extensions.Options.IOptions<EduFlyUp.Services.BankTransferOptions> PaymentOptions
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+    string Money(decimal v) => v.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) + " VNĐ";
+    string Time(DateTime v) => DateTime.SpecifyKind(v, DateTimeKind.Utc).AddHours(7).ToString("dd/MM/yyyy HH:mm");
+    var code = Model.Items.FirstOrDefault(i => i.CouponCode != null)?.CouponCode;
+    var paymentAvailable = CheckoutPaymentDisplay.Available(PaymentOptions.Value);
+    var qr = CheckoutPaymentDisplay.QrUrl(PaymentOptions.Value, Model.PaymentInstructions);
+    var status = Model.Status switch { CheckoutOrderStatus.Paid => Model.Payable == 0 ? "Đã đăng ký miễn phí" : "Đã thanh toán",
+        CheckoutOrderStatus.Cancelled => "Đã hủy", CheckoutOrderStatus.Expired => "Đã hết hạn", _ => "Chờ thanh toán" };
+}
+<div class="py-4">
+    <a asp-controller="Courses" asp-action="Index" class="text-decoration-none">← Khám phá khóa học</a>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 my-3">
+        <h1 class="h3 fw-bold mb-0">Đơn hàng</h1>
+        <span class="badge rounded-pill text-bg-light border px-3 py-2">@status</span>
+    </div>
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+    }
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h2 class="h5 mb-3">Khóa học</h2>
+                @foreach (var item in Model.Items)
+                {
+                    <div class="border-bottom py-3">
+                        <h3 class="h6">@item.Title</h3>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <strong>@Money(item.Payable)</strong>
+                            @if (item.Discount > 0) { <del class="text-muted small"><span class="visually-hidden">Giá gốc: </span>@Money(item.Original)</del> }
+                        </div>
+                        @if (item.CouponCode != null) { <small class="text-success">Mã @item.CouponCode · Giảm @Money(item.Discount)</small> }
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h2 class="h5 mb-3">Tổng thanh toán</h2>
+                <dl class="row mb-3">
+                    @if (Model.Discount > 0)
+                    {
+                        <dt class="col-6 text-muted fw-normal">Tạm tính</dt><dd class="col-6 text-end">@Money(Model.Original)</dd>
+                        <dt class="col-6 text-muted fw-normal">Giảm giá</dt><dd class="col-6 text-end text-success">−@Money(Model.Discount)</dd>
+                    }
+                    <dt class="visually-hidden">Tổng</dt><dd class="col-12 text-break fs-4 fw-bold text-primary mb-0" id="checkout-payable">@Money(Model.Payable)</dd>
+                </dl>
+                @if (Model.CanEditCoupon)
+                {
+                    <form asp-action="ApplyCoupon" asp-route-id="@Model.PublicId" method="post" class="mb-3">
+                        <input type="hidden" name="Version" value="@Model.Version" />
+                        <label for="checkout-code" class="form-label">Mã giảm giá</label>
+                        <div class="input-group"><input id="checkout-code" name="Code" value="@code" maxlength="40" class="form-control" autocomplete="off" /><button class="btn btn-outline-primary" type="submit">Áp dụng</button></div>
+                    </form>
+                    @if (code != null)
+                    {
+                        <form asp-action="ApplyCoupon" asp-route-id="@Model.PublicId" method="post" class="mb-3">
+                            <input type="hidden" name="Version" value="@Model.Version" /><input type="hidden" name="Code" value="" />
+                            <button type="submit" class="btn btn-link text-danger p-0">Gỡ mã</button>
+                        </form>
+                    }
+                }
+                @if (Model.Status == CheckoutOrderStatus.Pending)
+                {
+                    @if (qr != null && Model.PaymentInstructions is { } payment)
+                    {
+                        <h2 class="h5">Quét mã chuyển khoản</h2>
+                        <img src="@qr" alt="QR chuyển khoản đúng số tiền và nội dung đơn" class="img-fluid d-block mx-auto mb-3" width="280" height="280" referrerpolicy="no-referrer" />
+                        <details class="small mb-3">
+                            <summary>Thông tin chuyển khoản</summary>
+                            <dl class="mt-2 mb-0">
+                                <dt>Ngân hàng (BIN)</dt><dd>@payment.BankBin</dd>
+                                <dt>Số tài khoản</dt><dd class="text-break user-select-all">@payment.AccountNumber</dd>
+                                <dt>Người nhận</dt><dd class="text-break">@payment.AccountName</dd>
+                                <dt>Số tiền</dt><dd>@Money(payment.Amount)</dd>
+                                <dt>Nội dung</dt><dd class="text-break user-select-all">@payment.Reference</dd>
+                            </dl>
+                        </details>
+                        <p class="small text-muted mb-0">Giữ nguyên số tiền và nội dung. Đơn chờ xác minh thanh toán.</p>
+                    }
+                    else if (paymentAvailable && Model.CanEditCoupon && Model.Payable > 0)
+                    {
+                        <form asp-action="PreparePayment" asp-route-id="@Model.PublicId" method="post">
+                            <input type="hidden" name="Version" value="@Model.Version" />
+                            <button type="submit" class="btn btn-brand w-100">Tạo QR thanh toán</button>
+                            <p class="small text-muted mt-2 mb-0">Sau bước này không thể đổi mã giảm giá.</p>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">@(paymentAvailable ? "Chưa thể tạo QR cho đơn này." : "Chưa mở thanh toán. Khóa học chưa được kích hoạt.")</div>
+                    }
+                }
+                @if (Model.Status == CheckoutOrderStatus.Expired)
+                {
+                    <div class="alert alert-warning mb-0">Đơn đã hết hạn. Chọn lại khóa học để tạo đơn mới.</div>
+                }
+                @if (Model.Status == CheckoutOrderStatus.Paid && Model.Payable == 0)
+                {
+                    @foreach (var item in Model.Items) { <a asp-controller="Courses" asp-action="Details" asp-route-id="@item.CourseId" class="btn btn-brand mb-2">Mở khóa học</a> }
+                }
+                <details class="small text-muted mt-3">
+                    <summary>Thông tin đơn</summary>
+                    <dl class="mt-2 mb-0">
+                        <dt>Mã đơn</dt><dd class="text-break">@Model.PublicId</dd>
+                        <dt>Hạn đơn (UTC+7)</dt><dd>@Time(Model.ExpiresAtUtc)</dd>
+                    </dl>
+                </details>
+            </div>
+        </div>
+    </div>
+</div>
