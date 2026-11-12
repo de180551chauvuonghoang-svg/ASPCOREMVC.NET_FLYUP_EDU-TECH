@@ -48,9 +48,8 @@ jobs:
       - name: 🛠️ Install Railway CLI
         run: npm i -g @railway/cli
 
-      - name: 🚢 Deploy to Railway
-        if: env.RAILWAY_TOKEN != ''
+      - name: 🚢 Deploy to Railway Service
         run: railway up --service ASPCOREMVC.NET_FLYUP_EDU-TECH --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
+          RAILWAY_PROJECT_ID: eb585c0a-7f02-41e0-89c6-14885e3d43ad
