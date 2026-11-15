@@ -1,0 +1,70 @@
+========================================================================
+EDULYUP - BỘ TÀI LIỆU KHÓA HỌC: HTML5, CSS3 & MODERN JAVASCRIPT
+Giảng viên: ThS. Hoàng Minh Đức - Senior Frontend Engineer
+========================================================================
+
+CHƯƠNG 3: MÃ NGUỒN MINI APP TODOLIST BẰNG JAVASCRIPT ES6
+
+// 1. Quản lý danh sách công việc với LocalStorage
+class TodoApp {
+    constructor() {
+        this.todos = JSON.parse(localStorage.getItem('todos')) || [];
+        this.initElements();
+        this.bindEvents();
+        this.render();
+    }
+
+    initElements() {
+        this.input = document.getElementById('todoInput');
+        this.list = document.getElementById('todoList');
+        this.addBtn = document.getElementById('addBtn');
+    }
+
+    bindEvents() {
+        this.addBtn.addEventListener('click', () => this.addTodo());
+        this.input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.addTodo();
+        });
+    }
+
+    addTodo() {
+        const text = this.input.value.trim();
+        if (!text) return;
+        const newTodo = {
+            id: Date.now(),
+            text: text,
+            completed: false
+        };
+        this.todos.push(newTodo);
+        this.saveAndRender();
+        this.input.value = '';
+    }
+
+    toggleTodo(id) {
+        this.todos = this.todos.map(todo => 
+            todo.id === id ? { ...todo, completed: !todo.completed } : todo
+        );
+        this.saveAndRender();
+    }
+
+    deleteTodo(id) {
+        this.todos = this.todos.filter(todo => todo.id !== id);
+        this.saveAndRender();
+    }
+
+    saveAndRender() {
+        localStorage.setItem('todos', JSON.stringify(this.todos));
+        this.render();
+    }
+
+    render() {
+        this.list.innerHTML = this.todos.map(todo => `
+            <li class="todo-item ${todo.completed ? 'completed' : ''}">
+                <span onclick="app.toggleTodo(${todo.id})">${todo.text}</span>
+                <button onclick="app.deleteTodo(${todo.id})">Xóa</button>
+            </li>
+        `).join('');
+    }
+}
+
+const app = new TodoApp();

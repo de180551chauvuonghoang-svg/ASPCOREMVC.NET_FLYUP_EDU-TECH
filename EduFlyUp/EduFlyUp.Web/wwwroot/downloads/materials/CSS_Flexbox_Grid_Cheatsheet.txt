@@ -1,0 +1,27 @@
+========================================================================
+EDULYUP - BỘ TÀI LIỆU KHÓA HỌC: HTML5, CSS3 & MODERN JAVASCRIPT
+Giảng viên: ThS. Hoàng Minh Đức - Senior Frontend Engineer
+========================================================================
+
+CHƯƠNG 2: LÀM CHỦ CSS FLEXBOX VÀ CSS GRID SYSTEM
+
+1. Cẩm nang CSS Box Model:
+   - Box-sizing: border-box; (Quy định width/height bao gồm cả padding và border)
+   - Margin: khoảng cách ngoài
+   - Border: đường viền
+   - Padding: khoảng đệm trong
+   - Content: nội dung phần tử
+
+2. Flexbox Cheatsheet (Layout 1 chiều):
+   - display: flex;
+   - flex-direction: row | column | row-reverse | column-reverse;
+   - justify-content: flex-start | flex-end | center | space-between | space-around | space-evenly;
+   - align-items: stretch | flex-start | flex-end | center | baseline;
+   - flex-wrap: nowrap | wrap | wrap-reverse;
+   - gap: khoảng cách giữa các phần tử flex con (ví dụ: gap: 1rem);
+
+3. CSS Grid Cheatsheet (Layout 2 chiều - Dòng và Cột):
+   - display: grid;
+   - grid-template-columns: repeat(3, 1fr); /* 3 cột bằng nhau */
+   - grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Tự co giãn theo màn hình */
+   - grid-gap: 20px;

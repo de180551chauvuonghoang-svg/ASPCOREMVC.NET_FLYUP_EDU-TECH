@@ -218,6 +218,17 @@
                             <span>Hỏi đáp & Thảo luận</span>
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-slate-300 fw-semibold px-4 py-2.5 d-flex align-items-center gap-2 border-0 position-relative" 
+                                id="quiz-tab" data-bs-toggle="tab" data-bs-target="#quiz-content" type="button" role="tab" style="background: transparent;">
+                            <i class="bi bi-patch-question-fill text-danger"></i>
+                            <span>Đề thi & Trắc nghiệm</span>
+                            @if (Model.CourseQuiz != null && Model.CourseQuiz.QuizQuestions.Any())
+                            {
+                                <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">@Model.CourseQuiz.QuizQuestions.Count</span>
+                            }
+                        </button>
+                    </li>
                 </ul>
 
                 <!-- Tab Panes -->
@@ -350,6 +361,134 @@
                                     <i class="bi bi-discord me-1"></i>Tham gia kênh thảo luận
                                 </a>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: QUIZ / KNOWLEDGE CHECK -->
+                    <div class="tab-pane fade" id="quiz-content" role="tabpanel">
+                        <div class="card border-0 rounded-4 p-4 p-md-5 mb-4 shadow-sm" style="background: #111827; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
+                            @if (Model.CourseQuiz != null && Model.CourseQuiz.QuizQuestions.Any())
+                            {
+                                var questionsList = Model.CourseQuiz.QuizQuestions
+                                    .OrderBy(qq => qq.Order)
+                                    .Select(qq => qq.Question)
+                                    .Where(q => q != null)
+                                    .ToList();
+
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+                                    <div>
+                                        <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill small mb-2" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                            <i class="bi bi-award-fill"></i>
+                                            <span>Đánh giá năng lực cuối khóa</span>
+                                        </div>
+                                        <h3 class="fw-bold text-white mb-1">@Model.CourseQuiz.Title</h3>
+                                        <div class="d-flex align-items-center gap-3 small text-slate-400" style="color: #94a3b8;">
+                                            <span><i class="bi bi-clock me-1 text-primary"></i>Thời gian: @Model.CourseQuiz.DurationMinutes phút</span>
+                                            <span>•</span>
+                                            <span><i class="bi bi-question-circle me-1 text-warning"></i>Số lượng: @questionsList.Count câu hỏi</span>
+                                            <span>•</span>
+                                            <span><i class="bi bi-check2-circle me-1 text-success"></i>Điểm đạt: @Model.CourseQuiz.PassingScorePercentage%</span>
+                                        </div>
+                                    </div>
+
+                                    @if (Model.CanManageCourse)
+                                    {
+                                        <a asp-controller="Quiz" asp-action="ManageQuestions" asp-route-id="@Model.CourseQuiz.Id" class="btn btn-outline-secondary rounded-pill btn-sm px-3 py-1.5 text-white" target="_blank">
+                                            <i class="bi bi-gear me-1"></i>Quản lý câu hỏi (CMS)
+                                        </a>
+                                    }
+                                </div>
+
+                                <!-- Quiz Score Summary Banner (Hidden until submitted) -->
+                                <div id="quizResultBanner" class="p-4 rounded-4 mb-4" style="display: none;">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div id="quizResultIconWrapper" class="rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                                                <i id="quizResultIcon" class="fs-2"></i>
+                                            </div>
+                                            <div>
+                                                <h5 id="quizResultTitle" class="fw-bold mb-1"></h5>
+                                                <p id="quizResultSubtitle" class="mb-0 small"></p>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="text-end">
+                                                <span class="small d-block opacity-75">Điểm số</span>
+                                                <h3 id="quizScoreText" class="fw-extrabold mb-0"></h3>
+                                            </div>
+                                            <button id="retryQuizBtn" class="btn btn-light rounded-pill px-4 py-2 fw-semibold btn-sm shadow-sm">
+                                                <i class="bi bi-arrow-repeat me-1"></i>Làm lại đề
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Questions Form -->
+                                <form id="quizForm">
+                                    <div class="d-flex flex-column gap-4 mb-4">
+                                        @for (int i = 0; i < questionsList.Count; i++)
+                                        {
+                                            var q = questionsList[i];
+                                            var qNum = i + 1;
+                                            var options = q.Options.ToList();
+
+                                            <div class="p-4 rounded-4 question-block" id="question_block_@q.Id" 
+                                                 style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);"
+                                                 data-question-id="@q.Id">
+                                                
+                                                <div class="d-flex align-items-start gap-2.5 mb-3">
+                                                    <span class="badge rounded-circle p-2 flex-shrink-0" style="width: 32px; height: 32px; background: rgba(99, 102, 241, 0.2); color: #818cf8; font-size: 0.85rem;">
+                                                        @qNum
+                                                    </span>
+                                                    <div>
+                                                        <h6 class="fw-bold text-white mb-1" style="line-height: 1.5;">@q.Content</h6>
+                                                        <span class="small text-slate-400" style="color: #94a3b8; font-size: 0.75rem;">(Chọn 1 đáp án đúng nhất)</span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Options List -->
+                                                <div class="d-flex flex-column gap-2 ms-md-4">
+                                                    @foreach (var opt in options)
+                                                    {
+                                                        var optRadioId = $"opt_{q.Id}_{opt.Id}";
+                                                        <label class="p-3 rounded-3 d-flex align-items-center gap-3 option-label" for="@optRadioId" 
+                                                               style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); cursor: pointer; transition: all 0.2s ease;">
+                                                            <input class="form-check-input flex-shrink-0 shadow-none mt-0" type="radio" 
+                                                                   name="q_@q.Id" id="@optRadioId" value="@opt.Id" 
+                                                                   data-is-correct="@(opt.IsCorrect ? "true" : "false")" />
+                                                            <span class="text-slate-200 small fw-medium" style="color: #e2e8f0;">@opt.Text</span>
+                                                        </label>
+                                                    }
+                                                </div>
+
+                                                <!-- Explanation Box (Hidden until submit) -->
+                                                <div class="explanation-box mt-3 p-3 rounded-3" style="display: none; background: rgba(99, 102, 241, 0.1); border-left: 4px solid #6366f1;">
+                                                    <div class="small fw-bold text-indigo-300 mb-1" style="color: #a5b4fc;">
+                                                        <i class="bi bi-lightbulb-fill me-1"></i>Giải thích chi tiết:
+                                                    </div>
+                                                    <p class="small text-slate-300 mb-0" style="color: #cbd5e1;">@q.Explanation</p>
+                                                </div>
+
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="d-flex justify-content-end pt-3 border-top" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+                                        <button type="button" id="submitQuizBtn" class="btn btn-brand rounded-pill px-5 py-3 fw-bold d-inline-flex align-items-center gap-2 shadow-glow">
+                                            <i class="bi bi-check2-circle fs-5"></i>
+                                            <span>Nộp bài kiểm tra & Chấm điểm</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            }
+                            else
+                            {
+                                <div class="text-center py-5">
+                                    <i class="bi bi-patch-question text-slate-500 fs-1 d-block mb-3" style="color: #64748b;"></i>
+                                    <h5 class="text-white fw-bold mb-1">Khóa học chưa có bài kiểm tra trắc nghiệm</h5>
+                                    <p class="small text-slate-400 mb-0" style="color: #94a3b8;">Giảng viên đang biên soạn bộ câu hỏi trắc nghiệm cho khóa học này. Vui lòng quay lại sau!</p>
+                                </div>
+                            }
                         </div>
                     </div>
 
@@ -587,6 +726,130 @@
 
             if (toggleBtn) toggleBtn.addEventListener("click", toggleSidebar);
             if (closeMobileBtn) closeMobileBtn.addEventListener("click", toggleSidebar);
+
+            // 4. Xử lý làm bài Quiz & Chấm điểm trắc nghiệm
+            const submitQuizBtn = document.getElementById("submitQuizBtn");
+            const quizForm = document.getElementById("quizForm");
+            const resultBanner = document.getElementById("quizResultBanner");
+            const retryQuizBtn = document.getElementById("retryQuizBtn");
+
+            if (submitQuizBtn && quizForm) {
+                const passingScore = @(Model.CourseQuiz?.PassingScorePercentage ?? 70);
+
+                submitQuizBtn.addEventListener("click", function () {
+                    const questionBlocks = document.querySelectorAll(".question-block");
+                    let totalQuestions = questionBlocks.length;
+                    let correctCount = 0;
+                    let answeredCount = 0;
+
+                    questionBlocks.forEach(block => {
+                        const checkedRadio = block.querySelector("input[type='radio']:checked");
+                        const allLabels = block.querySelectorAll(".option-label");
+                        const explanationBox = block.querySelector(".explanation-box");
+
+                        // Reset style cũ
+                        allLabels.forEach(lbl => {
+                            lbl.style.background = "rgba(255, 255, 255, 0.02)";
+                            lbl.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                        });
+
+                        if (checkedRadio) {
+                            answeredCount++;
+                            const isCorrect = checkedRadio.getAttribute("data-is-correct") === "true";
+                            const chosenLabel = checkedRadio.closest(".option-label");
+
+                            if (isCorrect) {
+                                correctCount++;
+                                if (chosenLabel) {
+                                    chosenLabel.style.background = "rgba(16, 185, 129, 0.2)";
+                                    chosenLabel.style.borderColor = "#10b981";
+                                }
+                            } else {
+                                if (chosenLabel) {
+                                    chosenLabel.style.background = "rgba(239, 68, 68, 0.2)";
+                                    chosenLabel.style.borderColor = "#ef4444";
+                                }
+                                // Highlight đáp án đúng
+                                const correctRadio = block.querySelector("input[data-is-correct='true']");
+                                if (correctRadio) {
+                                    const correctLabel = correctRadio.closest(".option-label");
+                                    if (correctLabel) {
+                                        correctLabel.style.background = "rgba(16, 185, 129, 0.2)";
+                                        correctLabel.style.borderColor = "#10b981";
+                                    }
+                                }
+                            }
+                        } else {
+                            // Chưa chọn cũng highlight đáp án đúng để người học đối chiếu
+                            const correctRadio = block.querySelector("input[data-is-correct='true']");
+                            if (correctRadio) {
+                                const correctLabel = correctRadio.closest(".option-label");
+                                if (correctLabel) {
+                                    correctLabel.style.background = "rgba(16, 185, 129, 0.15)";
+                                    correctLabel.style.borderColor = "#10b981";
+                                }
+                            }
+                        }
+
+                        // Hiện giải thích
+                        if (explanationBox) explanationBox.style.display = "block";
+                    });
+
+                    // Tính điểm %
+                    const scorePct = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+                    const isPassed = scorePct >= passingScore;
+
+                    // Hiển thị Banner kết quả
+                    if (resultBanner) {
+                        resultBanner.style.display = "block";
+                        const iconWrapper = document.getElementById("quizResultIconWrapper");
+                        const icon = document.getElementById("quizResultIcon");
+                        const title = document.getElementById("quizResultTitle");
+                        const subtitle = document.getElementById("quizResultSubtitle");
+                        const scoreText = document.getElementById("quizScoreText");
+
+                        scoreText.textContent = `${correctCount}/${totalQuestions} câu (${scorePct}%)`;
+
+                        if (isPassed) {
+                            resultBanner.style.background = "linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.3) 100%)";
+                            resultBanner.style.border = "1px solid #10b981";
+                            iconWrapper.style.background = "#10b981";
+                            iconWrapper.style.color = "#ffffff";
+                            icon.className = "bi bi-trophy-fill";
+                            title.className = "fw-bold mb-1 text-success";
+                            title.textContent = "XUẤT SẮC! BẠN ĐÃ ĐẠT CHUẨN ĐẦU RA";
+                            subtitle.className = "mb-0 small text-slate-300";
+                            subtitle.textContent = `Bạn đã hoàn thành xuất sắc ${correctCount}/${totalQuestions} câu hỏi trắc nghiệm của khóa học!`;
+                        } else {
+                            resultBanner.style.background = "linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.25) 100%)";
+                            resultBanner.style.border = "1px solid #ef4444";
+                            iconWrapper.style.background = "#ef4444";
+                            iconWrapper.style.color = "#ffffff";
+                            icon.className = "bi bi-exclamation-triangle-fill";
+                            title.className = "fw-bold mb-1 text-danger";
+                            title.textContent = `CHƯA ĐẠT ĐIỂM CHUẨN (CẦN TỐI THIỂU ${passingScore}%)`;
+                            subtitle.className = "mb-0 small text-slate-300";
+                            subtitle.textContent = "Hãy xem lại giải thích chi tiết bên dưới mỗi câu hỏi và làm lại đề thi để cải thiện điểm số.";
+                        }
+
+                        resultBanner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    }
+                });
+
+                if (retryQuizBtn) {
+                    retryQuizBtn.addEventListener("click", function () {
+                        quizForm.reset();
+                        document.querySelectorAll(".option-label").forEach(lbl => {
+                            lbl.style.background = "rgba(255, 255, 255, 0.02)";
+                            lbl.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                        });
+                        document.querySelectorAll(".explanation-box").forEach(box => {
+                            box.style.display = "none";
+                        });
+                        if (resultBanner) resultBanner.style.display = "none";
+                    });
+                }
+            }
         });
     </script>
 }

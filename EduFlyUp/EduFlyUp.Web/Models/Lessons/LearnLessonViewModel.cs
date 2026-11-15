@@ -23,6 +23,8 @@ namespace EduFlyUp.Web.Models.Lessons
         public bool CanManageCourse { get; set; }
         public bool IsPreviewAllowed => CurrentLesson.IsPreview || IsEnrolled || CanManageCourse;
 
+        public EduFlyUp.BusinessObjects.Quiz? CourseQuiz { get; set; }
+
         public int CurrentLessonIndex => AllLessons.FindIndex(l => l.Id == CurrentLesson.Id) + 1;
         public int TotalLessonsCount => AllLessons.Count;
         public int TotalCourseDurationMinutes => AllLessons.Sum(l => l.DurationMinutes);

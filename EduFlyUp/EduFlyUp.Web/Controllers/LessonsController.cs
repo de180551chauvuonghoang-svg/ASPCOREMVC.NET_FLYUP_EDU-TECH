@@ -9,17 +9,20 @@ namespace EduFlyUp.Web.Controllers
         private readonly ILessonService _lessonService;
         private readonly ICourseService _courseService;
         private readonly ICourseAccessService _courseAccessService;
+        private readonly IQuizService _quizService;
         private readonly ILogger<LessonsController> _logger;
 
         public LessonsController(
             ILessonService lessonService,
             ICourseService courseService,
             ICourseAccessService courseAccessService,
+            IQuizService quizService,
             ILogger<LessonsController> logger)
         {
             _lessonService = lessonService;
             _courseService = courseService;
             _courseAccessService = courseAccessService;
+            _quizService = quizService;
             _logger = logger;
         }
 
@@ -92,6 +95,22 @@ namespace EduFlyUp.Web.Controllers
                 })
                 .ToList();
 
+            // Lấy đề thi trắc nghiệm (Quiz) của khóa học nếu có
+            EduFlyUp.BusinessObjects.Quiz? courseQuiz = null;
+            try
+            {
+                var quizzes = await _quizService.GetQuizzesByCourseIdAsync(course.Id);
+                var firstQuiz = quizzes.FirstOrDefault();
+                if (firstQuiz != null)
+                {
+                    courseQuiz = await _quizService.GetQuizWithQuestionsAsync(firstQuiz.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Không thể tải đề thi trắc nghiệm cho khóa học {CourseId}", course.Id);
+            }
+
             var viewModel = new LearnLessonViewModel
             {
                 CurrentLesson = lesson,
@@ -101,7 +120,8 @@ namespace EduFlyUp.Web.Controllers
                 PreviousLesson = prevLesson,
                 NextLesson = nextLesson,
                 IsEnrolled = canLearn,
-                CanManageCourse = canManage
+                CanManageCourse = canManage,
+                CourseQuiz = courseQuiz
             };
 
             return View("Learn", viewModel);

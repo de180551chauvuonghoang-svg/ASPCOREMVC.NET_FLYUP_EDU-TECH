@@ -1,0 +1,32 @@
+========================================================================
+EDULYUP - BỘ TÀI LIỆU KHÓA HỌC: HTML5, CSS3 & MODERN JAVASCRIPT
+Giảng viên: ThS. Hoàng Minh Đức - Senior Frontend Engineer
+========================================================================
+
+CHƯƠNG 1: TỔNG QUAN VỀ HTML5 VÀ THẺ NGỮ NGHĨA (SEMANTIC HTML)
+
+1. Giới thiệu DOCTYPE & Cấu trúc cơ bản
+   <!DOCTYPE html>
+   <html lang="vi">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>Khóa học HTML5 EduFlyUp</title>
+   </head>
+   <body>
+   </body>
+   </html>
+
+2. Các thẻ Semantic quan trọng:
+   - <header>: Định nghĩa phần đầu của trang hoặc section.
+   - <nav>: Chứa danh sách các liên kết điều hướng chính.
+   - <main>: Nội dung duy nhất và quan trọng nhất của trang.
+   - <article>: Bài viết độc lập, có thể tái sử dụng hoặc chia sẻ.
+   - <section>: Nhóm các nội dung có cùng chủ đề.
+   - <aside>: Nội dung phụ, thanh bên (sidebar), ghi chú.
+   - <footer>: Chân trang, bản quyền, thông tin liên hệ.
+
+3. Lưu ý về SEO và Accessibility (A11y):
+   - Luôn khai báo thuộc tính `alt` cho thẻ <img>.
+   - Mỗi trang web chỉ nên có duy nhất 1 thẻ <h1>.
+   - Sử dụng đúng cấp độ heading: h1 -> h2 -> h3, không nhảy cóc.
