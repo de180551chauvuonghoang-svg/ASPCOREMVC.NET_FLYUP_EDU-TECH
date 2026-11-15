@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using Microsoft.Data.SqlClient;
 using Npgsql;
 
@@ -8,79 +9,67 @@ class Program
 {
     static void Main(string[] args)
     {
+        Console.OutputEncoding = Encoding.UTF8;
         var sqlConnStr = "Server=DESKTOP-IJV2BTH\\SQLEXPRESS;Database=EduFlyUpDb;Trusted_Connection=True;TrustServerCertificate=True;";
         var pgConnStr = "Host=thomas.proxy.rlwy.net;Port=52251;Database=railway;Username=postgres;Password=JGBdFelMwXyPVDJRtpgdthIrGgApeTkz;SSL Mode=Prefer;Trust Server Certificate=true;";
 
-        // 1. Tạo bảng Orders trên SQL Server
+        // 1. Thêm / cập nhật khóa học trên SQL Server
         try
         {
             using var sqlConn = new SqlConnection(sqlConnStr);
             sqlConn.Open();
+
             var sqlScript = @"
-                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Orders')
+                -- Kiểm tra bài học cho các khóa 2000đ và 3000đ
+                DECLARE @cId1 INT = (SELECT Id FROM Courses WHERE Title LIKE N'%Test Thanh Toán%2.000%');
+                IF @cId1 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Lessons WHERE CourseId = @cId1)
                 BEGIN
-                    CREATE TABLE [dbo].[Orders] (
-                        [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-                        [OrderCode] NVARCHAR(50) NOT NULL UNIQUE,
-                        [UserId] NVARCHAR(450) NOT NULL,
-                        [CourseId] INT NOT NULL,
-                        [Amount] DECIMAL(18,2) NOT NULL,
-                        [Status] INT NOT NULL DEFAULT 0,
-                        [PaymentMethod] NVARCHAR(50) NOT NULL DEFAULT N'VietQR_SePay',
-                        [TransactionReference] NVARCHAR(100) NULL,
-                        [PaidAt] DATETIME2 NULL,
-                        [CreatedAt] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
-                        [UpdatedAt] DATETIME2 NULL,
-                        CONSTRAINT [FK_Orders_Courses_CourseId] FOREIGN KEY ([CourseId]) REFERENCES [dbo].[Courses] ([Id])
-                    );
-                    CREATE INDEX [IX_Orders_UserId] ON [dbo].[Orders] ([UserId]);
-                    PRINT 'Da tao bang Orders tren SQL Server';
+                    INSERT INTO Lessons (CourseId, Title, Content, VideoUrl, DurationMinutes, [Order], IsPreview, SectionName, MaterialUrl, AttachmentName, CreatedAt)
+                    VALUES 
+                    (@cId1, N'Bài 1: Xác nhận thanh toán thành công', N'Chúc mừng bạn đã thanh toán thành công khóa học 2.000đ qua SePay!', '', 10, 1, 0, N'Chương 1: Bắt đầu', '', '', GETUTCDATE()),
+                    (@cId1, N'Bài 2: Hướng dẫn học tập', N'Nội dung bài học tiếp theo...', '', 15, 2, 0, N'Chương 1: Bắt đầu', '', '', GETUTCDATE());
                 END
-                ELSE
+
+                DECLARE @cId2 INT = (SELECT Id FROM Courses WHERE Title LIKE N'%Test Thanh Toán%3.000%');
+                IF @cId2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Lessons WHERE CourseId = @cId2)
                 BEGIN
-                    PRINT 'Bang Orders da ton tai tren SQL Server';
+                    INSERT INTO Lessons (CourseId, Title, Content, VideoUrl, DurationMinutes, [Order], IsPreview, SectionName, MaterialUrl, AttachmentName, CreatedAt)
+                    VALUES 
+                    (@cId2, N'Bài 1: Xác nhận thanh toán thành công', N'Chúc mừng bạn đã thanh toán thành công khóa học 3.000đ qua SePay!', '', 10, 1, 0, N'Chương 1: Bắt đầu', '', '', GETUTCDATE());
                 END
             ";
             using var cmd = new SqlCommand(sqlScript, sqlConn);
             cmd.ExecuteNonQuery();
-            Console.WriteLine("✅ Đã cập nhật bảng Orders trên SQL Server local thành công!");
+            Console.WriteLine("✅ Đã cập nhật bài học cho khóa 2.000đ và 3.000đ trên SQL Server local thành công!");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("❌ Lỗi tạo bảng trên SQL Server: " + ex.Message);
+            Console.WriteLine("❌ Lỗi SQL Server: " + ex.Message);
         }
 
-        // 2. Tạo bảng Orders trên PostgreSQL
-        try
+        // Kiểm tra danh sách khóa học trên cả 2 DB
+        Console.WriteLine("\n=== DANH SÁCH KHÓA HỌC TRÊN SQL SERVER ===");
+        using (var sqlConn = new SqlConnection(sqlConnStr))
         {
-            using var pgConn = new NpgsqlConnection(pgConnStr);
+            sqlConn.Open();
+            using var cmd = new SqlCommand("SELECT Id, Title, Price, IsPublished FROM Courses ORDER BY Price ASC", sqlConn);
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+            {
+                Console.WriteLine($"ID: {r["Id"]} | Giá: {Convert.ToDecimal(r["Price"]):N0} đ | Published: {r["IsPublished"]} | Tiêu đề: {r["Title"]}");
+            }
+        }
+
+        Console.WriteLine("\n=== DANH SÁCH KHÓA HỌC TRÊN POSTGRESQL RAILWAY ===");
+        using (var pgConn = new NpgsqlConnection(pgConnStr))
+        {
             pgConn.Open();
-            var pgScript = @"
-                CREATE TABLE IF NOT EXISTS ""Orders"" (
-                    ""Id"" INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-                    ""OrderCode"" VARCHAR(50) NOT NULL UNIQUE,
-                    ""UserId"" VARCHAR(450) NOT NULL,
-                    ""CourseId"" INTEGER NOT NULL,
-                    ""Amount"" NUMERIC(18,2) NOT NULL,
-                    ""Status"" INTEGER NOT NULL DEFAULT 0,
-                    ""PaymentMethod"" VARCHAR(50) NOT NULL DEFAULT 'VietQR_SePay',
-                    ""TransactionReference"" VARCHAR(100),
-                    ""PaidAt"" TIMESTAMPTZ,
-                    ""CreatedAt"" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    ""UpdatedAt"" TIMESTAMPTZ,
-                    CONSTRAINT ""FK_Orders_Courses_CourseId"" FOREIGN KEY (""CourseId"") REFERENCES ""Courses"" (""Id"") ON DELETE RESTRICT
-                );
-
-                CREATE INDEX IF NOT EXISTS ""IX_Orders_OrderCode"" ON ""Orders"" (""OrderCode"");
-                CREATE INDEX IF NOT EXISTS ""IX_Orders_UserId"" ON ""Orders"" (""UserId"");
-            ";
-            using var cmd = new NpgsqlCommand(pgScript, pgConn);
-            cmd.ExecuteNonQuery();
-            Console.WriteLine("✅ Đã tạo bảng Orders trên PostgreSQL Railway thành công!");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("❌ Lỗi tạo bảng trên PostgreSQL: " + ex.Message);
+            using var cmd = new NpgsqlCommand("SELECT \"Id\", \"Title\", \"Price\", \"IsPublished\" FROM \"Courses\" ORDER BY \"Price\" ASC", pgConn);
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+            {
+                Console.WriteLine($"ID: {r["Id"]} | Giá: {Convert.ToDecimal(r["Price"]):N0} đ | Published: {r["IsPublished"]} | Tiêu đề: {r["Title"]}");
+            }
         }
     }
 }
