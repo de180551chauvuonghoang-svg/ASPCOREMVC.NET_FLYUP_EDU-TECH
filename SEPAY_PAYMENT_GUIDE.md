@@ -6,6 +6,10 @@ Tài liệu này cung cấp toàn bộ quy trình thiết lập, tài liệu API
 
 ## 1. THÔNG TIN CẤU HÌNH SEPAY CỦA DỰ ÁN
 
+- **Ngân hàng**: `TPBank (Ngân hàng Tiên Phong)`
+- **Mã BIN Napas 247**: `970423`
+- **Số tài khoản**: `25816798888`
+- **Chủ tài khoản**: `CHAU VUONG HOANG`
 - **API Key SePay**: `UDGTQNAYNA18JZ5NXLQUPZUOIRDBE3OP9AM6DUXYC9MZN4VYD5P0SVIPFRZYWA7R`
 - **Tên Key**: `EDUFLYUPDOTNET`
 - **Webhook URL Production (Railway)**:
@@ -62,10 +66,10 @@ Trong file `EduFlyUp/EduFlyUp.Web/appsettings.json`:
 {
   "SePay": {
     "ApiKey": "UDGTQNAYNA18JZ5NXLQUPZUOIRDBE3OP9AM6DUXYC9MZN4VYD5P0SVIPFRZYWA7R",
-    "BankBin": "970422",
-    "BankName": "MBBank",
-    "BankAccountNumber": "0987654321",
-    "AccountHolderName": "NGUYEN VAN A"
+    "BankBin": "970423",
+    "BankName": "TPBank",
+    "BankAccountNumber": "25816798888",
+    "AccountHolderName": "CHAU VUONG HOANG"
   }
 }
 ```

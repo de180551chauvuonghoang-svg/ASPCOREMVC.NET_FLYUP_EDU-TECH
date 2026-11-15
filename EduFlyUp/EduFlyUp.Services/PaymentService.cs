@@ -57,10 +57,10 @@ public class PaymentService : IPaymentService
             });
         }
 
-        var bankBin = _config["SePay:BankBin"] ?? "970422"; // 970422 là BIN MBBank
-        var bankName = _config["SePay:BankName"] ?? "MBBank";
-        var bankAcc = _config["SePay:BankAccountNumber"] ?? "0987654321";
-        var accountName = _config["SePay:AccountHolderName"] ?? "EDUFLYUP";
+        var bankBin = _config["SePay:BankBin"] ?? _config["SEPAY_BANK_BIN"] ?? "970423"; // 970423 là BIN TPBank
+        var bankName = _config["SePay:BankName"] ?? _config["SEPAY_BANK_NAME"] ?? "TPBank";
+        var bankAcc = _config["SePay:BankAccountNumber"] ?? _config["SEPAY_BANK_ACCOUNT_NUMBER"] ?? "25816798888";
+        var accountName = _config["SePay:AccountHolderName"] ?? _config["SEPAY_ACCOUNT_HOLDER_NAME"] ?? "CHAU VUONG HOANG";
 
         // URL tạo ảnh VietQR chuẩn Napas 247
         var qrImageUrl = $"https://img.vietqr.io/image/{bankBin}-{bankAcc}-compact2.png?amount={(long)amount}&addInfo={orderCode}&accountName={Uri.EscapeDataString(accountName)}";
