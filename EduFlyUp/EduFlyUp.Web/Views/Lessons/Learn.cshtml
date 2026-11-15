@@ -1,0 +1,592 @@
+@model EduFlyUp.Web.Models.Lessons.LearnLessonViewModel
+
+@{
+    ViewData["Title"] = $"{Model.CurrentLesson.Title} - {Model.Course.Title}";
+    ViewData["FullWidth"] = true;
+    ViewData["HideHeader"] = true;
+    ViewData["HideFooter"] = true;
+}
+
+<div class="learning-classroom d-flex flex-column vh-100 overflow-hidden" style="background-color: #0b0f19; color: #f8fafc;">
+    
+    <!-- Top Learning Header (Coursera Style) -->
+    <header class="learning-header px-3 px-md-4 py-2 d-flex align-items-center justify-content-between border-bottom" 
+            style="background: #111827; border-color: rgba(255, 255, 255, 0.08) !important; height: 64px; z-index: 1030;">
+        
+        <!-- Left: Back to My Courses & Course Title -->
+        <div class="d-flex align-items-center gap-3 overflow-hidden">
+            <a asp-controller="Courses" asp-action="MyCourses" class="btn btn-outline-secondary btn-sm rounded-pill text-white border-secondary-subtle px-3 py-1.5 d-flex align-items-center gap-1.5 shadow-none" 
+               title="Quay lại khóa học của tôi" style="background: rgba(255, 255, 255, 0.05); font-size: 0.85rem;">
+                <i class="bi bi-chevron-left"></i>
+                <span class="d-none d-sm-inline">Khóa học của tôi</span>
+            </a>
+
+            <div class="vr bg-secondary opacity-25 d-none d-sm-block" style="height: 24px;"></div>
+
+            <div class="d-flex flex-column text-truncate">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill align-self-start mb-0 px-2 py-0.5 d-none d-md-inline-block" style="font-size: 0.7rem;">
+                    @Model.Course.Title
+                </span>
+                <span class="fw-bold text-white text-truncate mt-0.5" style="font-size: 0.95rem;" title="@Model.CurrentLesson.Title">
+                    Bài @Model.CurrentLessonIndex: @Model.CurrentLesson.Title
+                </span>
+            </div>
+        </div>
+
+        <!-- Right: Course Progress & Next/Prev Navigation -->
+        <div class="d-flex align-items-center gap-2 gap-md-3">
+            <!-- Progress Pill -->
+            <div class="d-none d-lg-flex align-items-center gap-2 px-3 py-1.5 rounded-pill" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <div class="progress" style="width: 80px; height: 6px; background-color: rgba(255, 255, 255, 0.15);">
+                    <div id="courseProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%;"></div>
+                </div>
+                <span id="courseProgressText" class="small fw-semibold text-slate-300" style="font-size: 0.78rem;">0% hoàn thành</span>
+            </div>
+
+            <!-- Previous Lesson Button -->
+            @if (Model.PreviousLesson != null)
+            {
+                <a asp-action="Learn" asp-route-id="@Model.PreviousLesson.Id" class="btn btn-dark btn-sm rounded-circle d-flex align-items-center justify-content-center" 
+                   style="width: 38px; height: 38px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.1);" 
+                   title="Bài trước: @Model.PreviousLesson.Title">
+                    <i class="bi bi-chevron-left text-white"></i>
+                </a>
+            }
+            else
+            {
+                <button class="btn btn-dark btn-sm rounded-circle d-flex align-items-center justify-content-center opacity-25" 
+                        style="width: 38px; height: 38px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.1);" disabled>
+                    <i class="bi bi-chevron-left text-white"></i>
+                </button>
+            }
+
+            <!-- Next Lesson Button -->
+            @if (Model.NextLesson != null)
+            {
+                <a asp-action="Learn" asp-route-id="@Model.NextLesson.Id" class="btn btn-dark btn-sm rounded-circle d-flex align-items-center justify-content-center" 
+                   style="width: 38px; height: 38px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.1);" 
+                   title="Bài tiếp theo: @Model.NextLesson.Title">
+                    <i class="bi bi-chevron-right text-white"></i>
+                </a>
+            }
+            else
+            {
+                <button class="btn btn-dark btn-sm rounded-circle d-flex align-items-center justify-content-center opacity-25" 
+                        style="width: 38px; height: 38px; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.1);" disabled>
+                    <i class="bi bi-chevron-right text-white"></i>
+                </button>
+            }
+
+            <!-- Toggle Sidebar Button (For full screen focus mode) -->
+            <button id="toggleCurriculumBtn" class="btn btn-brand btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1.5 ms-1" 
+                    title="Đóng / Mở danh sách bài giảng">
+                <i class="bi bi-layout-sidebar-reverse"></i>
+                <span class="d-none d-md-inline" id="curriculumBtnText">Bài giảng</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace (2 Columns: Main Stage + Curriculum Sidebar) -->
+    <div class="learning-workspace d-flex flex-grow-1 overflow-hidden position-relative">
+        
+        <!-- Center Stage (Video + Tabs) -->
+        <div id="learningMainStage" class="stage-container flex-grow-1 overflow-y-auto" style="scroll-behavior: smooth;">
+            
+            <!-- Video Player Area -->
+            <div class="video-container-wrapper bg-black position-relative" style="background: #000000; box-shadow: inset 0 0 30px rgba(0,0,0,0.8);">
+                <div class="container-fluid px-0 px-lg-4 py-0 py-lg-3" style="max-width: 1200px;">
+                    <div class="ratio ratio-16x9 rounded-0 rounded-lg-4 overflow-hidden shadow-2xl position-relative" style="background: #0f172a;">
+                        
+                        @if (!string.IsNullOrWhiteSpace(Model.CurrentLesson.VideoUrl))
+                        {
+                            @if (Model.IsYoutubeVideo())
+                            {
+                                <iframe src="@Model.GetEmbedVideoUrl()" 
+                                        title="@Model.CurrentLesson.Title" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                        allowfullscreen 
+                                        class="w-100 h-100 border-0"></iframe>
+                            }
+                            else
+                            {
+                                <video id="mainVideoPlayer" controls controlsList="nodownload" preload="metadata" class="w-100 h-100" style="object-fit: contain;">
+                                    <source src="@Model.CurrentLesson.VideoUrl" type="video/mp4">
+                                    Trình duyệt của bạn không hỗ trợ phát thẻ video HTML5.
+                                </video>
+                            }
+                        }
+                        else
+                        {
+                            <!-- Fallback for Text-based or upcoming lesson -->
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-4" 
+                                 style="background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 shadow" 
+                                     style="width: 80px; height: 80px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8;">
+                                    <i class="bi bi-book-half fs-1"></i>
+                                </div>
+                                <h4 class="text-white fw-bold mb-2">Bài đọc & Hướng dẫn thực hành</h4>
+                                <p class="text-slate-400 small mb-0" style="max-width: 480px; color: #94a3b8;">
+                                    Bài học này được biên soạn dạng văn bản tài liệu và mã nguồn hướng dẫn chi tiết bên dưới.
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Controls Bar (Under Video) -->
+            <div class="bg-dark px-3 px-md-4 py-3 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-3" 
+                 style="background: #111827 !important; border-color: rgba(255, 255, 255, 0.08) !important;">
+                
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Complete Checkbox Button -->
+                    <button id="markCompletedBtn" class="btn btn-outline-success rounded-pill px-3 py-2 d-flex align-items-center gap-2 btn-sm fw-semibold shadow-sm transition-all">
+                        <i class="bi bi-check2-circle fs-5" id="completeIcon"></i>
+                        <span id="completeText">Đánh dấu đã hoàn thành</span>
+                    </button>
+
+                    @if (Model.CurrentLesson.IsPreview)
+                    {
+                        <span class="badge rounded-pill px-3 py-1.5 text-info" style="background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.3);">
+                            <i class="bi bi-unlock-fill me-1"></i>Học thử miễn phí
+                        </span>
+                    }
+                </div>
+
+                <!-- Next/Prev Buttons -->
+                <div class="d-flex align-items-center gap-2">
+                    @if (Model.PreviousLesson != null)
+                    {
+                        <a asp-action="Learn" asp-route-id="@Model.PreviousLesson.Id" class="btn btn-secondary rounded-pill btn-sm px-3 py-2 d-inline-flex align-items-center gap-1.5" 
+                           style="background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15);">
+                            <i class="bi bi-arrow-left"></i>
+                            <span>Bài trước</span>
+                        </a>
+                    }
+                    
+                    @if (Model.NextLesson != null)
+                    {
+                        <a asp-action="Learn" asp-route-id="@Model.NextLesson.Id" class="btn btn-brand rounded-pill btn-sm px-4 py-2 d-inline-flex align-items-center gap-1.5 shadow-glow">
+                            <span>Bài kế tiếp</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Courses" asp-action="MyCourses" class="btn btn-success rounded-pill btn-sm px-4 py-2 d-inline-flex align-items-center gap-1.5 shadow-sm">
+                            <i class="bi bi-patch-check-fill"></i>
+                            <span>Hoàn thành khóa học!</span>
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <!-- Tabbed Content Section (Coursera Style Tabs) -->
+            <div class="container-fluid px-3 px-md-5 py-4" style="max-width: 1200px;">
+                
+                <!-- Nav Tabs -->
+                <ul class="nav nav-tabs border-bottom mb-4" id="learningTab" role="tablist" style="border-color: rgba(255, 255, 255, 0.12) !important;">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active text-white fw-semibold px-4 py-2.5 d-flex align-items-center gap-2 border-0 position-relative" 
+                                id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-content" type="button" role="tab" style="background: transparent;">
+                            <i class="bi bi-file-earmark-text text-primary"></i>
+                            <span>Nội dung bài học</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-slate-300 fw-semibold px-4 py-2.5 d-flex align-items-center gap-2 border-0 position-relative" 
+                                id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources-content" type="button" role="tab" style="background: transparent;">
+                            <i class="bi bi-folder-symlink text-warning"></i>
+                            <span>Tài liệu & Học liệu</span>
+                            @if (!string.IsNullOrWhiteSpace(Model.CurrentLesson.MaterialUrl))
+                            {
+                                <span class="badge bg-warning text-dark rounded-pill" style="font-size: 0.65rem;">1</span>
+                            }
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-slate-300 fw-semibold px-4 py-2.5 d-flex align-items-center gap-2 border-0 position-relative" 
+                                id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes-content" type="button" role="tab" style="background: transparent;">
+                            <i class="bi bi-pencil-square text-success"></i>
+                            <span>Ghi chú của tôi</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-slate-300 fw-semibold px-4 py-2.5 d-flex align-items-center gap-2 border-0 position-relative" 
+                                id="qa-tab" data-bs-toggle="tab" data-bs-target="#qa-content" type="button" role="tab" style="background: transparent;">
+                            <i class="bi bi-chat-dots text-info"></i>
+                            <span>Hỏi đáp & Thảo luận</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Panes -->
+                <div class="tab-content" id="learningTabContent">
+                    
+                    <!-- TAB 1: OVERVIEW & LESSON CONTENT -->
+                    <div class="tab-pane fade show active" id="overview-content" role="tabpanel">
+                        <div class="card border-0 rounded-4 p-4 p-md-5 mb-4 shadow-sm" style="background: #111827; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
+                            <!-- Header Info -->
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+                                <div>
+                                    <div class="text-primary small fw-semibold mb-1">
+                                        <i class="bi bi-bookmark-fill me-1"></i>@Model.CurrentLesson.SectionName
+                                    </div>
+                                    <h2 class="fw-bold text-white mb-2">@Model.CurrentLesson.Title</h2>
+                                    <div class="d-flex align-items-center gap-3 small text-slate-400" style="color: #94a3b8;">
+                                        <span><i class="bi bi-clock me-1 text-primary"></i>Thời lượng: @Model.CurrentLesson.DurationMinutes phút</span>
+                                        <span>•</span>
+                                        <span><i class="bi bi-sort-numeric-down me-1 text-primary"></i>Thứ tự: Bài số @Model.CurrentLesson.Order</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Detailed Lesson Body Text -->
+                            <div class="lesson-rich-text text-slate-300" style="color: #cbd5e1; font-size: 1.05rem; line-height: 1.8;">
+                                @if (!string.IsNullOrWhiteSpace(Model.CurrentLesson.Content))
+                                {
+                                    <div style="white-space: pre-wrap;">@Model.CurrentLesson.Content</div>
+                                }
+                                else
+                                {
+                                    <p class="text-slate-400 fst-italic">
+                                        Nội dung bài giảng đang được biên soạn chi tiết. Hãy theo dõi video hướng dẫn ở trên và tải tài liệu đính kèm ở tab <strong>Tài liệu & Học liệu</strong>.
+                                    </p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: RESOURCES & ATTACHMENTS -->
+                    <div class="tab-pane fade" id="resources-content" role="tabpanel">
+                        <div class="card border-0 rounded-4 p-4 p-md-5 mb-4 shadow-sm" style="background: #111827; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
+                            <h4 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark-arrow-down-fill text-warning"></i>
+                                <span>Tài liệu & Mã nguồn đính kèm</span>
+                            </h4>
+                            <p class="text-slate-400 mb-4" style="color: #94a3b8;">
+                                Tải về mã nguồn mẫu, slide trình chiếu bài giảng và tài liệu thực hành bổ trợ cho bài học này.
+                            </p>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.CurrentLesson.MaterialUrl))
+                            {
+                                <div class="p-3 p-md-4 rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-3" 
+                                     style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-3 d-flex align-items-center justify-content-center shadow-sm" 
+                                             style="width: 50px; height: 50px; background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                                            <i class="bi bi-file-earmark-zip-fill fs-3"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold text-white mb-1">
+                                                @(string.IsNullOrWhiteSpace(Model.CurrentLesson.AttachmentName) ? "Tài liệu bài học đính kèm" : Model.CurrentLesson.AttachmentName)
+                                            </h6>
+                                            <span class="small text-slate-400" style="color: #94a3b8;">Học liệu chính thức từ giảng viên</span>
+                                        </div>
+                                    </div>
+
+                                    <a href="@Model.CurrentLesson.MaterialUrl" download class="btn btn-warning rounded-pill px-4 py-2.5 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm text-dark">
+                                        <i class="bi bi-cloud-arrow-down-fill fs-5"></i>
+                                        <span>Tải tài liệu ngay</span>
+                                    </a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-5">
+                                    <i class="bi bi-folder-x text-slate-500 fs-1 d-block mb-3" style="color: #64748b;"></i>
+                                    <h6 class="text-white fw-bold mb-1">Không có tài liệu đính kèm riêng</h6>
+                                    <p class="small text-slate-400 mb-0" style="color: #94a3b8;">Toàn bộ kiến thức đã được truyền đạt đầy đủ trong video bài giảng và nội dung bài học.</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: PERSONAL NOTES (AUTO-SAVE TO LOCALSTORAGE) -->
+                    <div class="tab-pane fade" id="notes-content" role="tabpanel">
+                        <div class="card border-0 rounded-4 p-4 p-md-5 mb-4 shadow-sm" style="background: #111827; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h4 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
+                                    <i class="bi bi-journal-text text-success"></i>
+                                    <span>Vở ghi chép cá nhân</span>
+                                </h4>
+                                <span id="noteSaveStatus" class="small text-success fw-medium" style="display: none;">
+                                    <i class="bi bi-check-circle me-1"></i>Đã tự động lưu
+                                </span>
+                            </div>
+                            <p class="text-slate-400 small mb-3" style="color: #94a3b8;">
+                                Ghi lại những điểm cốt lõi, đoạn code quan trọng hoặc mốc thời gian video. Ghi chú được lưu trữ an toàn trên trình duyệt của bạn.
+                            </p>
+                            <textarea id="lessonNotesArea" class="form-control rounded-3 p-3 mb-3 text-white" rows="8" 
+                                      placeholder="Viết ghi chú của bạn cho bài học này tại đây (Ví dụ: 03:25 - Clean Architecture Dependency Rule)..." 
+                                      style="background: rgba(0, 0, 0, 0.4); border-color: rgba(255, 255, 255, 0.15); font-family: monospace; font-size: 0.95rem;"></textarea>
+                            <div class="d-flex justify-content-end">
+                                <button id="saveNoteManualBtn" class="btn btn-outline-success btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1.5">
+                                    <i class="bi bi-save"></i>
+                                    <span>Lưu ghi chú</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: Q&A / DISCUSSIONS -->
+                    <div class="tab-pane fade" id="qa-content" role="tabpanel">
+                        <div class="card border-0 rounded-4 p-4 p-md-5 mb-4 shadow-sm" style="background: #111827; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
+                            <h4 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-question-circle-fill text-info"></i>
+                                <span>Hỏi đáp & Thảo luận cùng Giảng viên</span>
+                            </h4>
+                            <p class="text-slate-400 mb-4" style="color: #94a3b8;">
+                                Bạn gặp khó khăn hoặc có thắc mắc trong quá trình thực hành? Đặt câu hỏi tại đây để được hỗ trợ giải đáp nhanh chóng.
+                            </p>
+
+                            <div class="p-4 rounded-4 mb-4 text-center" style="background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255, 255, 255, 0.15);">
+                                <i class="bi bi-chat-heart-fill text-primary fs-2 mb-2 d-block"></i>
+                                <h6 class="text-white fw-bold mb-1">Cộng đồng học viên EduFlyUp</h6>
+                                <p class="small text-slate-400 mb-3" style="color: #94a3b8; max-width: 480px; margin: 0 auto;">
+                                    Tham gia nhóm Zalo / Discord kín của khóa học để trao đổi trực tiếp mã nguồn và thảo luận bài tập cùng các học viên khác.
+                                </p>
+                                <a href="https://github.com" target="_blank" class="btn btn-outline-brand rounded-pill btn-sm px-4 py-2">
+                                    <i class="bi bi-discord me-1"></i>Tham gia kênh thảo luận
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Right Curriculum Sidebar (Coursera Accordion Style) -->
+        <aside id="learningSidebar" class="curriculum-sidebar flex-shrink-0 border-start overflow-y-auto" 
+               style="width: 360px; background: #111827; border-color: rgba(255, 255, 255, 0.08) !important; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+            
+            <!-- Sidebar Header -->
+            <div class="p-3 border-bottom d-flex align-items-center justify-content-between position-sticky top-0" 
+                 style="background: #111827; border-color: rgba(255, 255, 255, 0.08) !important; z-index: 10;">
+                <div>
+                    <h6 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-collection-play-fill text-primary"></i>
+                        <span>Nội dung khóa học</span>
+                    </h6>
+                    <span class="small text-slate-400" style="color: #94a3b8; font-size: 0.78rem;">
+                        @Model.TotalLessonsCount bài học • @Model.TotalCourseDurationMinutes phút
+                    </span>
+                </div>
+                <button id="closeSidebarMobileBtn" class="btn btn-sm btn-dark rounded-circle d-md-none text-slate-400">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <!-- Curriculum Accordion List -->
+            <div class="accordion accordion-flush" id="curriculumAccordion">
+                @for (int sIdx = 0; sIdx < Model.Sections.Count; sIdx++)
+                {
+                    var sec = Model.Sections[sIdx];
+                    var hasCurrentLesson = sec.Lessons.Any(l => l.Id == Model.CurrentLesson.Id);
+                    var collapseId = $"collapseSection_{sIdx}";
+
+                    <div class="accordion-item border-bottom" style="background: transparent; border-color: rgba(255, 255, 255, 0.06) !important;">
+                        
+                        <!-- Section Header -->
+                        <h2 class="accordion-header" id="heading_@sIdx">
+                            <button class="accordion-button @(hasCurrentLesson ? "" : "collapsed") px-3 py-3 text-white fw-bold shadow-none" 
+                                    type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" 
+                                    aria-expanded="@(hasCurrentLesson ? "true" : "false")"
+                                    style="background: rgba(255, 255, 255, 0.02); font-size: 0.88rem;">
+                                <div class="d-flex flex-column text-start me-2">
+                                    <span class="text-truncate">@sec.SectionName</span>
+                                    <span class="small fw-normal text-slate-400" style="color: #94a3b8; font-size: 0.75rem;">
+                                        @sec.Lessons.Count bài học • @sec.TotalDurationMinutes phút
+                                    </span>
+                                </div>
+                            </button>
+                        </h2>
+
+                        <!-- Section Lessons -->
+                        <div id="@collapseId" class="accordion-collapse collapse @(hasCurrentLesson ? "show" : "")" 
+                             data-bs-parent="#curriculumAccordion">
+                            <div class="accordion-body p-0">
+                                <div class="list-group list-group-flush">
+                                    @foreach (var item in sec.Lessons)
+                                    {
+                                        var isPlaying = (item.Id == Model.CurrentLesson.Id);
+                                        <a asp-action="Learn" asp-route-id="@item.Id" 
+                                           class="list-group-item list-group-item-action px-3 py-2.5 d-flex align-items-start gap-2.5 border-0 lesson-item-row @(isPlaying ? "active-lesson" : "")" 
+                                           style="background: @(isPlaying ? "rgba(99, 102, 241, 0.15)" : "transparent"); border-left: 3px solid @(isPlaying ? "#6366f1" : "transparent") !important; text-decoration: none;">
+                                            
+                                            <!-- Checkmark / Play indicator -->
+                                            <div class="lesson-status-icon pt-0.5 flex-shrink-0" data-lesson-id="@item.Id">
+                                                @if (isPlaying)
+                                                {
+                                                    <i class="bi bi-play-circle-fill text-primary fs-6"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-circle text-slate-500 fs-6 status-circle" style="color: #64748b;"></i>
+                                                }
+                                            </div>
+
+                                            <!-- Lesson Info -->
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <div class="d-flex align-items-center justify-content-between gap-1 mb-0.5">
+                                                    <span class="small fw-semibold text-truncate @(isPlaying ? "text-primary" : "text-slate-200")" 
+                                                          style="font-size: 0.84rem; color: @(isPlaying ? "#818cf8 !important" : "#e2e8f0");" 
+                                                          title="@item.Title">
+                                                        @item.Order. @item.Title
+                                                    </span>
+                                                </div>
+
+                                                <div class="d-flex align-items-center gap-2 small text-slate-400" style="color: #94a3b8; font-size: 0.72rem;">
+                                                    <span><i class="bi bi-clock me-1"></i>@item.DurationMinutes phút</span>
+                                                    @if (item.IsPreview)
+                                                    {
+                                                        <span class="badge rounded-pill text-info px-2 py-0.5" style="background: rgba(14, 165, 233, 0.15); font-size: 0.65rem;">
+                                                            Học thử
+                                                        </span>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(item.MaterialUrl))
+                                                    {
+                                                        <span title="Có tài liệu đính kèm"><i class="bi bi-paperclip text-warning"></i></span>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                }
+            </div>
+
+        </aside>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const courseId = @Model.Course.Id;
+            const currentLessonId = @Model.CurrentLesson.Id;
+            const totalLessons = @Model.TotalLessonsCount;
+
+            // 1. Quản lý trạng thái hoàn thành bài học qua localStorage
+            const storageKey = `edu_completed_lessons_course_${courseId}`;
+            let completedLessons = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+            const markBtn = document.getElementById("markCompletedBtn");
+            const completeIcon = document.getElementById("completeIcon");
+            const completeText = document.getElementById("completeText");
+
+            function updateCompletionUI() {
+                const isCompleted = completedLessons.includes(currentLessonId);
+                if (isCompleted) {
+                    markBtn.classList.remove("btn-outline-success");
+                    markBtn.classList.add("btn-success");
+                    completeIcon.className = "bi bi-check2-all fs-5";
+                    completeText.textContent = "Đã hoàn thành bài học này";
+                } else {
+                    markBtn.classList.add("btn-outline-success");
+                    markBtn.classList.remove("btn-success");
+                    completeIcon.className = "bi bi-check2-circle fs-5";
+                    completeText.textContent = "Đánh dấu đã hoàn thành";
+                }
+
+                // Cập nhật các icon trong sidebar
+                document.querySelectorAll(".lesson-status-icon").forEach(el => {
+                    const lId = parseInt(el.getAttribute("data-lesson-id"));
+                    if (lId !== currentLessonId) {
+                        if (completedLessons.includes(lId)) {
+                            el.innerHTML = '<i class="bi bi-check-circle-fill text-success fs-6"></i>';
+                        } else {
+                            el.innerHTML = '<i class="bi bi-circle text-slate-500 fs-6" style="color: #64748b;"></i>';
+                        }
+                    }
+                });
+
+                // Cập nhật thanh % tiến độ toàn khóa
+                const progressPct = totalLessons > 0 ? Math.round((completedLessons.length / totalLessons) * 100) : 0;
+                const progressBar = document.getElementById("courseProgressBar");
+                const progressText = document.getElementById("courseProgressText");
+                if (progressBar) progressBar.style.width = `${progressPct}%`;
+                if (progressText) progressText.textContent = `${progressPct}% (${completedLessons.length}/${totalLessons} bài)`;
+            }
+
+            markBtn.addEventListener("click", function () {
+                const idx = completedLessons.indexOf(currentLessonId);
+                if (idx > -1) {
+                    completedLessons.splice(idx, 1);
+                } else {
+                    completedLessons.push(currentLessonId);
+                }
+                localStorage.setItem(storageKey, JSON.stringify(completedLessons));
+                updateCompletionUI();
+            });
+
+            updateCompletionUI();
+
+            // 2. Tự động lưu ghi chú bài học (Auto-save Notes)
+            const notesKey = `edu_note_lesson_${currentLessonId}`;
+            const notesArea = document.getElementById("lessonNotesArea");
+            const noteStatus = document.getElementById("noteSaveStatus");
+            const manualSaveBtn = document.getElementById("saveNoteManualBtn");
+
+            if (notesArea) {
+                notesArea.value = localStorage.getItem(notesKey) || "";
+
+                let timeoutId = null;
+                notesArea.addEventListener("input", function () {
+                    if (noteStatus) noteStatus.style.display = "none";
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(() => {
+                        localStorage.setItem(notesKey, notesArea.value);
+                        if (noteStatus) {
+                            noteStatus.style.display = "inline-flex";
+                            setTimeout(() => { noteStatus.style.display = "none"; }, 3000);
+                        }
+                    }, 800);
+                });
+
+                if (manualSaveBtn) {
+                    manualSaveBtn.addEventListener("click", function () {
+                        localStorage.setItem(notesKey, notesArea.value);
+                        if (noteStatus) {
+                            noteStatus.style.display = "inline-flex";
+                            setTimeout(() => { noteStatus.style.display = "none"; }, 3000);
+                        }
+                    });
+                }
+            }
+
+            // 3. Đóng / Mở Sidebar học tập (Theater / Focus Mode)
+            const toggleBtn = document.getElementById("toggleCurriculumBtn");
+            const sidebar = document.getElementById("learningSidebar");
+            const btnText = document.getElementById("curriculumBtnText");
+            const closeMobileBtn = document.getElementById("closeSidebarMobileBtn");
+
+            let isSidebarOpen = true;
+
+            function toggleSidebar() {
+                isSidebarOpen = !isSidebarOpen;
+                if (isSidebarOpen) {
+                    sidebar.style.display = "block";
+                    sidebar.style.width = "360px";
+                    if (btnText) btnText.textContent = "Ẩn bài giảng";
+                } else {
+                    sidebar.style.width = "0px";
+                    setTimeout(() => { if (!isSidebarOpen) sidebar.style.display = "none"; }, 300);
+                    if (btnText) btnText.textContent = "Hiện bài giảng";
+                }
+            }
+
+            if (toggleBtn) toggleBtn.addEventListener("click", toggleSidebar);
+            if (closeMobileBtn) closeMobileBtn.addEventListener("click", toggleSidebar);
+        });
+    </script>
+}
