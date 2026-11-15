@@ -26,11 +26,11 @@ public class PaymentController : Controller
             return RedirectToAction("Login", "Account", new { returnUrl = $"/Payment/Checkout/{id}" });
         }
 
-        // Kiểm tra xem học viên đã sở hữu khóa học này chưa
+        // Kiểm tra xem học viên đã sở hữu khóa học này chưa (chặn không cho mua 2 lần)
         if (await _paymentService.IsCourseEnrolledAsync(userId, id))
         {
-            TempData["SuccessMessage"] = "Bạn đã ghi danh khóa học này rồi! Hãy bắt đầu học ngay.";
-            return RedirectToAction("Details", "Courses", new { id });
+            TempData["SuccessMessage"] = "Bạn đã sở hữu khóa học này rồi! Không thể mua hai lần.";
+            return RedirectToAction("MyCourses", "Courses");
         }
 
         try

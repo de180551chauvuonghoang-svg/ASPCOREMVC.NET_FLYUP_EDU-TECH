@@ -31,6 +31,15 @@ public class CoursesController : Controller
     {
         var courses = await _courseService.GetPublishedCoursesAsync();
 
+        // Ẩn các khóa học mà người dùng hiện tại đã mua / đã ghi danh (không hiển thị để không mua 2 lần)
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(userId) && _enrollmentRepo != null)
+        {
+            var userEnrollments = await _enrollmentRepo.GetByUserIdAsync(userId);
+            var enrolledCourseIds = userEnrollments.Select(e => e.CourseId).ToHashSet();
+            courses = courses.Where(c => !enrolledCourseIds.Contains(c.Id));
+        }
+
         var viewModel = courses.Select(c => new CourseItemModel
         {
             Id = c.Id,
