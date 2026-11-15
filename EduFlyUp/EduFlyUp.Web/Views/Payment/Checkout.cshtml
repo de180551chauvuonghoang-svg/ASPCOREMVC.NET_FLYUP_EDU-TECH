@@ -168,7 +168,7 @@
                 statusText.innerText = 'Thanh toán thành công! Đang chuyển hướng vào khóa học...';
 
                 setTimeout(() => {
-                    window.location.href = `/Courses/Details/${courseId}?enrolled=true`;
+                    window.location.href = `/Courses/MyCourses?enrolled=true`;
                 }, 1500);
             } else if (isManual) {
                 const statusText = document.getElementById('status-text');

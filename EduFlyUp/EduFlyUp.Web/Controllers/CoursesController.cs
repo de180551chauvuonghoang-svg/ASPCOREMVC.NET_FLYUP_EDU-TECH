@@ -45,6 +45,37 @@ public class CoursesController : Controller
         return View(viewModel);
     }
 
+    // GET: /Courses/MyCourses
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> MyCourses()
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return RedirectToAction("Login", "Account", new { returnUrl = "/Courses/MyCourses" });
+        }
+
+        var enrollments = _enrollmentRepo != null 
+            ? await _enrollmentRepo.GetByUserIdAsync(userId) 
+            : Enumerable.Empty<Enrollment>();
+
+        var viewModel = enrollments.Select(e => new MyCourseItemModel
+        {
+            EnrollmentId = e.Id,
+            CourseId = e.Course.Id,
+            CourseTitle = e.Course.Title,
+            Description = e.Course.Description,
+            ThumbnailUrl = string.IsNullOrEmpty(e.Course.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80" : e.Course.ThumbnailUrl,
+            EnrolledAt = e.EnrolledAt,
+            LessonCount = e.Course.Lessons.Count,
+            FirstLessonId = e.Course.Lessons.OrderBy(l => l.Order).FirstOrDefault()?.Id,
+            Status = e.Status
+        }).ToList();
+
+        return View(viewModel);
+    }
+
     // GET: /Courses/Details/5
     [HttpGet]
     public async Task<IActionResult> Details([FromRoute] int id)

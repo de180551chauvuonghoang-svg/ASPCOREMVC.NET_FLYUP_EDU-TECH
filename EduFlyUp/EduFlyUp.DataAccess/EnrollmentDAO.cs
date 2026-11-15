@@ -10,7 +10,9 @@ namespace EduFlyUp.DataAccess
             using var context = new AppDbContext();
             return await context.Enrollments
                 .Include(e => e.Course)
-                .Where(e => e.UserId == userId)
+                    .ThenInclude(c => c.Lessons)
+                .Where(e => e.UserId == userId && (e.Status == EnrollmentStatus.Active || e.Status == EnrollmentStatus.Completed))
+                .OrderByDescending(e => e.EnrolledAt)
                 .ToListAsync();
         }
 
