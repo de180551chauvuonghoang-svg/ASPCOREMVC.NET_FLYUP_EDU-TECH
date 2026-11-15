@@ -11,12 +11,18 @@ public class CoursesController : Controller
     private readonly ICourseService _courseService;
     private readonly ICourseAccessService _courseAccess;
     private readonly EduFlyUp.Web.Storage.LessonFileCleanup _fileCleanup;
+    private readonly EduFlyUp.Repositories.IEnrollmentRepository? _enrollmentRepo;
 
-    public CoursesController(ICourseService courseService, ICourseAccessService courseAccess, EduFlyUp.Web.Storage.LessonFileCleanup fileCleanup)
+    public CoursesController(
+        ICourseService courseService, 
+        ICourseAccessService courseAccess, 
+        EduFlyUp.Web.Storage.LessonFileCleanup fileCleanup,
+        EduFlyUp.Repositories.IEnrollmentRepository? enrollmentRepo = null)
     {
         _courseService = courseService;
         _courseAccess = courseAccess;
         _fileCleanup = fileCleanup;
+        _enrollmentRepo = enrollmentRepo;
     }
 
     // GET: /Courses
@@ -51,6 +57,9 @@ public class CoursesController : Controller
 
         if (!await _courseAccess.CanViewCourseAsync(course, User)) return NotFound();
 
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var isEnrolled = !string.IsNullOrEmpty(userId) && _enrollmentRepo != null && await _enrollmentRepo.IsEnrolledAsync(userId, id);
+
         var viewModel = new DetailCourseModel
         {
             Id = course.Id,
@@ -61,6 +70,7 @@ public class CoursesController : Controller
             Level = course.Level,
             CreatedAt = course.CreatedAt,
             CanManage = _courseAccess.CanManageCourse(course, User),
+            IsEnrolled = isEnrolled,
             Lessons = course.Lessons.OrderBy(l => l.Order).Select(l => new LessonItemViewModel
             {
                 Id = l.Id,

@@ -20,6 +20,7 @@ namespace EduFlyUp.DataAccess
         public DbSet<QuizAttempt> QuizAttempts => Set<QuizAttempt>();
         public DbSet<Coupon> Coupons => Set<Coupon>();
         public DbSet<PayoutRequest> PayoutRequests => Set<PayoutRequest>();
+        public DbSet<Order> Orders => Set<Order>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

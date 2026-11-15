@@ -107,6 +107,8 @@ builder.Services.AddScoped<IAdminUserStatusLock, SqlServerAdminUserStatusLock>()
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
 builder.Services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 // 4. Cấu hình Cookie Authentication & External Logins
 builder.Services.ConfigureApplicationCookie(options =>

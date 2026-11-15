@@ -13,6 +13,7 @@ public class DetailCourseModel
     public CourseLevel Level { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool CanManage { get; set; }
+    public bool IsEnrolled { get; set; }
     public List<LessonItemViewModel> Lessons { get; set; } = new();
 }
 

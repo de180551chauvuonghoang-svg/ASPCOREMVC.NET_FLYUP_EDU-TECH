@@ -168,10 +168,27 @@
                 </div>
             </div>
 
-            <button class="btn btn-brand w-100 py-3 mb-3 rounded-pill shadow-glow fs-6 d-flex align-items-center justify-content-center gap-2">
-                <i class="bi bi-lightning-charge-fill"></i>
-                <span>Đăng ký học ngay</span>
-            </button>
+            @if (Model.IsEnrolled)
+            {
+                <div class="alert alert-success border-success-subtle rounded-pill py-2 px-3 text-center mb-3 small d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-patch-check-fill text-success fs-5"></i>
+                    <span class="fw-bold">Bạn đã sở hữu khóa học này!</span>
+                </div>
+                @if (Model.Lessons.Any())
+                {
+                    <a asp-controller="Lessons" asp-action="Details" asp-route-id="@Model.Lessons.First().Id" class="btn btn-success w-100 py-3 mb-3 rounded-pill shadow-glow fs-6 d-flex align-items-center justify-content-center gap-2 fw-bold text-decoration-none">
+                        <i class="bi bi-play-circle-fill fs-5"></i>
+                        <span>Vào học ngay</span>
+                    </a>
+                }
+            }
+            else
+            {
+                <a asp-controller="Payment" asp-action="Checkout" asp-route-id="@Model.Id" class="btn btn-brand w-100 py-3 mb-3 rounded-pill shadow-glow fs-6 d-flex align-items-center justify-content-center gap-2 fw-bold text-decoration-none">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    <span>Đăng ký học ngay</span>
+                </a>
+            }
 
             @if (Model.CanManage)
             {

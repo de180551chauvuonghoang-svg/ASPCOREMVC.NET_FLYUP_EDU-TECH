@@ -1,0 +1,195 @@
+@model EduFlyUp.Services.CheckoutViewModel
+
+@{
+    ViewData["Title"] = $"Thanh toán khóa học: {Model.CourseTitle}";
+}
+
+<div class="container py-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted text-decoration-none"><i class="bi bi-house me-1"></i>Trang chủ</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Courses" asp-action="Index" class="text-muted text-decoration-none">Khóa học</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Courses" asp-action="Details" asp-route-id="@Model.CourseId" class="text-muted text-decoration-none">@Model.CourseTitle</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Thanh toán</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <!-- Header -->
+                <div class="bg-primary text-white p-4 text-center position-relative">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-white text-primary rounded-circle mb-2" style="width: 48px; height: 48px;">
+                        <i class="bi bi-qr-code-scan fs-4"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">Thanh toán chuyển khoản qua VietQR</h3>
+                    <p class="mb-0 opacity-75 small">Mở bất kỳ App Ngân hàng hoặc Ví điện tử để quét mã thanh toán tự động</p>
+                </div>
+
+                <!-- Body -->
+                <div class="card-body p-4 p-md-5">
+                    <div class="row align-items-center g-4">
+                        <!-- Cột Trái: Mã VietQR -->
+                        <div class="col-md-5 text-center border-end-md">
+                            <div class="p-3 bg-white border border-2 border-primary-subtle rounded-4 d-inline-block shadow-sm position-relative">
+                                <img src="@Model.QrImageUrl" alt="VietQR Code" class="img-fluid rounded-3" style="max-width: 250px; width: 100%;" />
+                            </div>
+
+                            <div class="mt-3">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill small d-inline-flex align-items-center gap-1">
+                                    <span class="spinner-grow spinner-grow-sm text-success" role="status" style="width: 8px; height: 8px;"></span>
+                                    <span>Tự động kích hoạt trong 3 - 5 giây</span>
+                                </span>
+                            </div>
+
+                            <div class="mt-2 text-muted small">
+                                <i class="bi bi-shield-check text-primary me-1"></i>Bảo mật chuẩn liên ngân hàng Napas 247
+                            </div>
+                        </div>
+
+                        <!-- Cột Phải: Thông tin chuyển khoản chi tiết -->
+                        <div class="col-md-7">
+                            <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+                                <img src="@Model.CourseThumbnail" alt="@Model.CourseTitle" class="rounded-3" style="width: 60px; height: 60px; object-fit: cover;" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80';" />
+                                <div>
+                                    <div class="text-muted small">Khóa học đăng ký:</div>
+                                    <h6 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 320px;">@Model.CourseTitle</h6>
+                                </div>
+                            </div>
+
+                            <!-- Danh sách thông tin nhận tiền -->
+                            <ul class="list-group list-group-flush mb-4">
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                    <span class="text-muted small">Ngân hàng</span>
+                                    <span class="fw-bold text-dark">@Model.BankName</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                    <span class="text-muted small">Số tài khoản</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fw-bold text-primary fs-5" id="txt-stk">@Model.BankAccountNumber</span>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-0 rounded-pill copy-btn" onclick="copyText('@Model.BankAccountNumber', this)" title="Sao chép số tài khoản">
+                                            <i class="bi bi-copy"></i>
+                                        </button>
+                                    </div>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                    <span class="text-muted small">Chủ tài khoản</span>
+                                    <span class="fw-bold text-dark text-uppercase">@Model.AccountHolderName</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                    <span class="text-muted small">Số tiền cần chuyển</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fw-extrabold text-danger fs-4">@Model.Amount.ToString("N0") <span class="fs-6 text-muted fw-normal">đ</span></span>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-0 rounded-pill copy-btn" onclick="copyText('@((long)Model.Amount)', this)" title="Sao chép số tiền">
+                                            <i class="bi bi-copy"></i>
+                                        </button>
+                                    </div>
+                                </li>
+                                <li class="list-group-item px-0 py-3">
+                                    <div class="p-3 bg-warning-subtle border border-warning rounded-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="text-dark small fw-bold text-uppercase"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>Nội dung chuyển tiền chính xác:</span>
+                                            <button type="button" class="btn btn-warning btn-sm px-2 py-0 rounded-pill copy-btn text-dark fw-semibold" onclick="copyText('@Model.TransferContent', this)">
+                                                <i class="bi bi-copy me-1"></i>Copy
+                                            </button>
+                                        </div>
+                                        <div class="fw-black text-primary fs-4 letter-spacing-1 font-monospace" id="txt-content">
+                                            @Model.TransferContent
+                                        </div>
+                                        <div class="text-muted small mt-1" style="font-size: 0.78rem;">
+                                            * Vui lòng giữ nguyên nội dung trên để hệ thống tự động ghi nhận học phí.
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <a asp-controller="Courses" asp-action="Details" asp-route-id="@Model.CourseId" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm">
+                                    <i class="bi bi-arrow-left me-1"></i>Hủy & Quay lại
+                                </a>
+                                <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 btn-sm ms-auto" onclick="checkPaymentStatus(true)">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Kiểm tra trạng thái ngay
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Status Bar -->
+                <div class="card-footer bg-light p-3 text-center border-top">
+                    <div id="payment-status-box" class="d-flex align-items-center justify-content-center gap-2 text-muted small">
+                        <span id="loading-spinner" class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                        <span id="status-text">Đang chờ hệ thống ngân hàng xác nhận giao dịch...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const orderCode = "@Model.OrderCode";
+    const courseId = @Model.CourseId;
+    let isCompleted = false;
+
+    // Hàm copy text vào clipboard
+    function copyText(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check2"></i> Đã chép';
+            btn.classList.add('btn-success');
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('btn-success');
+            }, 1500);
+        }).catch(err => {
+            console.error('Không thể copy:', err);
+        });
+    }
+
+    // Hàm kiểm tra trạng thái thanh toán từ backend
+    async function checkPaymentStatus(isManual = false) {
+        if (isCompleted) return;
+
+        try {
+            const response = await fetch(`/api/payments/status/${orderCode}`);
+            const data = await response.json();
+
+            if (data.success && data.isPaid) {
+                isCompleted = true;
+                const statusBox = document.getElementById('payment-status-box');
+                const statusText = document.getElementById('status-text');
+                const spinner = document.getElementById('loading-spinner');
+
+                spinner.className = 'bi bi-check-circle-fill text-success fs-5';
+                statusText.className = 'text-success fw-bold fs-6';
+                statusText.innerText = 'Thanh toán thành công! Đang chuyển hướng vào khóa học...';
+
+                setTimeout(() => {
+                    window.location.href = `/Courses/Details/${courseId}?enrolled=true`;
+                }, 1500);
+            } else if (isManual) {
+                const statusText = document.getElementById('status-text');
+                const oldText = statusText.innerText;
+                statusText.innerText = 'Chưa nhận được giao dịch. Vui lòng đợi trong giây lát...';
+                setTimeout(() => {
+                    if (!isCompleted) statusText.innerText = oldText;
+                }, 2000);
+            }
+        } catch (err) {
+            console.error('Lỗi khi kiểm tra trạng thái:', err);
+        }
+    }
+
+    // Polling tự động mỗi 3 giây
+    const pollInterval = setInterval(() => {
+        if (!isCompleted) {
+            checkPaymentStatus(false);
+        } else {
+            clearInterval(pollInterval);
+        }
+    }, 3000);
+</script>
+}
