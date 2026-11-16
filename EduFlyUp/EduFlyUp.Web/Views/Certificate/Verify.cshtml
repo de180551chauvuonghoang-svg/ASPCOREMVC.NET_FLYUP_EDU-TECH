@@ -1,0 +1,106 @@
+@model EduFlyUp.BusinessObjects.Certificate
+
+@{
+    ViewData["Title"] = Model != null ? $"Xác minh Chứng chỉ #{Model.CertificateCode} - EduFlyUp" : "Tra cứu Chứng chỉ - EduFlyUp";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 shadow-sm" 
+                     style="width: 80px; height: 80px; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #facc15; border: 2px solid #facc15;">
+                    <i class="bi bi-patch-check-fill fs-1"></i>
+                </div>
+                <h2 class="fw-extrabold text-dark mb-2">Hệ Thống Tra Cứu & Xác Minh Chứng Chỉ</h2>
+                <p class="text-muted">Cổng xác thực văn bằng điện tử chính thức từ Nền tảng Đào tạo Công nghệ EduFlyUp</p>
+            </div>
+
+            @if (Model != null)
+            {
+                <!-- Certificate Verified Card -->
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4" style="border-top: 6px solid #10b981 !important;">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4 pb-3 border-bottom">
+                            <span class="badge px-3 py-2 rounded-pill fw-bold d-inline-flex align-items-center gap-1.5" 
+                                  style="background: #ecfdf5; color: #059669; font-size: 0.9rem; border: 1px solid #a7f3d0;">
+                                <i class="bi bi-shield-fill-check"></i>
+                                CHỨNG CHỈ HỢP LỆ & ĐƯỢC XÁC NHẬN
+                            </span>
+                            <span class="text-muted small">
+                                Mã tra cứu: <strong class="text-dark font-monospace">@Model.CertificateCode</strong>
+                            </span>
+                        </div>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-sm-6">
+                                <label class="small text-muted text-uppercase fw-semibold mb-1">Học viên được cấp</label>
+                                <h4 class="fw-bold text-dark mb-0">@Model.StudentName</h4>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="small text-muted text-uppercase fw-semibold mb-1">Khóa học hoàn thành</label>
+                                <h5 class="fw-bold text-primary mb-0">@Model.CourseTitle</h5>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="small text-muted text-uppercase fw-semibold mb-1">Điểm thi tốt nghiệp (Final Test)</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-warning text-dark fs-6 px-3 py-1.5 rounded-pill fw-bold">
+                                        <i class="bi bi-trophy-fill me-1"></i>@Model.FinalScore%
+                                    </span>
+                                    <span class="small text-success fw-semibold">(Đạt chuẩn xuất sắc &ge; 95%)</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="small text-muted text-uppercase fw-semibold mb-1">Ngày cấp chứng nhận</label>
+                                <p class="fw-semibold text-dark mb-0 fs-6">
+                                    <i class="bi bi-calendar-event me-1.5 text-secondary"></i>@Model.IssuedAt.ToString("dd/MM/yyyy HH:mm:ss") (UTC)
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-3 mb-4" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
+                            <div class="d-flex align-items-center gap-3">
+                                <i class="bi bi-award fs-2 text-warning flex-shrink-0"></i>
+                                <div class="small text-secondary">
+                                    Chứng chỉ điện tử này chứng nhận học viên đã hoàn thành 100% chương trình đào tạo và vượt qua kỳ thi đánh giá năng lực cuối khóa theo tiêu chuẩn kiểm định của EduFlyUp.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-3 justify-content-center pt-2">
+                            <a asp-action="ViewCertificate" asp-route-id="@Model.Id" target="_blank" 
+                               class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold d-inline-flex align-items-center gap-2 shadow-sm">
+                                <i class="bi bi-eye-fill"></i>
+                                <span>Xem Bản In Chứng Chỉ Đầy Đủ</span>
+                            </a>
+                            <a asp-controller="Courses" asp-action="Index" 
+                               class="btn btn-outline-secondary rounded-pill px-4 py-2.5 fw-semibold">
+                                <i class="bi bi-arrow-left me-1"></i>Trang chủ Khóa học
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Invalid or Not Found Alert -->
+                <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white" style="border-top: 6px solid #ef4444 !important;">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mx-auto mb-3" 
+                         style="width: 72px; height: 72px; background: #fee2e2; color: #dc2626;">
+                        <i class="bi bi-exclamation-triangle-fill fs-2"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-2">Không tìm thấy chứng chỉ</h4>
+                    <p class="text-muted mx-auto mb-4" style="max-width: 500px;">
+                        @(ViewBag.ErrorMessage ?? "Mã số chứng chỉ không tồn tại trên hệ thống hoặc liên kết xác minh không chính xác. Vui lòng kiểm tra lại mã số.")
+                    </p>
+                    <div>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary rounded-pill px-4 py-2.5">
+                            <i class="bi bi-house me-1"></i>Trở về trang chủ
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

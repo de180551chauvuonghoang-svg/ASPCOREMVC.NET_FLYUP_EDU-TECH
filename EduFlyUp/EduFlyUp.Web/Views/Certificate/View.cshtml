@@ -1,0 +1,339 @@
+@model EduFlyUp.BusinessObjects.Certificate
+
+@{
+    Layout = null;
+    ViewData["Title"] = $"Chứng chỉ tốt nghiệp - {Model.StudentName} - EduFlyUp";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #0b0f19;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Action bar outside print */
+        .top-action-bar {
+            width: 100%;
+            max-width: 1050px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+        }
+
+        /* Certificate A4 Landscape Canvas */
+        .certificate-canvas {
+            width: 1000px;
+            height: 700px;
+            background: #ffffff;
+            position: relative;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 40px;
+            box-sizing: border-box;
+            overflow: hidden;
+            color: #0f172a;
+        }
+
+        /* Gold Guilloche Outer & Inner Borders */
+        .cert-outer-border {
+            width: 100%;
+            height: 100%;
+            border: 4px solid #b45309;
+            box-sizing: border-box;
+            padding: 8px;
+            position: relative;
+        }
+
+        .cert-inner-border {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #d97706;
+            box-sizing: border-box;
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+            background: radial-gradient(circle at center, #ffffff 60%, #fffbeb 100%);
+            position: relative;
+        }
+
+        /* Corner Decorative Ornaments */
+        .corner-ornament {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            border-color: #b45309;
+            border-style: solid;
+        }
+        .corner-tl { top: 6px; left: 6px; border-width: 3px 0 0 3px; }
+        .corner-tr { top: 6px; right: 6px; border-width: 3px 3px 0 0; }
+        .corner-bl { bottom: 6px; left: 6px; border-width: 0 0 3px 3px; }
+        .corner-br { bottom: 6px; right: 6px; border-width: 0 3px 3px 0; }
+
+        /* Typography */
+        .cert-brand-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 800;
+            font-size: 1.35rem;
+            letter-spacing: 0.15em;
+            color: #1e1b4b;
+            text-transform: uppercase;
+        }
+
+        .cert-main-heading {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #92400e;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin: 5px 0 2px 0;
+            text-shadow: 1px 1px 0 rgba(245, 158, 11, 0.2);
+        }
+
+        .cert-subtitle {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.88rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .cert-statement {
+            font-size: 1rem;
+            color: #475569;
+            font-style: italic;
+            margin-top: 15px;
+        }
+
+        .cert-student-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #0f172a;
+            border-bottom: 2px solid #d97706;
+            display: inline-block;
+            padding: 0 30px 6px 30px;
+            margin: 8px 0;
+            letter-spacing: 0.02em;
+        }
+
+        .cert-course-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            max-width: 750px;
+            line-height: 1.4;
+            margin: 6px auto;
+        }
+
+        .cert-score-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(245, 158, 11, 0.12);
+            color: #b45309;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 50px;
+            padding: 4px 18px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-top: 6px;
+        }
+
+        /* Gold 3D Seal */
+        .gold-seal {
+            width: 86px;
+            height: 86px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #fef08a 0%, #f59e0b 60%, #b45309 100%);
+            border: 3px solid #fef08a;
+            box-shadow: 0 8px 18px rgba(180, 83, 9, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #78350f;
+            position: relative;
+        }
+
+        /* Signatures & Footer info */
+        .cert-footer-row {
+            width: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding: 0 10px;
+        }
+
+        .signature-block {
+            width: 220px;
+            text-align: center;
+        }
+        .signature-line {
+            width: 100%;
+            height: 1px;
+            background: #cbd5e1;
+            margin-bottom: 6px;
+        }
+        .signature-title {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .signature-name {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: #1e1b4b;
+            font-size: 1.05rem;
+        }
+
+        /* Print Media Styles */
+        @@media print {
+            body {
+                background: transparent !important;
+                padding: 0 !important;
+            }
+            .top-action-bar {
+                display: none !important;
+            }
+            .certificate-canvas {
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: 100vh !important;
+                page-break-after: avoid;
+            }
+            @@page {
+                size: A4 landscape;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Action Bar for Screen view -->
+    <div class="top-action-bar">
+        <a href="/Courses/MyCourses" class="btn btn-outline-light rounded-pill px-3 py-2 btn-sm d-inline-flex align-items-center gap-1.5">
+            <i class="bi bi-arrow-left"></i>
+            <span>Về Khóa học của tôi</span>
+        </a>
+
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-warning rounded-pill px-4 py-2 btn-sm fw-bold d-inline-flex align-items-center gap-2 shadow-sm text-dark">
+                <i class="bi bi-printer-fill fs-6"></i>
+                <span>In Chứng chỉ / Lưu PDF</span>
+            </button>
+            <a href="@Model.VerificationUrl" target="_blank" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm text-white">
+                <i class="bi bi-shield-check me-1"></i>Xác minh
+            </a>
+        </div>
+    </div>
+
+    <!-- Certificate Canvas -->
+    <div class="certificate-canvas">
+        <div class="cert-outer-border">
+            <div class="corner-ornament corner-tl"></div>
+            <div class="corner-ornament corner-tr"></div>
+            <div class="corner-ornament corner-bl"></div>
+            <div class="corner-ornament corner-br"></div>
+
+            <div class="cert-inner-border">
+                
+                <!-- Header Logo & Institution -->
+                <div>
+                    <div class="cert-brand-title">
+                        <i class="bi bi-mortarboard-fill text-warning me-2"></i>EduFlyUp Tech & Education
+                    </div>
+                    <div class="cert-subtitle mt-1">Học viện Đào tạo Kỹ sư Phần mềm Thực chiến</div>
+                </div>
+
+                <!-- Main Certificate Headings -->
+                <div>
+                    <div class="cert-main-heading">CHỨNG CHỈ TỐT NGHIỆP</div>
+                    <div class="cert-subtitle" style="color: #b45309;">CERTIFICATE OF EXCELLENCE & COMPLETION</div>
+                    <div class="cert-statement">Chứng nhận học viên</div>
+                    
+                    <!-- Student Name -->
+                    <div class="cert-student-name">@Model.StudentName</div>
+
+                    <div class="cert-statement" style="margin-top: 4px;">
+                        Đã hoàn thành xuất sắc chương trình đào tạo và đạt điểm số tốt nghiệp kỳ thi Final Test của khóa học:
+                    </div>
+
+                    <!-- Course Title -->
+                    <div class="cert-course-title">@Model.CourseTitle</div>
+
+                    <!-- Score Badge -->
+                    <div class="cert-score-badge">
+                        <i class="bi bi-award-fill"></i>
+                        <span>ĐIỂM FINAL TEST: @Model.FinalScore% (XUẤT SẮC)</span>
+                    </div>
+                </div>
+
+                <!-- Footer Signatures, Seal & Verification -->
+                <div class="cert-footer-row">
+                    <!-- Left: Academic Director Signature -->
+                    <div class="signature-block">
+                        <div class="mb-2" style="font-family: 'Playfair Display', cursive; font-style: italic; font-size: 1.3rem; color: #1e3a8a;">
+                            HoangMinhDuc
+                        </div>
+                        <div class="signature-line"></div>
+                        <div class="signature-name">ThS. Hoàng Minh Đức</div>
+                        <div class="signature-title">Giảng viên Trưởng & Ban Cố Vấn</div>
+                    </div>
+
+                    <!-- Center: 3D Gold Seal & Code -->
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="gold-seal mb-1">
+                            <i class="bi bi-patch-check-fill" style="font-size: 2.8rem;"></i>
+                        </div>
+                        <span class="small fw-bold" style="font-size: 0.75rem; color: #b45309; letter-spacing: 0.08em; text-transform: uppercase;">SEAL OF EXCELLENCE</span>
+                        <span class="small text-muted" style="font-size: 0.72rem; font-family: monospace;">Mã số: @Model.CertificateCode</span>
+                        <span class="small text-muted" style="font-size: 0.7rem;">Ngày cấp: @Model.IssuedAt.ToString("dd/MM/yyyy")</span>
+                    </div>
+
+                    <!-- Right: Board of Directors Signature -->
+                    <div class="signature-block">
+                        <div class="mb-2" style="font-family: 'Playfair Display', cursive; font-style: italic; font-size: 1.3rem; color: #1e3a8a;">
+                            ChauVuongHoang
+                        </div>
+                        <div class="signature-line"></div>
+                        <div class="signature-name">Châu Vương Hoàng</div>
+                        <div class="signature-title">Giám đốc Học thuật EduFlyUp</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -387,7 +387,7 @@
                                             <span>•</span>
                                             <span><i class="bi bi-question-circle me-1 text-warning"></i>Số lượng: @questionsList.Count câu hỏi</span>
                                             <span>•</span>
-                                            <span><i class="bi bi-check2-circle me-1 text-success"></i>Điểm đạt: @Model.CourseQuiz.PassingScorePercentage%</span>
+                                            <span class="text-warning fw-semibold"><i class="bi bi-award-fill me-1"></i>Chuẩn cấp Chứng chỉ: &ge; 95%</span>
                                         </div>
                                     </div>
 
@@ -411,10 +411,16 @@
                                                 <p id="quizResultSubtitle" class="mb-0 small"></p>
                                             </div>
                                         </div>
-                                        <div class="d-flex align-items-center gap-3">
+                                        <div class="d-flex flex-wrap align-items-center gap-3">
                                             <div class="text-end">
-                                                <span class="small d-block opacity-75">Điểm số</span>
+                                                <span class="small d-block opacity-75">Điểm Final Test</span>
                                                 <h3 id="quizScoreText" class="fw-extrabold mb-0"></h3>
+                                            </div>
+                                            <div id="certificateActionArea" class="d-none">
+                                                <a id="viewCertificateBtn" href="#" target="_blank" class="btn btn-warning rounded-pill px-4 py-2 fw-bold shadow-sm text-dark d-inline-flex align-items-center gap-1.5 animate__animated animate__pulse animate__infinite">
+                                                    <i class="bi bi-award-fill"></i>
+                                                    <span>Xem Chứng Chỉ Tốt Nghiệp</span>
+                                                </a>
                                             </div>
                                             <button id="retryQuizBtn" class="btn btn-light rounded-pill px-4 py-2 fw-semibold btn-sm shadow-sm">
                                                 <i class="bi bi-arrow-repeat me-1"></i>Làm lại đề
@@ -727,14 +733,17 @@
             if (toggleBtn) toggleBtn.addEventListener("click", toggleSidebar);
             if (closeMobileBtn) closeMobileBtn.addEventListener("click", toggleSidebar);
 
-            // 4. Xử lý làm bài Quiz & Chấm điểm trắc nghiệm
+            // 4. Xử lý làm bài Quiz & Chấm điểm trắc nghiệm Final Test
             const submitQuizBtn = document.getElementById("submitQuizBtn");
             const quizForm = document.getElementById("quizForm");
             const resultBanner = document.getElementById("quizResultBanner");
             const retryQuizBtn = document.getElementById("retryQuizBtn");
+            const certArea = document.getElementById("certificateActionArea");
+            const certBtn = document.getElementById("viewCertificateBtn");
 
             if (submitQuizBtn && quizForm) {
-                const passingScore = @(Model.CourseQuiz?.PassingScorePercentage ?? 70);
+                // Tiêu chuẩn tốt nghiệp & cấp chứng chỉ EduFlyUp là từ 95% trở lên
+                const passingScore = 95;
 
                 submitQuizBtn.addEventListener("click", function () {
                     const questionBlocks = document.querySelectorAll(".question-block");
@@ -811,15 +820,38 @@
                         scoreText.textContent = `${correctCount}/${totalQuestions} câu (${scorePct}%)`;
 
                         if (isPassed) {
-                            resultBanner.style.background = "linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.3) 100%)";
+                            resultBanner.style.background = "linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)";
                             resultBanner.style.border = "1px solid #10b981";
                             iconWrapper.style.background = "#10b981";
                             iconWrapper.style.color = "#ffffff";
-                            icon.className = "bi bi-trophy-fill";
+                            icon.className = "bi bi-patch-check-fill";
                             title.className = "fw-bold mb-1 text-success";
-                            title.textContent = "XUẤT SẮC! BẠN ĐÃ ĐẠT CHUẨN ĐẦU RA";
-                            subtitle.className = "mb-0 small text-slate-300";
-                            subtitle.textContent = `Bạn đã hoàn thành xuất sắc ${correctCount}/${totalQuestions} câu hỏi trắc nghiệm của khóa học!`;
+                            title.textContent = "CHÚC MỪNG! BẠN ĐÃ TỐT NGHIỆP XUẤT SẮC";
+                            subtitle.className = "mb-0 small text-slate-200";
+                            subtitle.textContent = `Bạn đã đạt ${scorePct}% (tiêu chuẩn >= ${passingScore}%). Chứng chỉ hoàn thành khóa học đã được khởi tạo và lưu vào mục 'Chứng chỉ của tôi'!`;
+
+                            // Gửi yêu cầu cấp chứng chỉ tự động lên máy chủ
+                            fetch('/Certificate/CompleteFinalTest', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    courseId: @Model.Course.Id,
+                                    score: scorePct
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data && data.success) {
+                                    if (certArea && certBtn) {
+                                        certBtn.href = data.viewUrl;
+                                        certArea.classList.remove("d-none");
+                                    }
+                                }
+                            })
+                            .catch(err => console.error("Lỗi tự động cấp chứng chỉ:", err));
+
                         } else {
                             resultBanner.style.background = "linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.25) 100%)";
                             resultBanner.style.border = "1px solid #ef4444";
@@ -827,9 +859,10 @@
                             iconWrapper.style.color = "#ffffff";
                             icon.className = "bi bi-exclamation-triangle-fill";
                             title.className = "fw-bold mb-1 text-danger";
-                            title.textContent = `CHƯA ĐẠT ĐIỂM CHUẨN (CẦN TỐI THIỂU ${passingScore}%)`;
+                            title.textContent = `CHƯA ĐẠT CHUẨN CẤP CHỨNG CHỈ (CẦN TỐI THIỂU ${passingScore}%)`;
                             subtitle.className = "mb-0 small text-slate-300";
-                            subtitle.textContent = "Hãy xem lại giải thích chi tiết bên dưới mỗi câu hỏi và làm lại đề thi để cải thiện điểm số.";
+                            subtitle.textContent = `Bạn đạt ${scorePct}%. Để được công nhận tốt nghiệp và nhận chứng chỉ chính thức từ EduFlyUp, bạn cần đạt tối thiểu ${passingScore}%. Hãy ôn lại bài và thử lại nhé!`;
+                            if (certArea) certArea.classList.add("d-none");
                         }
 
                         resultBanner.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -846,6 +879,7 @@
                         document.querySelectorAll(".explanation-box").forEach(box => {
                             box.style.display = "none";
                         });
+                        if (certArea) certArea.classList.add("d-none");
                         if (resultBanner) resultBanner.style.display = "none";
                     });
                 }

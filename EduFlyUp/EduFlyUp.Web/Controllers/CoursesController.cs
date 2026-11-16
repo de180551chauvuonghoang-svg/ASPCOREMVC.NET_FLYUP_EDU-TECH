@@ -12,17 +12,20 @@ public class CoursesController : Controller
     private readonly ICourseAccessService _courseAccess;
     private readonly EduFlyUp.Web.Storage.LessonFileCleanup _fileCleanup;
     private readonly EduFlyUp.Repositories.IEnrollmentRepository? _enrollmentRepo;
+    private readonly ICertificateService? _certificateService;
 
     public CoursesController(
         ICourseService courseService, 
         ICourseAccessService courseAccess, 
         EduFlyUp.Web.Storage.LessonFileCleanup fileCleanup,
-        EduFlyUp.Repositories.IEnrollmentRepository? enrollmentRepo = null)
+        EduFlyUp.Repositories.IEnrollmentRepository? enrollmentRepo = null,
+        ICertificateService? certificateService = null)
     {
         _courseService = courseService;
         _courseAccess = courseAccess;
         _fileCleanup = fileCleanup;
         _enrollmentRepo = enrollmentRepo;
+        _certificateService = certificateService;
     }
 
     // GET: /Courses
@@ -69,7 +72,7 @@ public class CoursesController : Controller
             ? await _enrollmentRepo.GetByUserIdAsync(userId) 
             : Enumerable.Empty<Enrollment>();
 
-        var viewModel = enrollments.Select(e => new MyCourseItemModel
+        var courseItems = enrollments.Select(e => new MyCourseItemModel
         {
             EnrollmentId = e.Id,
             CourseId = e.Course.Id,
@@ -81,6 +84,16 @@ public class CoursesController : Controller
             FirstLessonId = e.Course.Lessons.OrderBy(l => l.Order).FirstOrDefault()?.Id,
             Status = e.Status
         }).ToList();
+
+        var certificates = _certificateService != null
+            ? (await _certificateService.GetCertificatesByUserIdAsync(userId)).ToList()
+            : new List<Certificate>();
+
+        var viewModel = new MyCoursesPageViewModel
+        {
+            Courses = courseItems,
+            Certificates = certificates
+        };
 
         return View(viewModel);
     }
