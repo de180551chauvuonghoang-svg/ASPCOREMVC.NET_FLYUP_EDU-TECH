@@ -1,4 +1,7 @@
 using System.Text.RegularExpressions;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
 using EduFlyUp.BusinessObjects;
 using EduFlyUp.Repositories;
 using Microsoft.Extensions.Configuration;
@@ -82,30 +85,25 @@ public class PaymentService : IPaymentService
 
     public async Task<bool> ProcessSePayWebhookAsync(string? authHeader, SePayWebhookPayload payload)
     {
-        var configuredApiKey = _config["SePay:ApiKey"] ?? "UDGTQNAYNA18JZ5NXLQUPZUOIRDBE3OP9AM6DUXYC9MZN4VYD5P0SVIPFRZYWA7R";
-
-        // Xác thực API Key nếu được cung cấp
-        if (!string.IsNullOrEmpty(configuredApiKey) && !string.IsNullOrEmpty(authHeader))
+        var configuredApiKey = _config["SePay:ApiKey"];
+        if (string.IsNullOrWhiteSpace(configuredApiKey) ||
+            !AuthenticationHeaderValue.TryParse(authHeader, out var authorization) ||
+            !string.Equals(authorization.Scheme, "Apikey", StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrWhiteSpace(authorization.Parameter) ||
+            !CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(authorization.Parameter),
+                Encoding.UTF8.GetBytes(configuredApiKey)))
         {
-            var token = authHeader.Replace("Apikey ", "", StringComparison.OrdinalIgnoreCase)
-                                  .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase)
-                                  .Trim();
-
-            if (!string.Equals(token, configuredApiKey, StringComparison.Ordinal))
-            {
-                _logger.LogWarning("SePay Webhook: Xác thực thất bại với header {AuthHeader}", authHeader);
-                return false;
-            }
-        }
-
-        if (payload == null)
-        {
-            _logger.LogWarning("SePay Webhook: Payload rỗng.");
+            _logger.LogWarning("SePay Webhook: Xác thực thất bại.");
             return false;
         }
 
-        _logger.LogInformation("SePay Webhook nhận giao dịch: ID={Id}, Gateway={Gateway}, Amount={Amount}, Content={Content}",
-            payload.id, payload.gateway, payload.transferAmount, payload.content);
+        if (payload is null || payload.id <= 0 || payload.transferAmount <= 0 ||
+            !string.Equals(payload.transferType, "in", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        _logger.LogInformation("SePay Webhook nhận giao dịch: ID={Id}", payload.id);
 
         // Nội dung giao dịch có thể nằm ở trường content hoặc description
         var rawContent = $"{payload.content} {payload.description}";
@@ -113,7 +111,7 @@ public class PaymentService : IPaymentService
 
         if (!match.Success)
         {
-            _logger.LogInformation("SePay Webhook: Không tìm thấy mã EDUPAY trong nội dung: '{Content}'", rawContent);
+            _logger.LogInformation("SePay Webhook: Không tìm thấy mã EDUPAY.");
             return false;
         }
 

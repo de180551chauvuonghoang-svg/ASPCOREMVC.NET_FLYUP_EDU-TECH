@@ -10,7 +10,7 @@ Tài liệu này cung cấp toàn bộ quy trình thiết lập, tài liệu API
 - **Mã BIN Napas 247**: `970423`
 - **Số tài khoản**: `25816798888`
 - **Chủ tài khoản**: `CHAU VUONG HOANG`
-- **API Key SePay**: `UDGTQNAYNA18JZ5NXLQUPZUOIRDBE3OP9AM6DUXYC9MZN4VYD5P0SVIPFRZYWA7R`
+- **API Key SePay**: cấu hình khóa webhook mới qua biến môi trường `SePay__ApiKey` hoặc .NET User Secrets. Thay khóa từng được lưu trong Git tại SePay trước khi triển khai.
 - **Tên Key**: `EDUFLYUPDOTNET`
 - **Webhook URL Production (Railway)**:
   ```text
@@ -65,7 +65,7 @@ Trong file `EduFlyUp/EduFlyUp.Web/appsettings.json`:
 ```json
 {
   "SePay": {
-    "ApiKey": "UDGTQNAYNA18JZ5NXLQUPZUOIRDBE3OP9AM6DUXYC9MZN4VYD5P0SVIPFRZYWA7R",
+    "ApiKey": "SEPAY_WEBHOOK_KEY",
     "BankBin": "970423",
     "BankName": "TPBank",
     "BankAccountNumber": "25816798888",
@@ -104,7 +104,7 @@ Mở một cửa sổ PowerShell mới và chạy lệnh sau (thay mã `EDUPAY64
 ```powershell
 $headers = @{
     "Content-Type" = "application/json"
-    "Authorization" = "Apikey UDGTQNAYNA18JZ5NXLQUPZUOIRDBE3OP9AM6DUXYC9MZN4VYD5P0SVIPFRZYWA7R"
+    "Authorization" = "Apikey SEPAY_WEBHOOK_KEY"
 }
 
 $body = @{
