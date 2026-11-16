@@ -107,18 +107,39 @@ public class AiQuizService : IAiQuizService
 
     private async Task<AiQuizResult> GenerateQuizCoreAsync(string contextText, string lessonTitle, string materialName, CancellationToken cancellationToken)
     {
-        var apiKey = _config["Gemini:ApiKey"]
+        var groqApiKey = _config["Groq:ApiKey"]
+            ?? _config["GROQ_API_KEY"]
+            ?? Environment.GetEnvironmentVariable("GROQ_API_KEY");
+
+        var geminiApiKey = _config["Gemini:ApiKey"]
             ?? _config["GEMINI_API_KEY"]
             ?? Environment.GetEnvironmentVariable("GEMINI_API_KEY");
 
         List<AiGeneratedQuestion>? questions = null;
 
-        // 1. Thử gọi Google Gemini API nếu có API Key
-        if (!string.IsNullOrWhiteSpace(apiKey))
+        // 1. Ưu tiên gọi Groq AI (Quota 14.400 lượt/ngày, tốc độ siêu nhanh 0.3s)
+        if (!string.IsNullOrWhiteSpace(groqApiKey))
         {
             try
             {
-                questions = await CallGeminiAiAsync(apiKey, contextText, lessonTitle, cancellationToken);
+                questions = await CallGroqAiAsync(groqApiKey, contextText, lessonTitle, cancellationToken);
+                if (questions != null && questions.Count > 0)
+                {
+                    _logger.LogInformation("Tạo thành công {Count} câu hỏi từ Groq AI.", questions.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Gọi Groq AI thất bại, thử các giải pháp tiếp theo.");
+            }
+        }
+
+        // 2. Dự phòng gọi Google Gemini AI nếu Groq chưa trả về kết quả
+        if ((questions == null || questions.Count == 0) && !string.IsNullOrWhiteSpace(geminiApiKey))
+        {
+            try
+            {
+                questions = await CallGeminiAiAsync(geminiApiKey, contextText, lessonTitle, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -126,7 +147,7 @@ public class AiQuizService : IAiQuizService
             }
         }
 
-        // 2. Fallback sang Smart Heuristic AI Generator nếu chưa có API Key hoặc API trả về rỗng
+        // 3. Fallback sang Smart Heuristic AI Generator nếu chưa có API Key hoặc API trả về rỗng
         if (questions == null || questions.Count == 0)
         {
             questions = GenerateHeuristicQuiz(contextText, lessonTitle);
@@ -140,6 +161,74 @@ public class AiQuizService : IAiQuizService
             MaterialName = materialName,
             Questions = questions
         };
+    }
+
+    private async Task<List<AiGeneratedQuestion>?> CallGroqAiAsync(string apiKey, string content, string title, CancellationToken cancellationToken)
+    {
+        var endpoint = "https://api.groq.com/openai/v1/chat/completions";
+        var truncatedContent = content[..Math.Min(content.Length, 8000)];
+
+        var systemPrompt = @"Bạn là chuyên gia sư phạm và kiểm thử đánh giá năng lực lập trình.
+Hãy đọc kỹ tài liệu bài học và tạo ra chính xác 5 câu hỏi trắc nghiệm khách quan (Multiple Choice Questions) bằng tiếng Việt để kiểm tra kiến thức của học viên.
+YÊU CẦU:
+- Mỗi câu hỏi phải có 4 lựa chọn (A, B, C, D) không trùng lặp.
+- Chỉ có 1 đáp án đúng duy nhất (chỉ số correctAnswerIndex từ 0 đến 3).
+- Có phần giải thích chi tiết trích dẫn căn cứ từ tài liệu.
+- Trả về DUY NHẤT một mảng JSON thuần túy (không kèm markdown hay văn bản thừa), theo định dạng:
+[
+  {
+    ""question"": ""Nội dung câu hỏi..."",
+    ""options"": [""Lựa chọn A"", ""Lựa chọn B"", ""Lựa chọn C"", ""Lựa chọn D""],
+    ""correctAnswerIndex"": 0,
+    ""explanation"": ""Giải thích chi tiết vì sao đáp án này đúng theo tài liệu...""
+  }
+]";
+
+        var userPrompt = $"Bài học: {title}\nNội dung tài liệu:\n{truncatedContent}";
+
+        var payload = new
+        {
+            model = "openai/gpt-oss-120b",
+            messages = new[]
+            {
+                new { role = "system", content = systemPrompt },
+                new { role = "user", content = userPrompt }
+            },
+            temperature = 0.2
+        };
+
+        var json = JsonSerializer.Serialize(payload);
+        using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+        request.Headers.Add("User-Agent", "EduFlyUp/1.0");
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var err = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning("Groq API returned status code {StatusCode}: {Error}", response.StatusCode, err);
+            return null;
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var doc = JsonDocument.Parse(responseBody);
+        var messageText = doc.RootElement
+            .GetProperty("choices")[0]
+            .GetProperty("message")
+            .GetProperty("content")
+            .GetString();
+
+        if (string.IsNullOrWhiteSpace(messageText)) return null;
+
+        var match = Regex.Match(messageText, @"\[[\s\S]*\]");
+        if (match.Success)
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<List<AiGeneratedQuestion>>(match.Value, options);
+        }
+
+        return null;
     }
 
     private async Task<List<AiGeneratedQuestion>?> CallGeminiAiAsync(string apiKey, string content, string title, CancellationToken cancellationToken)
