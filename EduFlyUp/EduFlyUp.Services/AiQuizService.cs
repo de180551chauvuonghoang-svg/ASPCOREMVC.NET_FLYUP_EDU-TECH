@@ -1,12 +1,8 @@
-using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using EduFlyUp.BusinessObjects;
-using EduFlyUp.DataAccess;
 using EduFlyUp.Repositories;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -14,15 +10,18 @@ namespace EduFlyUp.Services;
 
 public class AiQuizService : IAiQuizService
 {
+    private readonly IAiQuizRepository _aiQuizRepo;
     private readonly IConfiguration _config;
     private readonly ILogger<AiQuizService> _logger;
     private readonly HttpClient _httpClient;
 
     public AiQuizService(
+        IAiQuizRepository aiQuizRepo,
         IConfiguration config,
         ILogger<AiQuizService> logger,
         IHttpClientFactory? httpClientFactory = null)
     {
+        _aiQuizRepo = aiQuizRepo;
         _config = config;
         _logger = logger;
         _httpClient = httpClientFactory?.CreateClient() ?? new HttpClient();
@@ -30,70 +29,37 @@ public class AiQuizService : IAiQuizService
 
     public async Task<AiQuizResult> GenerateQuizFromLessonMaterialAsync(int lessonId, CancellationToken cancellationToken = default)
     {
-        using var db = new AppDbContext();
-        var lesson = await db.Lessons.Include(l => l.Course).FirstOrDefaultAsync(l => l.Id == lessonId, cancellationToken);
-        if (lesson == null)
+        var context = await _aiQuizRepo.GetLessonMaterialContextAsync(lessonId, cancellationToken);
+        if (context is null)
         {
             return new AiQuizResult { Success = false, Message = "Không tìm thấy bài học." };
         }
 
         var materialTextBuilder = new StringBuilder();
-        var materialName = !string.IsNullOrWhiteSpace(lesson.AttachmentName) ? lesson.AttachmentName : "Tài liệu bài học";
+        var materialName = !string.IsNullOrWhiteSpace(context.AttachmentName) ? context.AttachmentName : "Tài liệu bài học";
 
         // 1. Thêm nội dung bài giảng hiện tại
-        if (!string.IsNullOrWhiteSpace(lesson.Content))
+        if (!string.IsNullOrWhiteSpace(context.Content))
         {
-            materialTextBuilder.AppendLine($"[Nội dung bài học: {lesson.Title}]");
-            materialTextBuilder.AppendLine(lesson.Content);
+            materialTextBuilder.AppendLine($"[Nội dung bài học: {context.LessonTitle}]");
+            materialTextBuilder.AppendLine(context.Content);
             materialTextBuilder.AppendLine();
         }
 
-        // 2. Nếu có file đính kèm trong App_Data/materials, trích xuất text
-        if (!string.IsNullOrWhiteSpace(lesson.MaterialUrl))
+        // 2. Thêm nội dung tài liệu đính kèm đã được tầng DataAccess trích xuất
+        if (!string.IsNullOrWhiteSpace(context.ExtractedDocumentText))
         {
-            var prefix = $"/LessonMaterials/Download/{lessonId}/";
-            if (lesson.MaterialUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            {
-                var storedFileName = lesson.MaterialUrl[prefix.Length..];
-                var root = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "materials");
-                var filePath = Path.Combine(root, storedFileName);
-
-                if (File.Exists(filePath))
-                {
-                    try
-                    {
-                        var ext = Path.GetExtension(storedFileName).ToLowerInvariant();
-                        if (ext == ".docx")
-                        {
-                            var docText = ExtractTextFromDocx(filePath);
-                            if (!string.IsNullOrWhiteSpace(docText))
-                            {
-                                materialTextBuilder.AppendLine($"[Nội dung file {materialName}]:");
-                                materialTextBuilder.AppendLine(docText);
-                            }
-                        }
-                        else if (ext is ".txt" or ".md" or ".json" or ".csv")
-                        {
-                            var text = await File.ReadAllTextAsync(filePath, cancellationToken);
-                            materialTextBuilder.AppendLine($"[Nội dung file {materialName}]:");
-                            materialTextBuilder.AppendLine(text);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Không thể đọc nội dung file material {FileName}", storedFileName);
-                    }
-                }
-            }
+            materialTextBuilder.AppendLine($"[Nội dung file {materialName}]:");
+            materialTextBuilder.AppendLine(context.ExtractedDocumentText);
         }
 
         var fullContext = materialTextBuilder.ToString().Trim();
         if (string.IsNullOrWhiteSpace(fullContext))
         {
-            fullContext = $"Khóa học: {lesson.Course?.Title}. Bài học: {lesson.Title}. Thời lượng: {lesson.DurationMinutes} phút. Chủ đề: {lesson.SectionName}.";
+            fullContext = $"Khóa học: {context.CourseTitle}. Bài học: {context.LessonTitle}. Thời lượng: {context.DurationMinutes} phút. Chủ đề: {context.SectionName}.";
         }
 
-        return await GenerateQuizCoreAsync(fullContext, lesson.Title, materialName, cancellationToken);
+        return await GenerateQuizCoreAsync(fullContext, context.LessonTitle, materialName, cancellationToken);
     }
 
     public async Task<AiQuizResult> GenerateQuizFromCustomTextAsync(string content, string title, CancellationToken cancellationToken = default)
@@ -291,7 +257,6 @@ YÊU CẦU:
 
         if (string.IsNullOrWhiteSpace(text)) return null;
 
-        // Bóc tách JSON thuần túy
         var match = Regex.Match(text, @"\[[\s\S]*\]");
         if (match.Success)
         {
@@ -417,24 +382,5 @@ YÊU CẦU:
         }
 
         return questions.Take(5).ToList();
-    }
-
-    private static string ExtractTextFromDocx(string filePath)
-    {
-        try
-        {
-            using var zip = ZipFile.OpenRead(filePath);
-            var entry = zip.GetEntry("word/document.xml");
-            if (entry == null) return string.Empty;
-
-            using var stream = entry.Open();
-            var doc = XDocument.Load(stream);
-            var textElements = doc.Descendants().Where(d => d.Name.LocalName == "t").Select(d => d.Value);
-            return string.Join(" ", textElements);
-        }
-        catch
-        {
-            return string.Empty;
-        }
     }
 }

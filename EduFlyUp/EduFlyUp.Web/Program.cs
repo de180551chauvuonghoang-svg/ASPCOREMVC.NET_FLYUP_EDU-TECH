@@ -113,6 +113,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ICertificateRepository, CertificateRepository>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<IAiQuizRepository, AiQuizRepository>();
 builder.Services.AddScoped<IAiQuizService, AiQuizService>();
 
 // 4. Cấu hình Cookie Authentication & External Logins

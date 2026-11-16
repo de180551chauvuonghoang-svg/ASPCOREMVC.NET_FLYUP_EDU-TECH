@@ -85,6 +85,18 @@ namespace EduFlyUp.DataAccess
                     await userManager.AddToRoleAsync(adminUser, "Admin");
                 }
             }
+            else
+            {
+                if (!await userManager.CheckPasswordAsync(adminUser, "Admin@123"))
+                {
+                    var token = await userManager.GeneratePasswordResetTokenAsync(adminUser);
+                    await userManager.ResetPasswordAsync(adminUser, token, "Admin@123");
+                }
+                if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                }
+            }
 
             // 2. Seed Instructor (Giảng viên)
             var instructorEmail = "instructor@eduflyup.vn";
@@ -103,6 +115,18 @@ namespace EduFlyUp.DataAccess
 
                 var createResult = await userManager.CreateAsync(instructorUser, "Instructor@123");
                 if (createResult.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(instructorUser, "Instructor");
+                }
+            }
+            else
+            {
+                if (!await userManager.CheckPasswordAsync(instructorUser, "Instructor@123"))
+                {
+                    var token = await userManager.GeneratePasswordResetTokenAsync(instructorUser);
+                    await userManager.ResetPasswordAsync(instructorUser, token, "Instructor@123");
+                }
+                if (!await userManager.IsInRoleAsync(instructorUser, "Instructor"))
                 {
                     await userManager.AddToRoleAsync(instructorUser, "Instructor");
                 }
