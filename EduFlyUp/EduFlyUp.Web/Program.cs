@@ -93,6 +93,7 @@ builder.Services.AddScoped<IInstructorStudentRepository, InstructorStudentReposi
 builder.Services.AddScoped<IInstructorStudentService, InstructorStudentService>();
 builder.Services.AddScoped<IInstructorPayoutRepository, InstructorPayoutRepository>();
 builder.Services.AddScoped<IInstructorSettlementSource, SePayInstructorSettlementSource>();
+builder.Services.AddScoped<AdminPayoutDAO>();
 builder.Services.AddScoped<IInstructorEarningsSource, SettlementInstructorEarningsSource>();
 builder.Services.AddScoped<IInstructorPayoutService, InstructorPayoutService>();
 builder.Services.AddScoped<IInstructorRevenueRepository, InstructorRevenueRepository>();

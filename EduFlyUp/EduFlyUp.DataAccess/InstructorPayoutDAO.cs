@@ -21,8 +21,9 @@ public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
     public async Task<InstructorPayoutBalance> BalanceAsync(AppDbContext db, IInstructorEarningsSource earnings, InstructorIdentity instructor)
     {
         var credited = await earnings.CreditedEarningsAsync(db, instructor);
+        var normalizedUsername = instructor.UserName.ToUpperInvariant();
         var summary = await db.PayoutRequests.AsNoTracking()
-            .Where(p => p.InstructorId == instructor.UserId || p.InstructorId == instructor.UserName)
+            .Where(p => p.InstructorId == instructor.UserId || p.InstructorId.ToUpper() == normalizedUsername)
             .GroupBy(_ => 1).Select(g => new
             {
                 Pending = g.Sum(p => p.Status == PayoutStatus.Pending ? p.Amount : 0),

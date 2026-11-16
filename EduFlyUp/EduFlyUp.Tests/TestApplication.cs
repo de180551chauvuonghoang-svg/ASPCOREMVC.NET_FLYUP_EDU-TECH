@@ -29,7 +29,7 @@ internal sealed class TestApplication : IDisposable
     public TestQuizRepository Quizzes { get; } = new();
     public IServiceProvider Services => _server.Services;
 
-    public TestApplication(EduFlyUp.Web.Storage.ILessonMaterialStorage? materialStorage = null, EduFlyUp.Web.Storage.ILessonVideoStorage? videoStorage = null, IInstructorPayoutService? payoutService = null, IInstructorSettlementSource? settlements = null)
+    public TestApplication(EduFlyUp.Web.Storage.ILessonMaterialStorage? materialStorage = null, EduFlyUp.Web.Storage.ILessonVideoStorage? videoStorage = null, IInstructorPayoutService? payoutService = null, IInstructorSettlementSource? settlements = null, string? sqlConnection = null)
     {
         var database = Guid.NewGuid().ToString();
         _server = new TestServer(new WebHostBuilder()
@@ -38,7 +38,13 @@ internal sealed class TestApplication : IDisposable
             {
                 services.AddLogging(logging => logging.SetMinimumLevel(LogLevel.Warning));
                 services.AddDataProtection().UseEphemeralDataProtectionProvider();
-                services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(database));
+                services.AddDbContext<AppDbContext>(options =>
+                {
+                    if (sqlConnection is null)
+                        options.UseInMemoryDatabase(database);
+                    else
+                        options.UseSqlServer(sqlConnection);
+                });
                 services.AddIdentity<ApplicationUser, IdentityRole>()
                     .AddEntityFrameworkStores<AppDbContext>()
                     .AddDefaultTokenProviders()
@@ -67,6 +73,7 @@ internal sealed class TestApplication : IDisposable
                 services.AddScoped<IInstructorStudentService, InstructorStudentService>();
                 services.AddScoped<IInstructorPayoutRepository, InstructorPayoutRepository>();
                 services.AddScoped<IInstructorSettlementSource, UnavailableInstructorSettlementSource>();
+                services.AddScoped<AdminPayoutDAO>();
                 services.AddScoped<IOrderRepository, OrderRepository>();
                 if (settlements is not null) services.AddSingleton(settlements);
                 services.AddScoped<IInstructorEarningsSource, SettlementInstructorEarningsSource>();

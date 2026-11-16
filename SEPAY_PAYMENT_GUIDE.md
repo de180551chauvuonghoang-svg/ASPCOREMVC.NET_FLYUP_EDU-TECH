@@ -18,7 +18,8 @@ Tài liệu này cung cấp toàn bộ quy trình thiết lập, tài liệu API
 - SQL Server dùng migration `20261116034927_AddSePayReceipts`. Với PostgreSQL hiện có, chạy `tools/InitPg/sepay-receipts.sql` trước khi triển khai bản web.
 - Webhook cần `Authorization: Apikey ...`. Giao dịch tiền vào cần đúng số tài khoản, đúng tổng tiền đơn, có một mã đơn rõ ràng và có ID SePay hợp lệ. Chuyển thiếu, chuyển thừa hoặc giao dịch mơ hồ cần đối soát riêng.
 - Sau xác thực, hệ thống lưu ID SePay, số tiền nhận và ID giảng viên cùng với cập nhật đơn và ghi danh. Báo cáo tính 70% trên các biên nhận này. Yêu cầu rút tiền dùng số dư sau khi trừ khoản đã duyệt và đang chờ.
-- Các đơn `Paid` lịch sử chưa có biên nhận cần đối chiếu với SePay trước khi ghi có. Khoản hoàn tiền thực hiện bên ngoài ứng dụng và bước duyệt hoặc chuyển tiền bên Admin còn cần quy trình riêng.
+- Admin mở **Yêu cầu rút tiền** để xem chi tiết. Sau khi chuyển qua ngân hàng, nhập mã chuyển khoản và bấm **Xác nhận đã chuyển**. Khi từ chối, nhập lý do để giảng viên xem trong lịch sử.
+- Các đơn `Paid` lịch sử chưa có biên nhận cần đối chiếu với SePay trước khi ghi có. Khoản hoàn tiền thực hiện bên ngoài ứng dụng cần đối soát riêng.
 - **Webhook URL Production (Railway)**:
   ```text
   https://aspcoremvcnetflyupedu-tech-production.up.railway.app/api/payments/sepay-webhook

@@ -1,0 +1,55 @@
+@model InstructorPayoutHistory
+@using System.Globalization
+@using EduFlyUp.Web.Models.Instructor
+@{
+    ViewData["Title"] = "Yêu cầu rút tiền";
+    Layout = "_AdminLayout";
+    var vi = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<h1 class="h3 mb-3">Yêu cầu rút tiền</h1>
+<nav class="nav nav-pills gap-2 mb-3" aria-label="Lọc yêu cầu rút tiền">
+    @foreach (var status in Enum.GetValues<PayoutStatus>())
+    {
+        var active = Model.StatusFilter == status;
+        <a asp-action="Index" asp-route-status="@status" aria-current="@(active ? "page" : null)"
+           class="nav-link @(active ? "active" : "")">@InstructorPayoutDisplay.Status(status)</a>
+    }
+</nav>
+@if (Model.Items.Count == 0)
+{
+    <p class="text-muted">Chưa có yêu cầu.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th scope="col">Mã</th><th scope="col">Số tiền</th><th scope="col">Ngày gửi (UTC+7)</th><th scope="col">Trạng thái</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@item.Id">#@item.Id</a></td>
+                    <td>@item.Amount.ToString("#,0.##", vi) đ</td>
+                    <td>@item.CreatedAt.AddHours(7).ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@InstructorPayoutDisplay.Status(item.Status)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+@if (Model.TotalPages > 1)
+{
+    <nav class="d-flex gap-3 align-items-center" aria-label="Phân trang">
+        @if (Model.Page > 1)
+        {
+            <a asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-status="@Model.StatusFilter">Trước</a>
+        }
+        <span>@Model.Page / @Model.TotalPages</span>
+        @if (Model.Page < Model.TotalPages)
+        {
+            <a asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-status="@Model.StatusFilter">Sau</a>
+        }
+    </nav>
+}
