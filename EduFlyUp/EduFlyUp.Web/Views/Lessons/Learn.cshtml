@@ -276,12 +276,12 @@
                                 <span>Tài liệu & Mã nguồn đính kèm</span>
                             </h4>
                             <p class="text-slate-400 mb-4" style="color: #94a3b8;">
-                                Tải về mã nguồn mẫu, slide trình chiếu bài giảng và tài liệu thực hành bổ trợ cho bài học này.
+                                Tải về mã nguồn mẫu, slide trình chiếu bài giảng và tài liệu thực hành bổ trợ cho bài học này. Đặc biệt, bạn có thể dùng **AI để tự động sinh bài trắc nghiệm luyện tập** trực tiếp từ tài liệu!
                             </p>
 
                             @if (!string.IsNullOrWhiteSpace(Model.CurrentLesson.MaterialUrl))
                             {
-                                <div class="p-3 p-md-4 rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-3" 
+                                <div class="p-3 p-md-4 rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4" 
                                      style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1);">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-3 d-flex align-items-center justify-content-center shadow-sm" 
@@ -296,20 +296,48 @@
                                         </div>
                                     </div>
 
-                                    <a href="@Model.CurrentLesson.MaterialUrl" download class="btn btn-warning rounded-pill px-4 py-2.5 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm text-dark">
-                                        <i class="bi bi-cloud-arrow-down-fill fs-5"></i>
-                                        <span>Tải tài liệu ngay</span>
-                                    </a>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a href="@Model.CurrentLesson.MaterialUrl" download class="btn btn-outline-warning rounded-pill px-4 py-2.5 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm">
+                                            <i class="bi bi-cloud-arrow-down-fill fs-5"></i>
+                                            <span>Tải tài liệu ngay</span>
+                                        </a>
+                                        <button type="button" class="btn btn-warning rounded-pill px-4 py-2.5 fw-bold d-inline-flex align-items-center gap-2 shadow-sm text-dark" onclick="startAiQuizFromLesson(@Model.CurrentLesson.Id)">
+                                            <i class="bi bi-stars fs-5 text-primary"></i>
+                                            <span>AI Tạo Quiz từ Tài liệu</span>
+                                        </button>
+                                    </div>
                                 </div>
                             }
                             else
                             {
-                                <div class="text-center py-5">
-                                    <i class="bi bi-folder-x text-slate-500 fs-1 d-block mb-3" style="color: #64748b;"></i>
-                                    <h6 class="text-white fw-bold mb-1">Không có tài liệu đính kèm riêng</h6>
-                                    <p class="small text-slate-400 mb-0" style="color: #94a3b8;">Toàn bộ kiến thức đã được truyền đạt đầy đủ trong video bài giảng và nội dung bài học.</p>
+                                <div class="text-center py-4 mb-4 rounded-4" style="background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.1);">
+                                    <i class="bi bi-folder-x text-slate-500 fs-1 d-block mb-2" style="color: #64748b;"></i>
+                                    <h6 class="text-white fw-bold mb-1">Chưa có file tài liệu đính kèm riêng</h6>
+                                    <p class="small text-slate-400 mb-3" style="color: #94a3b8;">Bạn vẫn có thể dùng AI để sinh bài kiểm tra trắc nghiệm từ nội dung bài giảng hiện tại!</p>
+                                    <button type="button" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold d-inline-flex align-items-center gap-2 shadow-sm" onclick="startAiQuizFromLesson(@Model.CurrentLesson.Id)">
+                                        <i class="bi bi-stars fs-5 text-warning"></i>
+                                        <span>AI Tạo Quiz từ Bài giảng này</span>
+                                    </button>
                                 </div>
                             }
+
+                            <!-- Khu vực: Tải lên tài liệu ngoài để AI sinh Quiz -->
+                            <div class="p-4 rounded-4" style="background: rgba(37, 99, 235, 0.05); border: 1px solid rgba(37, 99, 235, 0.2);">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class="bi bi-robot text-primary fs-5"></i>
+                                    <h6 class="fw-bold text-white mb-0">Hoặc dán nội dung tài liệu của bạn để AI tạo câu hỏi:</h6>
+                                </div>
+                                <p class="small text-slate-400 mb-3">Nếu bạn có file ghi chép, tài liệu tóm tắt hoặc nội dung vừa tải về, hãy dán vào đây để AI phân tích và tạo bài trắc nghiệm ôn tập tức thì.</p>
+                                <textarea id="customMaterialText" class="form-control rounded-3 p-3 mb-3 text-white" rows="3" 
+                                          placeholder="Dán nội dung tài liệu cần tạo bài trắc nghiệm vào đây..." 
+                                          style="background: rgba(0, 0, 0, 0.4); border-color: rgba(255, 255, 255, 0.15); font-size: 0.9rem;"></textarea>
+                                <div class="d-flex justify-content-end">
+                                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5" onclick="startAiQuizFromCustomText()">
+                                        <i class="bi bi-lightning-charge-fill text-warning"></i>
+                                        <span>AI Sinh Quiz từ nội dung trên</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1280,5 +1308,271 @@
                 }
             }
         });
+
+        // ================= AI QUIZ GENERATOR FROM MATERIAL =================
+        let currentAiQuestions = [];
+        let aiQuizModalInstance = null;
+
+        function getAiModal() {
+            if (!aiQuizModalInstance) {
+                const el = document.getElementById('aiQuizModal');
+                if (el && window.bootstrap) {
+                    aiQuizModalInstance = new bootstrap.Modal(el);
+                }
+            }
+            return aiQuizModalInstance;
+        }
+
+        window.startAiQuizFromLesson = function (lessonId) {
+            const modal = getAiModal();
+            if (modal) modal.show();
+            showAiLoading(true);
+
+            fetch('/api/ai/quiz/generate-from-lesson', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lessonId: lessonId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                showAiLoading(false);
+                if (data && data.success && data.questions && data.questions.length > 0) {
+                    renderAiQuiz(data);
+                } else {
+                    showAiError(data.message || 'Không thể tạo câu hỏi trắc nghiệm từ tài liệu này.');
+                }
+            })
+            .catch(err => {
+                showAiLoading(false);
+                showAiError('Đã xảy ra lỗi kết nối với máy chủ AI.');
+                console.error(err);
+            });
+        };
+
+        window.startAiQuizFromCustomText = function () {
+            const text = (document.getElementById('customMaterialText')?.value || '').trim();
+            if (!text) {
+                alert('Vui lòng dán nội dung tài liệu vào ô văn bản trước khi bấm tạo.');
+                return;
+            }
+
+            const modal = getAiModal();
+            if (modal) modal.show();
+            showAiLoading(true);
+
+            fetch('/api/ai/quiz/generate-from-text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: text, title: 'Tài liệu tùy chỉnh' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                showAiLoading(false);
+                if (data && data.success && data.questions && data.questions.length > 0) {
+                    renderAiQuiz(data);
+                } else {
+                    showAiError(data.message || 'Không thể tạo câu hỏi từ nội dung này.');
+                }
+            })
+            .catch(err => {
+                showAiLoading(false);
+                showAiError('Đã xảy ra lỗi kết nối với máy chủ AI.');
+                console.error(err);
+            });
+        };
+
+        function showAiLoading(isLoading) {
+            const loadingEl = document.getElementById('aiQuizLoading');
+            const contentEl = document.getElementById('aiQuizContent');
+            const errorEl = document.getElementById('aiQuizError');
+            if (loadingEl) loadingEl.style.display = isLoading ? 'block' : 'none';
+            if (contentEl) contentEl.style.display = isLoading ? 'none' : 'block';
+            if (errorEl) errorEl.style.display = 'none';
+        }
+
+        function showAiError(msg) {
+            const errorEl = document.getElementById('aiQuizError');
+            const contentEl = document.getElementById('aiQuizContent');
+            if (contentEl) contentEl.style.display = 'none';
+            if (errorEl) {
+                errorEl.style.display = 'block';
+                errorEl.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${msg}`;
+            }
+        }
+
+        function renderAiQuiz(data) {
+            currentAiQuestions = data.questions || [];
+            document.getElementById('aiMaterialTitle').textContent = data.materialName || 'Tài liệu học tập';
+            document.getElementById('aiLessonSubtitle').textContent = data.lessonTitle || '';
+            const container = document.getElementById('aiQuestionsContainer');
+            const resultBox = document.getElementById('aiQuizResultBox');
+            if (resultBox) resultBox.style.display = 'none';
+
+            let html = '';
+            currentAiQuestions.forEach((q, qIdx) => {
+                html += `
+                    <div class="ai-question-card mb-4 p-3 p-md-4 rounded-4" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);" id="aiQCard_${qIdx}">
+                        <div class="d-flex align-items-start gap-2 mb-3">
+                            <span class="badge bg-primary text-white rounded-pill px-2.5 py-1">Câu ${qIdx + 1}</span>
+                            <h6 class="fw-bold text-white mb-0 mt-0.5" style="line-height: 1.5;">${escapeHtml(q.question)}</h6>
+                        </div>
+                        <div class="d-flex flex-column gap-2">
+                `;
+
+                (q.options || []).forEach((opt, optIdx) => {
+                    const optLetter = String.fromCharCode(65 + optIdx);
+                    html += `
+                        <label class="ai-opt-label p-3 rounded-3 d-flex align-items-center gap-3 cursor-pointer" 
+                               style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s;" 
+                               id="aiOptLabel_${qIdx}_${optIdx}">
+                            <input type="radio" name="aiAns_${qIdx}" value="${optIdx}" class="form-check-input mt-0" style="border-color: rgba(255,255,255,0.3);">
+                            <span class="fw-bold text-primary">${optLetter}.</span>
+                            <span class="text-slate-200" style="font-size: 0.95rem;">${escapeHtml(opt)}</span>
+                        </label>
+                    `;
+                });
+
+                html += `
+                        </div>
+                        <div class="ai-exp-box mt-3 p-3 rounded-3 small" id="aiExp_${qIdx}" style="display: none; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; color: #cbd5e1;">
+                            <strong class="text-success d-block mb-1"><i class="bi bi-lightbulb-fill me-1"></i>Giải thích từ tài liệu:</strong>
+                            ${escapeHtml(q.explanation || 'Đáp án chính xác theo tài liệu bài học.')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        window.submitAiQuiz = function () {
+            if (!currentAiQuestions || currentAiQuestions.length === 0) return;
+
+            let correctCount = 0;
+            currentAiQuestions.forEach((q, qIdx) => {
+                const selected = document.querySelector(`input[name="aiAns_${qIdx}"]:checked`);
+                const expBox = document.getElementById(`aiExp_${qIdx}`);
+                const isCorrect = selected && parseInt(selected.value) === q.correctAnswerIndex;
+
+                if (isCorrect) correctCount++;
+
+                // Đổi màu các options
+                (q.options || []).forEach((_, optIdx) => {
+                    const lbl = document.getElementById(`aiOptLabel_${qIdx}_${optIdx}`);
+                    if (!lbl) return;
+                    if (optIdx === q.correctAnswerIndex) {
+                        lbl.style.background = 'rgba(16, 185, 129, 0.2)';
+                        lbl.style.borderColor = '#10b981';
+                    } else if (selected && parseInt(selected.value) === optIdx) {
+                        lbl.style.background = 'rgba(239, 68, 68, 0.2)';
+                        lbl.style.borderColor = '#ef4444';
+                    } else {
+                        lbl.style.opacity = '0.5';
+                    }
+                });
+
+                if (expBox) expBox.style.display = 'block';
+            });
+
+            const total = currentAiQuestions.length;
+            const pct = Math.round((correctCount / total) * 100);
+            const resultBox = document.getElementById('aiQuizResultBox');
+            const scoreText = document.getElementById('aiScoreText');
+            const titleText = document.getElementById('aiResultTitle');
+
+            if (resultBox && scoreText && titleText) {
+                resultBox.style.display = 'block';
+                scoreText.textContent = `${correctCount}/${total} câu (${pct}%)`;
+                if (pct >= 80) {
+                    titleText.className = 'fw-bold text-success mb-1';
+                    titleText.textContent = 'XUẤT SẮC! BẠN ĐÃ NẮM VỮNG KIẾN THỨC TÀI LIỆU';
+                } else if (pct >= 50) {
+                    titleText.className = 'fw-bold text-warning mb-1';
+                    titleText.textContent = 'ĐẠT YÊU CẦU - CẦN ĐỌC LẠI CÁC Ý QUAN TRỌNG';
+                } else {
+                    titleText.className = 'fw-bold text-danger mb-1';
+                    titleText.textContent = 'CẦN ÔN TẬP THÊM TÀI LIỆU';
+                }
+                resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        };
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
     </script>
+
+    <!-- Modal AI Quiz Generator -->
+    <div class="modal fade" id="aiQuizModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="aiQuizModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content text-white" style="background: #111827; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+                <!-- Modal Header -->
+                <div class="modal-header border-bottom px-4 py-3" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(37, 99, 235, 0.15); color: #3b82f6;">
+                            <i class="bi bi-stars fs-4 text-warning"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-white mb-0" id="aiQuizModalLabel">AI Quiz Generator từ Tài liệu</h5>
+                            <span class="small text-slate-400" id="aiLessonSubtitle" style="color: #94a3b8; font-size: 0.8rem;"></span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body p-4">
+                    <!-- Loading State -->
+                    <div id="aiQuizLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary mb-3" style="width: 3.5rem; height: 3.5rem;" role="status">
+                            <span class="visually-hidden">Đang xử lý...</span>
+                        </div>
+                        <h5 class="fw-bold text-white mb-2">Trợ lý AI đang đọc và phân tích tài liệu...</h5>
+                        <p class="text-slate-400 small mb-0" style="color: #94a3b8; max-width: 420px; margin: 0 auto;">
+                            Hệ thống đang trích xuất các khái niệm cốt lõi, công thức và kỹ thuật quan trọng để tự động tạo 5 câu hỏi trắc nghiệm thực chiến bám sát tài liệu.
+                        </p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="aiQuizError" class="alert alert-danger rounded-3" style="display: none;"></div>
+
+                    <!-- Content State -->
+                    <div id="aiQuizContent" style="display: none;">
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-4" style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.2);">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark-check-fill text-warning fs-5"></i>
+                                <div>
+                                    <span class="small text-slate-400 d-block" style="font-size: 0.75rem;">Nguồn học liệu đã phân tích:</span>
+                                    <strong class="text-white" id="aiMaterialTitle">Tài liệu bài học</strong>
+                                </div>
+                            </div>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 small">
+                                <i class="bi bi-check2-all me-1"></i>Đã sinh 5 câu hỏi
+                            </span>
+                        </div>
+
+                        <!-- Result Banner -->
+                        <div id="aiQuizResultBox" class="p-4 rounded-4 mb-4 text-center" style="display: none; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981;">
+                            <h5 id="aiResultTitle" class="fw-bold text-success mb-1">KẾT QUẢ ĐÁNH GIÁ</h5>
+                            <div class="fs-4 fw-black text-white mb-2" id="aiScoreText">0/5 câu</div>
+                            <p class="small text-slate-300 mb-0">Hãy đối chiếu từng câu hỏi bên dưới để xem đáp án đúng và lời giải thích chi tiết trích dẫn từ tài liệu.</p>
+                        </div>
+
+                        <!-- Questions Container -->
+                        <div id="aiQuestionsContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer border-top px-4 py-3 d-flex justify-content-between" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm" onclick="submitAiQuiz()">
+                        <i class="bi bi-send-check-fill"></i>
+                        <span>Nộp bài & Chấm điểm</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 }
