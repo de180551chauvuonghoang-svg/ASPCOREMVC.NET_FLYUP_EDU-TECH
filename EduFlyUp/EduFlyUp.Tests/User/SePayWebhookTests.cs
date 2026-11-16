@@ -29,9 +29,11 @@ public sealed class SePayWebhookTests
     public async Task Valid_webhook_records_receipt_and_enrollment_once_with_snapshot()
     {
         await using var database = await AdminUserSqlServerTests.SqlDatabase.CreateAsync(useMigrations: true);
+        var ownerId = await database.CreateUserAsync("owner@example.test", "Instructor");
+        var newOwnerId = await database.CreateUserAsync("new@example.test", "Instructor");
         using var seed = database.Services.CreateScope();
         var db = seed.ServiceProvider.GetRequiredService<AppDbContext>();
-        var course = new Course { Title = "Khóa thử nghiệm", InstructorId = "original-owner", Price = 200000 };
+        var course = new Course { Title = "Khóa thử nghiệm", InstructorId = "owner@example.test", Price = 200000 };
         db.Courses.Add(course);
         await db.SaveChangesAsync();
         var first = new Order { CourseId = course.Id, UserId = "student-1", Amount = 180000, OrderCode = "EDUPAY123456" };
@@ -58,15 +60,29 @@ public sealed class SePayWebhookTests
         Assert.False(await Send(Payment(second.OrderCode)));
         Assert.False(await Send(Payment(first.OrderCode, 124)));
 
-        await db.Courses.ExecuteUpdateAsync(update => update.SetProperty(c => c.InstructorId, "new-owner").SetProperty(c => c.Price, 999999));
+        await db.Courses.ExecuteUpdateAsync(update => update.SetProperty(c => c.InstructorId, newOwnerId).SetProperty(c => c.Price, 999999));
         var receipt = await db.SePayReceipts.AsNoTracking().SingleAsync();
         Assert.Equal(180000m, receipt.Amount);
-        Assert.Equal("original-owner", receipt.InstructorId);
+        Assert.Equal(ownerId, receipt.InstructorId);
         Assert.Equal(123, receipt.TransactionId);
         Assert.Equal(first.Id, receipt.OrderId);
         Assert.Equal(OrderStatus.Paid, (await db.Orders.AsNoTracking().SingleAsync(o => o.Id == first.Id)).Status);
         Assert.Equal(OrderStatus.Pending, (await db.Orders.AsNoTracking().SingleAsync(o => o.Id == second.Id)).Status);
         Assert.Equal(first.UserId, (await db.Enrollments.AsNoTracking().SingleAsync()).UserId);
+
+        var earnings = new SettlementInstructorEarningsSource(new SePayInstructorSettlementSource());
+        var owner = new InstructorIdentity(ownerId, "renamed@example.test");
+        var newOwner = new InstructorIdentity(newOwnerId, "new@example.test");
+        var statement = Assert.IsType<InstructorRevenueStatement>(await earnings.ReadStatementAsync(db, owner));
+        Assert.Equal(126000m, statement.TotalInstructor);
+        Assert.Equal(54000m, statement.TotalPlatform);
+        Assert.Equal(0m, await earnings.CreditedEarningsAsync(db, newOwner));
+
+        var payout = new InstructorPayoutService(new InstructorPayoutRepository(db, earnings));
+        var request = new InstructorPayoutInput(125000, "Demo Bank", "000012345678", "DEMO HOLDER", Guid.NewGuid());
+        Assert.Equal(InstructorPayoutChange.InsufficientBalance, (await payout.CreateAsync(owner, request with { Amount = 126001 })).Change);
+        Assert.Equal(InstructorPayoutChange.Created, (await payout.CreateAsync(owner, request)).Change);
+        Assert.Equal(1000m, (await payout.BalanceAsync(owner)).Available);
     }
 
     private static PaymentService BuildService(IOrderRepository orders, string? key)

@@ -56,6 +56,15 @@ public class OrderDAO : SingletonBase<OrderDAO>
             order.Course.InstructorId.Length > 450 || string.IsNullOrWhiteSpace(order.Course.Title))
             return false;
 
+        // Khóa học cũ có thể lưu username. Quy đổi sang ID để đổi email không làm chuyển khoản thu.
+        var owner = order.Course.InstructorId;
+        var normalizedOwner = owner.ToUpperInvariant();
+        var ownerIds = await context.Users.AsNoTracking()
+            .Where(user => user.Id == owner || user.NormalizedUserName == normalizedOwner)
+            .Select(user => user.Id).Take(2).ToListAsync();
+        if (ownerIds.Count != 1)
+            return false;
+
         var now = DateTime.UtcNow;
         order.Status = OrderStatus.Paid;
         order.TransactionReference = !string.IsNullOrWhiteSpace(transactionRef) && transactionRef.Length <= 100
@@ -67,7 +76,7 @@ public class OrderDAO : SingletonBase<OrderDAO>
             OrderId = order.Id,
             CourseId = order.CourseId,
             CourseTitle = order.Course.Title,
-            InstructorId = order.Course.InstructorId,
+            InstructorId = ownerIds[0],
             Amount = amount,
             VerifiedAtUtc = now
         });

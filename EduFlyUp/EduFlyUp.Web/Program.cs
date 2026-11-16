@@ -92,7 +92,7 @@ builder.Services.AddScoped<ICouponService, CouponService>();
 builder.Services.AddScoped<IInstructorStudentRepository, InstructorStudentRepository>();
 builder.Services.AddScoped<IInstructorStudentService, InstructorStudentService>();
 builder.Services.AddScoped<IInstructorPayoutRepository, InstructorPayoutRepository>();
-builder.Services.AddScoped<IInstructorSettlementSource, UnavailableInstructorSettlementSource>();
+builder.Services.AddScoped<IInstructorSettlementSource, SePayInstructorSettlementSource>();
 builder.Services.AddScoped<IInstructorEarningsSource, SettlementInstructorEarningsSource>();
 builder.Services.AddScoped<IInstructorPayoutService, InstructorPayoutService>();
 builder.Services.AddScoped<IInstructorRevenueRepository, InstructorRevenueRepository>();
