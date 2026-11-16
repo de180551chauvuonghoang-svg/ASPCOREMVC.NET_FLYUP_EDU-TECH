@@ -103,6 +103,64 @@ namespace EduFlyUp.DataAccess.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("EduFlyUp.BusinessObjects.Certificate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CertificateCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CourseTitle")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("FinalScore")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("IssuedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("StudentName")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("VerificationUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CertificateCode")
+                        .IsUnique();
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Certificates", (string)null);
+                });
+
             modelBuilder.Entity("EduFlyUp.BusinessObjects.Coupon", b =>
                 {
                     b.Property<int>("Id")
@@ -315,6 +373,61 @@ namespace EduFlyUp.DataAccess.Migrations
                     b.HasIndex("CourseId");
 
                     b.ToTable("Lessons", (string)null);
+                });
+
+            modelBuilder.Entity("EduFlyUp.BusinessObjects.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("OrderCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TransactionReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("OrderCode")
+                        .IsUnique();
+
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("EduFlyUp.BusinessObjects.PayoutRequest", b =>
@@ -553,6 +666,44 @@ namespace EduFlyUp.DataAccess.Migrations
                     b.ToTable("QuizQuestions", (string)null);
                 });
 
+            modelBuilder.Entity("EduFlyUp.BusinessObjects.SePayReceipt", b =>
+                {
+                    b.Property<long>("TransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CourseTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("InstructorId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("VerifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("TransactionId");
+
+                    b.HasIndex("InstructorId");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.ToTable("SePayReceipts", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -686,6 +837,25 @@ namespace EduFlyUp.DataAccess.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("EduFlyUp.BusinessObjects.Certificate", b =>
+                {
+                    b.HasOne("EduFlyUp.BusinessObjects.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EduFlyUp.BusinessObjects.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EduFlyUp.BusinessObjects.Coupon", b =>
                 {
                     b.HasOne("EduFlyUp.BusinessObjects.Course", "Course")
@@ -712,6 +882,17 @@ namespace EduFlyUp.DataAccess.Migrations
                         .WithMany("Lessons")
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("EduFlyUp.BusinessObjects.Order", b =>
+                {
+                    b.HasOne("EduFlyUp.BusinessObjects.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Course");

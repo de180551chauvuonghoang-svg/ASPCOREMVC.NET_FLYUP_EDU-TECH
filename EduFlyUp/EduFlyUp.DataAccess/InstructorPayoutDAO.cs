@@ -21,8 +21,9 @@ public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
     public async Task<InstructorPayoutBalance> BalanceAsync(AppDbContext db, IInstructorEarningsSource earnings, InstructorIdentity instructor)
     {
         var credited = await earnings.CreditedEarningsAsync(db, instructor);
+        var normalizedUsername = instructor.UserName.ToUpperInvariant();
         var summary = await db.PayoutRequests.AsNoTracking()
-            .Where(p => p.InstructorId == instructor.UserId || p.InstructorId == instructor.UserName)
+            .Where(p => p.InstructorId == instructor.UserId || p.InstructorId.ToUpper() == normalizedUsername)
             .GroupBy(_ => 1).Select(g => new
             {
                 Pending = g.Sum(p => p.Status == PayoutStatus.Pending ? p.Amount : 0),
@@ -45,14 +46,12 @@ public sealed class InstructorPayoutDAO : SingletonBase<InstructorPayoutDAO>
         if (previous.HasValue) return previous.Value;
         if (!(await earnings.CreditedEarningsAsync(db, instructor)).HasValue)
             return InstructorPayoutChange.EarningsUnavailable;
-        await using var transaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
-        // Settlement and Admin payout writers must use this same lock for balance-affecting changes.
-        await db.Database.ExecuteSqlRawAsync("""
-            DECLARE @result int;
-            EXEC @result = sp_getapplock @Resource=N'EduFlyUp.PayoutManagement',
-                @LockMode=N'Exclusive', @LockOwner=N'Transaction', @LockTimeout=10000;
-            IF @result < 0 THROW 51002, N'Không thể lấy khóa quản lý yêu cầu rút tiền.', 1;
-            """);
+        // PostgreSQL phải đọc số dư sau khi lấy khóa, theo snapshot của câu lệnh READ COMMITTED.
+        var isolation = db.Database.IsNpgsql()
+            ? System.Data.IsolationLevel.ReadCommitted
+            : System.Data.IsolationLevel.Serializable;
+        await using var transaction = await db.Database.BeginTransactionAsync(isolation);
+        await PayoutWriteLock.AcquireAsync(db);
         previous = await PreviousSubmissionAsync(db, instructor, input);
         if (previous.HasValue) return previous.Value;
         var balance = await BalanceAsync(db, earnings, instructor);

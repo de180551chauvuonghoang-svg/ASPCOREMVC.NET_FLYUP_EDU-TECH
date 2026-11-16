@@ -20,14 +20,14 @@ public class AccountController : Controller
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         ILogger<AccountController> logger,
-        IOrderRepository? orderRepo = null,
+        IOrderRepository orderRepo,
         ICertificateRepository? certRepo = null,
         IEnrollmentRepository? enrollmentRepo = null)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
-        _orderRepo = orderRepo ?? new OrderRepository();
+        _orderRepo = orderRepo;
         _certRepo = certRepo ?? new CertificateRepository();
         _enrollmentRepo = enrollmentRepo ?? new EnrollmentRepository();
     }

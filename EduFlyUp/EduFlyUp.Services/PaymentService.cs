@@ -1,4 +1,7 @@
 using System.Text.RegularExpressions;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
 using EduFlyUp.BusinessObjects;
 using EduFlyUp.Repositories;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +44,7 @@ public class PaymentService : IPaymentService
         if (existingOrder != null)
         {
             orderCode = existingOrder.OrderCode;
+            amount = existingOrder.Amount;
         }
         else
         {
@@ -59,7 +63,7 @@ public class PaymentService : IPaymentService
 
         var bankBin = _config["SePay:BankBin"] ?? _config["SEPAY_BANK_BIN"] ?? "970423"; // 970423 là BIN TPBank
         var bankName = _config["SePay:BankName"] ?? _config["SEPAY_BANK_NAME"] ?? "TPBank";
-        var bankAcc = _config["SePay:BankAccountNumber"] ?? _config["SEPAY_BANK_ACCOUNT_NUMBER"] ?? "25816798888";
+        var bankAcc = BankAccountNumber;
         var accountName = _config["SePay:AccountHolderName"] ?? _config["SEPAY_ACCOUNT_HOLDER_NAME"] ?? "CHAU VUONG HOANG";
 
         // URL tạo ảnh VietQR chuẩn Napas 247
@@ -82,77 +86,38 @@ public class PaymentService : IPaymentService
 
     public async Task<bool> ProcessSePayWebhookAsync(string? authHeader, SePayWebhookPayload payload)
     {
-        var configuredApiKey = _config["SePay:ApiKey"] ?? "UDGTQNAYNA18JZ5NXLQUPZUOIRDBE3OP9AM6DUXYC9MZN4VYD5P0SVIPFRZYWA7R";
-
-        // Xác thực API Key nếu được cung cấp
-        if (!string.IsNullOrEmpty(configuredApiKey) && !string.IsNullOrEmpty(authHeader))
+        var configuredApiKey = _config["SePay:ApiKey"];
+        if (string.IsNullOrWhiteSpace(configuredApiKey) ||
+            !AuthenticationHeaderValue.TryParse(authHeader, out var authorization) ||
+            !string.Equals(authorization.Scheme, "Apikey", StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrWhiteSpace(authorization.Parameter) ||
+            !CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(authorization.Parameter),
+                Encoding.UTF8.GetBytes(configuredApiKey)))
         {
-            var token = authHeader.Replace("Apikey ", "", StringComparison.OrdinalIgnoreCase)
-                                  .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase)
-                                  .Trim();
-
-            if (!string.Equals(token, configuredApiKey, StringComparison.Ordinal))
-            {
-                _logger.LogWarning("SePay Webhook: Xác thực thất bại với header {AuthHeader}", authHeader);
-                return false;
-            }
-        }
-
-        if (payload == null)
-        {
-            _logger.LogWarning("SePay Webhook: Payload rỗng.");
+            _logger.LogWarning("SePay Webhook: Xác thực thất bại.");
             return false;
         }
 
-        _logger.LogInformation("SePay Webhook nhận giao dịch: ID={Id}, Gateway={Gateway}, Amount={Amount}, Content={Content}",
-            payload.id, payload.gateway, payload.transferAmount, payload.content);
+        if (payload is null || payload.id <= 0 || payload.transferAmount <= 0 ||
+            !string.Equals(payload.transferType, "in", StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(payload.accountNumber, BankAccountNumber, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        _logger.LogInformation("SePay Webhook nhận giao dịch: ID={Id}", payload.id);
 
         // Nội dung giao dịch có thể nằm ở trường content hoặc description
         var rawContent = $"{payload.content} {payload.description}";
-        var match = Regex.Match(rawContent, @"EDUPAY\d{6}", RegexOptions.IgnoreCase);
-
-        if (!match.Success)
-        {
-            _logger.LogInformation("SePay Webhook: Không tìm thấy mã EDUPAY trong nội dung: '{Content}'", rawContent);
-            return false;
-        }
-
-        var orderCode = match.Value.ToUpper();
-        var order = await _orderRepo.GetByCodeAsync(orderCode);
-
-        if (order == null)
-        {
-            _logger.LogWarning("SePay Webhook: Không tìm thấy đơn hàng với mã {OrderCode}", orderCode);
-            return false;
-        }
-
-        if (order.Status == OrderStatus.Paid)
-        {
-            _logger.LogInformation("SePay Webhook: Đơn hàng {OrderCode} đã được thanh toán trước đó.", orderCode);
-            return true;
-        }
-
-        // Kiểm tra số tiền chuyển phải đủ số tiền khóa học
-        if (payload.transferAmount >= order.Amount)
-        {
-            var txnRef = payload.referenceCode ?? payload.id.ToString();
-            var success = await _orderRepo.MarkAsPaidAsync(orderCode, txnRef);
-
-            if (success)
-            {
-                _logger.LogInformation("🎉 Thanh toán thành công cho đơn hàng {OrderCode}, kích hoạt khóa học {CourseId} cho user {UserId}!",
-                    orderCode, order.CourseId, order.UserId);
-                return true;
-            }
-        }
-        else
-        {
-            _logger.LogWarning("SePay Webhook: Số tiền thanh toán ({PaidAmount}) không đủ giá trị đơn hàng ({OrderAmount}) cho đơn {OrderCode}",
-                payload.transferAmount, order.Amount, orderCode);
-        }
-
-        return false;
+        var codes = Regex.Matches(rawContent, @"(?<![A-Za-z0-9])EDUPAY[0-9]{6}(?![A-Za-z0-9])",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)
+            .Select(match => match.Value.ToUpperInvariant()).Distinct(StringComparer.Ordinal).Take(2).ToArray();
+        return codes.Length == 1 &&
+            await _orderRepo.MarkAsPaidAsync(codes[0], payload.id, payload.transferAmount, payload.referenceCode);
     }
+
+    private string BankAccountNumber =>
+        _config["SePay:BankAccountNumber"] ?? _config["SEPAY_BANK_ACCOUNT_NUMBER"] ?? "25816798888";
 
     public async Task<Order?> GetOrderByCodeAsync(string orderCode)
     {

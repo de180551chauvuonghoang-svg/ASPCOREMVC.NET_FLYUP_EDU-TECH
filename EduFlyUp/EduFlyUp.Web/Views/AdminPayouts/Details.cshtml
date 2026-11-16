@@ -1,0 +1,43 @@
+@model PayoutRequest
+@using System.Globalization
+@using EduFlyUp.Web.Models.Instructor
+@{
+    ViewData["Title"] = $"Yêu cầu #{Model.Id}";
+    Layout = "_AdminLayout";
+    var pending = Model.Status == PayoutStatus.Pending;
+    var vi = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<a asp-action="Index" class="text-decoration-none">← Yêu cầu rút tiền</a>
+<h1 class="h3 mt-3">Yêu cầu #@Model.Id</h1>
+<p>@InstructorPayoutDisplay.Status(Model.Status)</p>
+<dl class="row">
+    <dt class="col-sm-4">Số tiền</dt><dd class="col-sm-8 fw-bold">@Model.Amount.ToString("#,0.##", vi) đ</dd>
+    <dt class="col-sm-4">Giảng viên</dt><dd class="col-sm-8 text-break">@Model.InstructorId</dd>
+    <dt class="col-sm-4">Ngân hàng</dt><dd class="col-sm-8">@Model.BankName</dd>
+    @if (pending)
+    {
+        <dt class="col-sm-4">Chủ tài khoản</dt><dd class="col-sm-8">@Model.AccountHolderName</dd>
+        <dt class="col-sm-4">Số tài khoản</dt><dd class="col-sm-8 user-select-all">@Model.AccountNumber</dd>
+    }
+    else
+    {
+        <dt class="col-sm-4">Ghi chú</dt><dd class="col-sm-8 text-break">@Model.AdminNote</dd>
+    }
+</dl>
+<div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+@if (pending)
+{
+    <div class="row g-3">
+        <form asp-action="ConfirmTransfer" asp-route-id="@Model.Id" method="post" class="col-md-6">
+            <label for="transfer-code" class="form-label">Mã chuyển khoản đã thực hiện</label>
+            <input id="transfer-code" name="note" class="form-control mb-2" maxlength="250" required />
+            <button class="btn btn-primary" type="submit">Xác nhận đã chuyển</button>
+        </form>
+        <form asp-action="Reject" asp-route-id="@Model.Id" method="post" class="col-md-6">
+            <label for="reject-reason" class="form-label">Lý do từ chối</label>
+            <input id="reject-reason" name="note" class="form-control mb-2" maxlength="250" required />
+            <button class="btn btn-outline-danger" type="submit">Từ chối</button>
+        </form>
+    </div>
+}

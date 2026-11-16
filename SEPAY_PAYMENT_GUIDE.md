@@ -10,8 +10,16 @@ Tài liệu này cung cấp toàn bộ quy trình thiết lập, tài liệu API
 - **Mã BIN Napas 247**: `970423`
 - **Số tài khoản**: `25816798888`
 - **Chủ tài khoản**: `CHAU VUONG HOANG`
-- **API Key SePay**: `UDGTQNAYNA18JZ5NXLQUPZUOIRDBE3OP9AM6DUXYC9MZN4VYD5P0SVIPFRZYWA7R`
+- **API Key SePay**: cấu hình khóa webhook mới qua biến môi trường `SePay__ApiKey` hoặc .NET User Secrets. Thay khóa từng được lưu trong Git tại SePay trước khi triển khai.
 - **Tên Key**: `EDUFLYUPDOTNET`
+
+## Doanh thu giảng viên (UC-38)
+
+- SQL Server dùng migration `20261116034927_AddSePayReceipts`. Với PostgreSQL hiện có, chạy `tools/InitPg/sepay-receipts.sql` trước khi triển khai bản web.
+- Webhook cần `Authorization: Apikey ...`. Giao dịch tiền vào cần đúng số tài khoản, đúng tổng tiền đơn, có một mã đơn rõ ràng và có ID SePay hợp lệ. Chuyển thiếu, chuyển thừa hoặc giao dịch mơ hồ cần đối soát riêng.
+- Sau xác thực, hệ thống lưu ID SePay, số tiền nhận và ID giảng viên cùng với cập nhật đơn và ghi danh. Báo cáo tính 70% trên các biên nhận này. Yêu cầu rút tiền dùng số dư sau khi trừ khoản đã duyệt và đang chờ.
+- Admin mở **Yêu cầu rút tiền** để xem chi tiết. Sau khi chuyển qua ngân hàng, nhập mã chuyển khoản và bấm **Xác nhận đã chuyển**. Khi từ chối, nhập lý do để giảng viên xem trong lịch sử.
+- Các đơn `Paid` lịch sử chưa có biên nhận cần đối chiếu với SePay trước khi ghi có. Khoản hoàn tiền thực hiện bên ngoài ứng dụng cần đối soát riêng.
 - **Webhook URL Production (Railway)**:
   ```text
   https://aspcoremvcnetflyupedu-tech-production.up.railway.app/api/payments/sepay-webhook
@@ -65,7 +73,7 @@ Trong file `EduFlyUp/EduFlyUp.Web/appsettings.json`:
 ```json
 {
   "SePay": {
-    "ApiKey": "UDGTQNAYNA18JZ5NXLQUPZUOIRDBE3OP9AM6DUXYC9MZN4VYD5P0SVIPFRZYWA7R",
+    "ApiKey": "SEPAY_WEBHOOK_KEY",
     "BankBin": "970423",
     "BankName": "TPBank",
     "BankAccountNumber": "25816798888",
@@ -104,7 +112,7 @@ Mở một cửa sổ PowerShell mới và chạy lệnh sau (thay mã `EDUPAY64
 ```powershell
 $headers = @{
     "Content-Type" = "application/json"
-    "Authorization" = "Apikey UDGTQNAYNA18JZ5NXLQUPZUOIRDBE3OP9AM6DUXYC9MZN4VYD5P0SVIPFRZYWA7R"
+    "Authorization" = "Apikey SEPAY_WEBHOOK_KEY"
 }
 
 $body = @{
