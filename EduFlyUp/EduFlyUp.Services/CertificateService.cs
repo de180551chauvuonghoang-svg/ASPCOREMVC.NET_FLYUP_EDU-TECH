@@ -51,37 +51,25 @@ namespace EduFlyUp.Services
 
             var studentName = !string.IsNullOrWhiteSpace(user.FullName) ? user.FullName : user.UserName ?? user.Email ?? "Học viên EduFlyUp";
 
-            // 1. Cập nhật trạng thái Enrollment thành Completed
+            // 1. Cập nhật trạng thái Enrollment thành Completed (đã hoàn thành khóa học)
             try
             {
-                var enrollments = await _enrollmentRepo.GetByUserIdAsync(userId);
-                var currentEnrollment = enrollments.FirstOrDefault(e => e.CourseId == courseId);
-                if (currentEnrollment != null && currentEnrollment.Status != EnrollmentStatus.Completed)
-                {
-                    currentEnrollment.Status = EnrollmentStatus.Completed;
-                    currentEnrollment.CompletedAt = DateTime.UtcNow;
-                    // EnrollmentDAO.Instance đã có phương thức cập nhật hoặc lưu trạng thái
-                }
+                await _enrollmentRepo.CompleteEnrollmentAsync(userId, courseId);
             }
             catch
             {
                 // Bỏ qua lỗi cập nhật enrollment nếu đã hoàn thành
             }
 
-            // 2. Kiểm tra xem đã có Certificate cho khóa học này chưa
+            // 2. Quy tắc: Mỗi học viên chỉ được cấp Certificate DUY NHẤT 1 LẦN ĐẦU TIÊN khi hoàn thành
             var existingCert = await _certificateRepo.GetByCourseAndUserAsync(courseId, userId);
             if (existingCert != null)
             {
-                if (score > existingCert.FinalScore)
-                {
-                    existingCert.FinalScore = score;
-                    existingCert.IssuedAt = DateTime.UtcNow;
-                    await _certificateRepo.AddOrUpdateAsync(existingCert);
-                }
-                return (true, "Bạn đã hoàn thành khóa học và cập nhật điểm số chứng chỉ thành công!", existingCert);
+                // Bảo lưu chứng chỉ lần đầu tiên, không tạo mới và không ghi đè ngày cấp ban đầu
+                return (true, $"Bạn đã nhận Chứng chỉ tốt nghiệp cho khóa học này từ lần hoàn thành đầu tiên (Ngày cấp: {existingCert.IssuedAt:dd/MM/yyyy}). Khóa học đã được lưu vào mục 'Khóa học đã hoàn thành' và bạn có thể học lại bất cứ lúc nào!", existingCert);
             }
 
-            // 3. Tạo chứng chỉ mới
+            // 3. Tạo chứng chỉ mới cho lần đầu hoàn thành
             var randomCode = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
             var certCode = $"CERT-{DateTime.UtcNow.Year}-{randomCode}";
             var verifyUrl = !string.IsNullOrWhiteSpace(requestBaseUrl)

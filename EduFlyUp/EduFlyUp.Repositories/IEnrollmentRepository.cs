@@ -10,5 +10,6 @@ namespace EduFlyUp.Repositories
         Task<bool> HasCourseEnrollmentsAsync(int courseId);
         Task<bool> HasActiveCourseEnrollmentsAsync(int courseId);
         Task<Dictionary<int, int>> GetCourseEnrollmentCountsAsync(IEnumerable<int> courseIds);
+        Task<bool> CompleteEnrollmentAsync(string userId, int courseId);
     }
 }

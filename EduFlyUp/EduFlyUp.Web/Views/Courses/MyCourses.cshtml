@@ -41,7 +41,7 @@
         </div>
 
         <div class="row align-items-center position-relative" style="z-index: 2;">
-            <div class="col-lg-8">
+            <div class="col-lg-7">
                 <!-- Tag pill -->
                 <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill mb-3 shadow-sm" 
                      style="background: rgba(255, 255, 255, 0.12); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); font-size: 0.85rem; font-weight: 500;">
@@ -54,37 +54,55 @@
                 </h1>
                 
                 <p class="mb-0 fs-6" style="color: #cbd5e1 !important; max-width: 620px; line-height: 1.6;">
-                    Theo dõi tiến độ học tập, tham gia bài thi đánh giá năng lực cuối khóa (Final Test đạt &ge; 95%) để nhận Chứng chỉ tốt nghiệp chuẩn quốc tế từ EduFlyUp.
+                    Theo dõi tiến độ, hoàn thành &ge; 95% bài học và vượt qua kỳ thi tốt nghiệp (Final Test &ge; 95%) để nhận Chứng chỉ chính thức. Các khóa học đã tốt nghiệp được lưu trữ riêng để bạn có thể học lại bất cứ lúc nào!
                 </p>
             </div>
 
-            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
-                <div class="d-inline-flex flex-column align-items-lg-end gap-2">
-                    <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);">
-                        <i class="bi bi-award-fill text-warning fs-5"></i>
-                        <span class="small fw-semibold" style="color: #f8fafc;">Đã đạt: <strong style="color: #facc15;">@Model.TotalCertificatesCount</strong> chứng chỉ tốt nghiệp</span>
+            <div class="col-lg-5 text-lg-end mt-4 mt-lg-0">
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <div class="p-3 rounded-4 shadow-sm" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);">
+                            <div class="fs-4 fw-extrabold text-info mb-0">@Model.InProgressCount</div>
+                            <span class="small" style="color: #94a3b8; font-size: 0.75rem;">Đang học</span>
+                        </div>
                     </div>
-                    <span class="small" style="color: #94a3b8;">
-                        Tổng số: <strong style="color: #67e8f9;">@Model.TotalCoursesCount</strong> khóa học sở hữu
-                    </span>
+                    <div class="col-4">
+                        <div class="p-3 rounded-4 shadow-sm" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);">
+                            <div class="fs-4 fw-extrabold text-success mb-0">@Model.CompletedCount</div>
+                            <span class="small" style="color: #94a3b8; font-size: 0.75rem;">Đã hoàn thành</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 rounded-4 shadow-sm" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);">
+                            <div class="fs-4 fw-extrabold text-warning mb-0">@Model.TotalCertificatesCount</div>
+                            <span class="small" style="color: #94a3b8; font-size: 0.75rem;">Chứng chỉ đạt</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Navigation Tabs: My Courses vs My Certificates -->
-    <ul class="nav nav-pills nav-fill gap-2 p-1.5 mb-4 rounded-4 shadow-sm" id="myAcademyTabs" role="tablist" style="background: #ffffff; border: 1px solid #e2e8f0; max-width: 540px;">
+    <!-- Main Navigation Tabs: In-Progress vs Completed vs Certificates -->
+    <ul class="nav nav-pills gap-2 p-1.5 mb-4 rounded-4 shadow-sm" id="myAcademyTabs" role="tablist" style="background: #ffffff; border: 1px solid #e2e8f0; max-width: 680px;">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active rounded-pill fw-bold py-2.5 d-flex align-items-center justify-content-center gap-2" 
-                    id="tab-courses" data-bs-toggle="pill" data-bs-target="#content-courses" type="button" role="tab">
-                <i class="bi bi-journal-bookmark-fill fs-5"></i>
-                <span>Khóa học của tôi (@Model.TotalCoursesCount)</span>
+            <button class="nav-link active rounded-pill fw-bold py-2.5 px-3 d-flex align-items-center gap-2" 
+                    id="tab-inprogress" data-bs-toggle="pill" data-bs-target="#content-inprogress" type="button" role="tab">
+                <i class="bi bi-play-circle-fill text-primary fs-5"></i>
+                <span>Đang học (@Model.InProgressCount)</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link rounded-pill fw-bold py-2.5 d-flex align-items-center justify-content-center gap-2" 
+            <button class="nav-link rounded-pill fw-bold py-2.5 px-3 d-flex align-items-center gap-2" 
+                    id="tab-completed" data-bs-toggle="pill" data-bs-target="#content-completed" type="button" role="tab">
+                <i class="bi bi-patch-check-fill text-success fs-5"></i>
+                <span>Đã hoàn thành (@Model.CompletedCount)</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill fw-bold py-2.5 px-3 d-flex align-items-center gap-2" 
                     id="tab-certificates" data-bs-toggle="pill" data-bs-target="#content-certificates" type="button" role="tab">
-                <i class="bi bi-patch-check-fill text-warning fs-5"></i>
+                <i class="bi bi-award-fill text-warning fs-5"></i>
                 <span>Chứng chỉ của tôi (@Model.TotalCertificatesCount)</span>
             </button>
         </li>
@@ -93,75 +111,63 @@
     <!-- Tab Contents -->
     <div class="tab-content" id="myAcademyTabContent">
         
-        <!-- ================= TAB 1: MY COURSES ================= -->
-        <div class="tab-pane fade show active" id="content-courses" role="tabpanel">
-            @if (!Model.Courses.Any())
+        <!-- ================= TAB 1: KHÓA HỌC ĐANG HỌC ================= -->
+        <div class="tab-pane fade show active" id="content-inprogress" role="tabpanel">
+            @if (!Model.InProgressCourses.Any())
             {
                 <!-- Empty State -->
                 <div class="card card-modern border-0 shadow-sm rounded-4 p-5 text-center my-4" style="background: #ffffff;">
                     <div class="py-5">
                         <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow-sm" 
-                             style="width: 90px; height: 90px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.15) 100%); color: #4f46e5;">
-                            <i class="bi bi-collection-play fs-1"></i>
+                             style="width: 80px; height: 80px; background: #ecfdf5; color: #10b981;">
+                            <i class="bi bi-check2-circle fs-1"></i>
                         </div>
-                        <h3 class="fw-bold mb-2" style="color: #0f172a;">Bạn chưa đăng ký khóa học nào</h3>
-                        <p class="mx-auto mb-4 fs-6" style="color: #64748b; max-width: 520px; line-height: 1.6;">
-                            Khám phá ngay các chương trình đào tạo lập trình thực chiến (.NET 8, Clean Architecture, HTML/CSS/JS, Web API) để bắt đầu.
+                        <h4 class="fw-bold mb-2 text-dark">Bạn không có khóa học nào đang học dở</h4>
+                        <p class="mx-auto mb-4 small text-muted" style="max-width: 500px;">
+                            Tất cả các khóa học bạn đã đăng ký đều đã được hoàn thành xuất sắc hoặc bạn chưa đăng ký khóa học mới nào.
                         </p>
-                        <a asp-controller="Courses" asp-action="Index" class="btn btn-brand rounded-pill px-4 py-3 fw-semibold shadow-glow d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-compass fs-5"></i>
-                            <span>Khám phá danh sách khóa học</span>
-                        </a>
+                        <div class="d-flex justify-content-center gap-2">
+                            @if (Model.CompletedCount > 0)
+                            {
+                                <button type="button" class="btn btn-outline-success rounded-pill px-4 py-2.5 fw-semibold" onclick="document.getElementById('tab-completed').click();">
+                                    <i class="bi bi-patch-check me-1"></i>Xem khóa học đã hoàn thành (@Model.CompletedCount)
+                                </button>
+                            }
+                            <a asp-controller="Courses" asp-action="Index" class="btn btn-brand rounded-pill px-4 py-2.5 fw-semibold shadow-glow">
+                                <i class="bi bi-compass me-1"></i>Khám phá khóa học mới
+                            </a>
+                        </div>
                     </div>
                 </div>
             }
             else
             {
-                <!-- Course Cards Grid -->
+                <!-- In-Progress Cards Grid -->
                 <div class="row g-4 mb-5">
-                    @foreach (var item in Model.Courses)
+                    @foreach (var item in Model.InProgressCourses)
                     {
                         <div class="col-md-6 col-lg-4">
                             <div class="card card-modern h-100 border-0 shadow-sm rounded-4 overflow-hidden d-flex flex-column" 
-                                 style="background: #ffffff; border: 1px solid #e2e8f0; transition: all 0.3s ease;">
+                                 style="background: #ffffff; border: 1px solid #f1f5f9 !important; transition: all 0.3s ease;">
                                 
-                                <!-- Thumbnail -->
-                                <div class="position-relative overflow-hidden" style="height: 200px; background: #0f172a;">
-                                    <img src="@(string.IsNullOrEmpty(item.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80" : item.ThumbnailUrl)" 
-                                         class="w-100 h-100" 
-                                         alt="@item.CourseTitle" 
-                                         style="object-fit: cover; transition: transform 0.4s ease;"
-                                         onmouseover="this.style.transform='scale(1.05)'"
-                                         onmouseout="this.style.transform='scale(1)'"
+                                <div class="position-relative overflow-hidden" style="height: 190px;">
+                                    <img src="@item.ThumbnailUrl" class="w-100 h-100 object-fit-cover" alt="@item.CourseTitle" 
                                          onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80';" />
-                                    
-                                    <div class="position-absolute bottom-0 start-0 end-0" style="height: 60px; background: linear-gradient(to top, rgba(15, 23, 42, 0.75), transparent); pointer-events: none;"></div>
+                                    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(180deg, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.7) 100%);"></div>
 
-                                    @if (item.Status == EduFlyUp.BusinessObjects.EnrollmentStatus.Completed)
-                                    {
-                                        <span class="position-absolute top-0 start-0 m-3 px-3 py-1.5 rounded-pill small fw-bold shadow-sm d-inline-flex align-items-center gap-1"
-                                              style="background: #f59e0b; color: #ffffff; font-size: 0.78rem;">
-                                            <i class="bi bi-award-fill"></i>
-                                            <span>ĐÃ TỐT NGHIỆP</span>
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="position-absolute top-0 start-0 m-3 px-3 py-1.5 rounded-pill small fw-bold shadow-sm d-inline-flex align-items-center gap-1"
-                                              style="background: #10b981; color: #ffffff; font-size: 0.78rem;">
-                                            <i class="bi bi-check-circle-fill"></i>
-                                            <span>ĐÃ SỞ HỮU</span>
-                                        </span>
-                                    }
+                                    <span class="badge position-absolute top-0 start-0 m-3 px-3 py-1.5 rounded-pill small fw-semibold shadow-sm d-inline-flex align-items-center gap-1.5"
+                                          style="background: #6366f1; color: #ffffff; font-size: 0.75rem;">
+                                        <i class="bi bi-play-circle-fill"></i>
+                                        <span>ĐANG HỌC</span>
+                                    </span>
 
                                     <span class="position-absolute bottom-0 end-0 m-3 px-2.5 py-1 rounded-pill small fw-semibold d-inline-flex align-items-center gap-1"
                                           style="background: rgba(15, 23, 42, 0.85); color: #f8fafc; font-size: 0.75rem; backdrop-filter: blur(4px);">
-                                        <i class="bi bi-play-circle-fill text-primary"></i>
+                                        <i class="bi bi-journal-code text-primary"></i>
                                         <span>@item.LessonCount bài học</span>
                                     </span>
                                 </div>
 
-                                <!-- Card Body -->
                                 <div class="card-body p-4 d-flex flex-column flex-grow-1">
                                     <div class="small mb-2 d-flex align-items-center gap-2" style="color: #64748b;">
                                         <span><i class="bi bi-calendar3 me-1 text-primary"></i>Kích hoạt: @item.EnrolledAt.ToString("dd/MM/yyyy")</span>
@@ -176,25 +182,6 @@
                                     <p class="small flex-grow-1 mb-4" style="color: #64748b; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5;">
                                         @(string.IsNullOrWhiteSpace(item.Description) ? "Khóa học chất lượng cao, bài giảng trực quan, mã nguồn chi tiết tại EduFlyUp." : item.Description)
                                     </p>
-
-                                    <!-- Status hint -->
-                                    <div class="p-2.5 rounded-3 mb-3 d-flex align-items-center justify-content-between" style="background: #f8fafc; border: 1px solid #f1f5f9;">
-                                        <span class="small fw-semibold" style="color: #334155; font-size: 0.8rem;">
-                                            <i class="bi bi-mortarboard me-1 text-primary"></i>Trạng thái học
-                                        </span>
-                                        @if (item.Status == EduFlyUp.BusinessObjects.EnrollmentStatus.Completed)
-                                        {
-                                            <span class="badge rounded-pill" style="background: rgba(245, 158, 11, 0.15); color: #d97706; font-size: 0.75rem;">
-                                                <i class="bi bi-patch-check-fill me-1"></i>Đã cấp chứng chỉ
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge rounded-pill" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-size: 0.75rem;">
-                                                Đang học
-                                            </span>
-                                        }
-                                    </div>
 
                                     <!-- Action Buttons -->
                                     <div class="mt-auto pt-3 border-top d-flex gap-2">
@@ -217,7 +204,7 @@
 
                                         <a asp-controller="Courses" asp-action="Details" asp-route-id="@item.CourseId" 
                                            class="btn btn-outline-secondary rounded-pill py-2.5 px-3 btn-sm d-flex align-items-center justify-content-center" 
-                                           title="Xem thông tin chi tiết khóa học">
+                                           title="Xem thông tin chi tiết">
                                             <i class="bi bi-info-circle"></i>
                                         </a>
                                     </div>
@@ -229,54 +216,158 @@
             }
         </div>
 
-        <!-- ================= TAB 2: MY CERTIFICATES ================= -->
-        <div class="tab-pane fade" id="content-certificates" role="tabpanel">
-            @if (!Model.Certificates.Any())
+        <!-- ================= TAB 2: KHÓA HỌC ĐÃ HOÀN THÀNH ================= -->
+        <div class="tab-pane fade" id="content-completed" role="tabpanel">
+            @if (!Model.CompletedCourses.Any())
             {
-                <!-- Empty Certificates State -->
                 <div class="card card-modern border-0 shadow-sm rounded-4 p-5 text-center my-4" style="background: #ffffff;">
                     <div class="py-5">
                         <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow-sm" 
-                             style="width: 90px; height: 90px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.2) 100%); color: #d97706;">
-                            <i class="bi bi-award fs-1"></i>
+                             style="width: 80px; height: 80px; background: #fef9c3; color: #ca8a04;">
+                            <i class="bi bi-mortarboard fs-1"></i>
                         </div>
-                        <h3 class="fw-bold mb-2" style="color: #0f172a;">Bạn chưa có Chứng chỉ tốt nghiệp nào</h3>
-                        <p class="mx-auto mb-4 fs-6" style="color: #64748b; max-width: 520px; line-height: 1.6;">
-                            Để nhận Chứng chỉ tốt nghiệp chuẩn quốc tế của EduFlyUp, hãy hoàn thành các bài học và đạt điểm số <strong>từ 95% trở lên</strong> ở bài kiểm tra cuối khóa (<strong>Final Test</strong>).
+                        <h4 class="fw-bold mb-2 text-dark">Bạn chưa hoàn thành khóa học nào</h4>
+                        <p class="mx-auto mb-4 small text-muted" style="max-width: 520px; line-height: 1.6;">
+                            Hoàn thành &ge; 95% số bài học của khóa học và vượt qua bài thi tốt nghiệp Final Test &ge; 95 điểm để nhận Chứng chỉ tốt nghiệp và đưa khóa học vào danh sách này.
                         </p>
-                        @if (Model.Courses.Any())
-                        {
-                            <button type="button" onclick="document.getElementById('tab-courses').click();" class="btn btn-brand rounded-pill px-4 py-3 fw-semibold shadow-glow d-inline-flex align-items-center gap-2">
-                                <i class="bi bi-mortarboard-fill"></i>
-                                <span>Tiếp tục học để thi tốt nghiệp</span>
-                            </button>
-                        }
+                        <button type="button" class="btn btn-brand rounded-pill px-4 py-2.5 fw-semibold shadow-glow" onclick="document.getElementById('tab-inprogress').click();">
+                            <i class="bi bi-arrow-left me-1"></i>Xem các khóa học đang học
+                        </button>
                     </div>
                 </div>
             }
             else
             {
-                <!-- Certificate Cards Grid (Luxury Gold Bordered Cards) -->
+                <div class="row g-4 mb-5">
+                    @foreach (var item in Model.CompletedCourses)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card card-modern h-100 border-0 shadow-sm rounded-4 overflow-hidden d-flex flex-column" 
+                                 style="background: #ffffff; border: 1.5px solid #a7f3d0 !important; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.08) !important;">
+                                
+                                <div class="position-relative overflow-hidden" style="height: 190px;">
+                                    <img src="@item.ThumbnailUrl" class="w-100 h-100 object-fit-cover" alt="@item.CourseTitle" 
+                                         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80';" />
+                                    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(180deg, rgba(6, 78, 59, 0.3) 0%, rgba(6, 78, 59, 0.85) 100%);"></div>
+
+                                    <!-- Completed Badge -->
+                                    <span class="badge position-absolute top-0 start-0 m-3 px-3 py-1.5 rounded-pill small fw-bold shadow d-inline-flex align-items-center gap-1.5"
+                                          style="background: #10b981; color: #ffffff; font-size: 0.78rem; border: 1px solid #ffffff;">
+                                        <i class="bi bi-patch-check-fill text-warning"></i>
+                                        <span>ĐÃ TỐT NGHIỆP</span>
+                                    </span>
+
+                                    <!-- Score badge on image -->
+                                    <span class="position-absolute bottom-0 end-0 m-3 px-3 py-1 rounded-pill small fw-bold d-inline-flex align-items-center gap-1 shadow-sm"
+                                          style="background: rgba(15, 23, 42, 0.85); color: #facc15; font-size: 0.75rem; backdrop-filter: blur(4px);">
+                                        <i class="bi bi-trophy-fill"></i>
+                                        <span>@(item.FinalScore.HasValue ? $"{item.FinalScore}% Final Test" : "100% Đạt")</span>
+                                    </span>
+                                </div>
+
+                                <div class="card-body p-4 d-flex flex-column flex-grow-1">
+                                    <div class="small mb-2 d-flex align-items-center justify-content-between" style="color: #64748b;">
+                                        <span><i class="bi bi-calendar-check me-1 text-success"></i>Tốt nghiệp: @(item.CompletedAt.HasValue ? item.CompletedAt.Value.ToString("dd/MM/yyyy") : "Đã cấp")</span>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small">Học lại trọn đời</span>
+                                    </div>
+
+                                    <h5 class="fw-bold mb-2" style="color: #0f172a; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8rem; line-height: 1.4;">
+                                        @item.CourseTitle
+                                    </h5>
+
+                                    <p class="small flex-grow-1 mb-3" style="color: #64748b; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5;">
+                                        @(string.IsNullOrWhiteSpace(item.Description) ? "Khóa học chất lượng cao, bài giảng trực quan, mã nguồn chi tiết tại EduFlyUp." : item.Description)
+                                    </p>
+
+                                    <!-- Certificate Notice Box -->
+                                    <div class="p-2.5 rounded-3 mb-3 d-flex align-items-center justify-content-between" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                                        <div class="d-flex align-items-center gap-2 small" style="color: #166534; font-size: 0.78rem;">
+                                            <i class="bi bi-award-fill text-warning fs-6"></i>
+                                            <span>Mã số: <strong>@(item.CertificateCode ?? "Đã cấp chứng chỉ")</strong></span>
+                                        </div>
+                                        <span class="badge bg-success rounded-pill" style="font-size: 0.68rem;">Đã chứng thực</span>
+                                    </div>
+
+                                    <!-- Action Buttons: Học lại vs Xem Chứng Chỉ -->
+                                    <div class="mt-auto pt-3 border-top d-flex flex-wrap gap-2">
+                                        @if (item.FirstLessonId.HasValue)
+                                        {
+                                            <a asp-controller="Lessons" asp-action="Details" asp-route-id="@item.FirstLessonId.Value" 
+                                               class="btn btn-outline-brand flex-grow-1 py-2 rounded-pill fw-semibold btn-sm d-flex align-items-center justify-content-center gap-1.5" title="Vào ôn tập và học lại bất cứ lúc nào">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                                <span>Học lại bài giảng</span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-controller="Lessons" asp-action="Course" asp-route-id="@item.CourseId" 
+                                               class="btn btn-outline-brand flex-grow-1 py-2 rounded-pill fw-semibold btn-sm d-flex align-items-center justify-content-center gap-1.5" title="Vào ôn tập và học lại bất cứ lúc nào">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                                <span>Học lại bài giảng</span>
+                                            </a>
+                                        }
+
+                                        @if (item.CertificateId.HasValue)
+                                        {
+                                            <a asp-controller="Certificate" asp-action="ViewCertificate" asp-route-id="@item.CertificateId.Value" target="_blank" 
+                                               class="btn btn-warning py-2 px-3 rounded-pill fw-bold btn-sm text-dark d-flex align-items-center justify-content-center gap-1 shadow-sm">
+                                                <i class="bi bi-award-fill"></i>
+                                                <span>Chứng chỉ</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- ================= TAB 3: CHỨNG CHỈ CỦA TÔI ================= -->
+        <div class="tab-pane fade" id="content-certificates" role="tabpanel">
+            @if (!Model.Certificates.Any())
+            {
+                <!-- Empty State Certificates -->
+                <div class="card card-modern border-0 shadow-sm rounded-4 p-5 text-center my-4" style="background: #ffffff;">
+                    <div class="py-5">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow-sm" 
+                             style="width: 80px; height: 80px; background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(202, 138, 4, 0.2) 100%); color: #ca8a04;">
+                            <i class="bi bi-award fs-1"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2 text-dark">Bạn chưa đạt được chứng chỉ nào</h4>
+                        <p class="mx-auto mb-4 small text-muted" style="max-width: 500px; line-height: 1.6;">
+                            Mỗi khóa học sẽ cấp <strong>duy nhất 1 chứng chỉ tốt nghiệp</strong> khi bạn hoàn thành &ge; 95% bài học và đạt &ge; 95% điểm trong bài thi Final Test.
+                        </p>
+                        <button type="button" class="btn btn-brand rounded-pill px-4 py-2.5 fw-semibold shadow-glow" onclick="document.getElementById('tab-inprogress').click();">
+                            <i class="bi bi-mortarboard me-1"></i>Tiếp tục học để nhận chứng chỉ
+                        </button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Certificates Grid -->
                 <div class="row g-4 mb-5">
                     @foreach (var cert in Model.Certificates)
                     {
                         <div class="col-md-6 col-lg-6">
-                            <div class="card border-0 shadow-md rounded-4 overflow-hidden position-relative p-4" 
-                                 style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); border: 2px solid #f59e0b !important; box-shadow: 0 10px 30px -5px rgba(245, 158, 11, 0.25);">
+                            <div class="card border-0 rounded-4 p-4 p-md-5 h-100 position-relative overflow-hidden shadow-lg d-flex flex-column" 
+                                 style="background: linear-gradient(135deg, #0b0f19 0%, #1e1b4b 60%, #1e1b4b 100%); border: 2px solid #ca8a04 !important; box-shadow: 0 10px 30px rgba(234, 179, 8, 0.15) !important;">
                                 
-                                <!-- Background Watermark Seal -->
-                                <div class="position-absolute end-0 bottom-0 pe-3 pb-2" style="opacity: 0.08; color: #f59e0b; pointer-events: none;">
-                                    <i class="bi bi-patch-check-fill" style="font-size: 10rem; line-height: 1;"></i>
+                                <!-- Gold Watermark Seal -->
+                                <div class="position-absolute end-0 bottom-0 p-3 opacity-15 pointer-events-none d-none d-sm-block" style="color: #facc15;">
+                                    <i class="bi bi-patch-check" style="font-size: 8rem; line-height: 0.8;"></i>
                                 </div>
 
                                 <div class="d-flex align-items-center justify-content-between mb-3 position-relative" style="z-index: 2;">
-                                    <span class="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm"
-                                          style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; font-size: 0.8rem; letter-spacing: 0.05em;">
-                                        <i class="bi bi-award-fill"></i>
-                                        <span>CHỨNG CHỈ TỐT NGHIỆP XUẤT SẮC</span>
+                                    <span class="badge px-3 py-1.5 rounded-pill fw-bold d-inline-flex align-items-center gap-1.5" 
+                                          style="background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); font-size: 0.8rem;">
+                                        <i class="bi bi-patch-check-fill"></i>
+                                        CHỨNG CHỈ TỐT NGHIỆP
                                     </span>
-                                    <span class="small fw-semibold" style="color: #67e8f9; font-family: monospace;">
-                                        @cert.CertificateCode
+                                    <span class="small font-monospace text-slate-300" style="color: #cbd5e1;">
+                                        Mã: <strong class="text-white">@cert.CertificateCode</strong>
                                     </span>
                                 </div>
 
@@ -290,6 +381,9 @@
                                         <span><i class="bi bi-calendar3 me-1 text-primary"></i>Ngày cấp: @cert.IssuedAt.ToString("dd/MM/yyyy")</span>
                                         <span>•</span>
                                         <span class="text-warning fw-bold"><i class="bi bi-trophy-fill me-1"></i>Điểm Final Test: @cert.FinalScore%</span>
+                                    </div>
+                                    <div class="mt-1 small" style="color: #94a3b8; font-size: 0.75rem;">
+                                        <i class="bi bi-info-circle me-1"></i>Chứng chỉ điện tử được cấp duy nhất 1 lần ở lần đầu tiên hoàn thành khóa học.
                                     </div>
                                 </div>
 

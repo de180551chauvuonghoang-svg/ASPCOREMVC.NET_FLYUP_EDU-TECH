@@ -115,6 +115,14 @@ internal sealed class TestEnrollmentRepository : IEnrollmentRepository
             .GroupBy(e => e.CourseId)
             .ToDictionary(g => g.Key, g => g.Count()));
     }
+    public Task<bool> CompleteEnrollmentAsync(string userId, int courseId)
+    {
+        var e = Enrollments.FirstOrDefault(x => x.UserId == userId && x.CourseId == courseId);
+        if (e == null) return Task.FromResult(false);
+        e.Status = EnrollmentStatus.Completed;
+        e.CompletedAt = DateTime.UtcNow;
+        return Task.FromResult(true);
+    }
 }
 
 internal sealed class TestLessonRepository : ILessonRepository

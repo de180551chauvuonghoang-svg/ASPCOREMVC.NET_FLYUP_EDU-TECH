@@ -13,4 +13,11 @@ public class MyCourseItemModel
     public int LessonCount { get; set; }
     public int? FirstLessonId { get; set; }
     public EnrollmentStatus Status { get; set; }
+
+    // Thông tin hoàn thành & Chứng chỉ
+    public bool IsCompleted { get; set; }
+    public string? CertificateCode { get; set; }
+    public int? CertificateId { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public double? FinalScore { get; set; }
 }

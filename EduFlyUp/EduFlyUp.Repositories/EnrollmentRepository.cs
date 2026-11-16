@@ -16,5 +16,7 @@ namespace EduFlyUp.Repositories
         public async Task<bool> HasActiveCourseEnrollmentsAsync(int courseId) => await EnrollmentDAO.Instance.HasActiveCourseEnrollmentsAsync(courseId);
 
         public async Task<Dictionary<int, int>> GetCourseEnrollmentCountsAsync(IEnumerable<int> courseIds) => await EnrollmentDAO.Instance.GetCourseEnrollmentCountsAsync(courseIds);
+
+        public async Task<bool> CompleteEnrollmentAsync(string userId, int courseId) => await EnrollmentDAO.Instance.CompleteEnrollmentAsync(userId, courseId);
     }
 }

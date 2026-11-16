@@ -72,26 +72,56 @@ public class CoursesController : Controller
             ? await _enrollmentRepo.GetByUserIdAsync(userId) 
             : Enumerable.Empty<Enrollment>();
 
-        var courseItems = enrollments.Select(e => new MyCourseItemModel
-        {
-            EnrollmentId = e.Id,
-            CourseId = e.Course.Id,
-            CourseTitle = e.Course.Title,
-            Description = e.Course.Description,
-            ThumbnailUrl = string.IsNullOrEmpty(e.Course.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80" : e.Course.ThumbnailUrl,
-            EnrolledAt = e.EnrolledAt,
-            LessonCount = e.Course.Lessons.Count,
-            FirstLessonId = e.Course.Lessons.OrderBy(l => l.Order).FirstOrDefault()?.Id,
-            Status = e.Status
-        }).ToList();
-
         var certificates = _certificateService != null
             ? (await _certificateService.GetCertificatesByUserIdAsync(userId)).ToList()
             : new List<Certificate>();
 
+        var certMap = certificates.ToDictionary(c => c.CourseId);
+
+        var allCourseItems = new List<MyCourseItemModel>();
+        var inProgressCourses = new List<MyCourseItemModel>();
+        var completedCourses = new List<MyCourseItemModel>();
+
+        foreach (var e in enrollments)
+        {
+            var hasCert = certMap.TryGetValue(e.Course.Id, out var cert);
+            var isCompleted = (e.Status == EnrollmentStatus.Completed) || hasCert;
+
+            var item = new MyCourseItemModel
+            {
+                EnrollmentId = e.Id,
+                CourseId = e.Course.Id,
+                CourseTitle = e.Course.Title,
+                Description = e.Course.Description,
+                ThumbnailUrl = string.IsNullOrEmpty(e.Course.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80" : e.Course.ThumbnailUrl,
+                EnrolledAt = e.EnrolledAt,
+                LessonCount = e.Course.Lessons.Count,
+                FirstLessonId = e.Course.Lessons.OrderBy(l => l.Order).FirstOrDefault()?.Id,
+                Status = isCompleted ? EnrollmentStatus.Completed : e.Status,
+                IsCompleted = isCompleted,
+                CertificateCode = cert?.CertificateCode,
+                CertificateId = cert?.Id,
+                CompletedAt = cert?.IssuedAt ?? e.CompletedAt,
+                FinalScore = cert?.FinalScore
+            };
+
+            allCourseItems.Add(item);
+
+            if (isCompleted)
+            {
+                completedCourses.Add(item);
+            }
+            else
+            {
+                inProgressCourses.Add(item);
+            }
+        }
+
         var viewModel = new MyCoursesPageViewModel
         {
-            Courses = courseItems,
+            Courses = allCourseItems,
+            InProgressCourses = inProgressCourses,
+            CompletedCourses = completedCourses,
             Certificates = certificates
         };
 

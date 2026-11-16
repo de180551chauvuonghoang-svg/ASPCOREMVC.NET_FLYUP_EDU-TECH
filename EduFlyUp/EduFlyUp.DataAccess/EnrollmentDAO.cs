@@ -56,5 +56,17 @@ namespace EduFlyUp.DataAccess
                 .Select(g => new { CourseId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.CourseId, x => x.Count);
         }
+
+        public async Task<bool> CompleteEnrollmentAsync(string userId, int courseId)
+        {
+            using var context = new AppDbContext();
+            var enrollment = await context.Enrollments.FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
+            if (enrollment == null) return false;
+
+            enrollment.Status = EnrollmentStatus.Completed;
+            enrollment.CompletedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+            return true;
+        }
     }
 }
