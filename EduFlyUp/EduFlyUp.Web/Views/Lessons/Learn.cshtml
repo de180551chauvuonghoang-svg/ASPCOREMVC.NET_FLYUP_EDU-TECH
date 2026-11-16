@@ -221,11 +221,11 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link text-slate-300 fw-semibold px-4 py-2.5 d-flex align-items-center gap-2 border-0 position-relative" 
                                 id="quiz-tab" data-bs-toggle="tab" data-bs-target="#quiz-content" type="button" role="tab" style="background: transparent;">
-                            <i class="bi bi-patch-question-fill text-danger"></i>
-                            <span>Đề thi & Trắc nghiệm</span>
+                            <i class="bi bi-question-square-fill text-warning"></i>
+                            <span>Trắc nghiệm luyện tập</span>
                             @if (Model.CourseQuiz != null && Model.CourseQuiz.QuizQuestions.Any())
                             {
-                                <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">@Model.CourseQuiz.QuizQuestions.Count</span>
+                                <span class="badge bg-warning text-dark rounded-pill" style="font-size: 0.65rem;">Luyện tập</span>
                             }
                         </button>
                     </li>
@@ -364,7 +364,7 @@
                         </div>
                     </div>
 
-                    <!-- TAB 5: QUIZ / KNOWLEDGE CHECK -->
+                    <!-- TAB 5: PRACTICE QUIZ / KNOWLEDGE CHECK -->
                     <div class="tab-pane fade" id="quiz-content" role="tabpanel">
                         <div class="card border-0 rounded-4 p-4 p-md-5 mb-4 shadow-sm" style="background: #111827; border: 1px solid rgba(255, 255, 255, 0.08) !important;">
                             @if (Model.CourseQuiz != null && Model.CourseQuiz.QuizQuestions.Any())
@@ -377,17 +377,17 @@
 
                                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom" style="border-color: rgba(255, 255, 255, 0.08) !important;">
                                     <div>
-                                        <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill small mb-2" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
-                                            <i class="bi bi-award-fill"></i>
-                                            <span>Đánh giá năng lực cuối khóa</span>
+                                        <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill small mb-2" style="background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3);">
+                                            <i class="bi bi-journal-check"></i>
+                                            <span>Trắc nghiệm luyện tập kiến thức</span>
                                         </div>
-                                        <h3 class="fw-bold text-white mb-1">@Model.CourseQuiz.Title</h3>
+                                        <h3 class="fw-bold text-white mb-1">Luyện Tập Trắc Nghiệm Bài Học</h3>
                                         <div class="d-flex align-items-center gap-3 small text-slate-400" style="color: #94a3b8;">
-                                            <span><i class="bi bi-clock me-1 text-primary"></i>Thời gian: @Model.CourseQuiz.DurationMinutes phút</span>
+                                            <span><i class="bi bi-clock me-1 text-primary"></i>Thời gian: Tự do</span>
                                             <span>•</span>
                                             <span><i class="bi bi-question-circle me-1 text-warning"></i>Số lượng: @questionsList.Count câu hỏi</span>
                                             <span>•</span>
-                                            <span class="text-warning fw-semibold"><i class="bi bi-award-fill me-1"></i>Chuẩn cấp Chứng chỉ: &ge; 95%</span>
+                                            <span class="text-info"><i class="bi bi-info-circle me-1"></i>Ôn tập trước khi thi Final Test ở Sidebar</span>
                                         </div>
                                     </div>
 
@@ -399,7 +399,7 @@
                                     }
                                 </div>
 
-                                <!-- Quiz Score Summary Banner (Hidden until submitted) -->
+                                <!-- Practice Quiz Score Summary Banner -->
                                 <div id="quizResultBanner" class="p-4 rounded-4 mb-4" style="display: none;">
                                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                                         <div class="d-flex align-items-center gap-3">
@@ -413,17 +413,11 @@
                                         </div>
                                         <div class="d-flex flex-wrap align-items-center gap-3">
                                             <div class="text-end">
-                                                <span class="small d-block opacity-75">Điểm Final Test</span>
+                                                <span class="small d-block opacity-75">Điểm luyện tập</span>
                                                 <h3 id="quizScoreText" class="fw-extrabold mb-0"></h3>
                                             </div>
-                                            <div id="certificateActionArea" class="d-none">
-                                                <a id="viewCertificateBtn" href="#" target="_blank" class="btn btn-warning rounded-pill px-4 py-2 fw-bold shadow-sm text-dark d-inline-flex align-items-center gap-1.5 animate__animated animate__pulse animate__infinite">
-                                                    <i class="bi bi-award-fill"></i>
-                                                    <span>Xem Chứng Chỉ Tốt Nghiệp</span>
-                                                </a>
-                                            </div>
                                             <button id="retryQuizBtn" class="btn btn-light rounded-pill px-4 py-2 fw-semibold btn-sm shadow-sm">
-                                                <i class="bi bi-arrow-repeat me-1"></i>Làm lại đề
+                                                <i class="bi bi-arrow-repeat me-1"></i>Làm lại câu hỏi
                                             </button>
                                         </div>
                                     </div>
@@ -524,6 +518,42 @@
                 </button>
             </div>
 
+            <!-- PINNED FINAL TEST CARD AT TOP OF SIDEBAR -->
+            <div class="p-3 border-bottom position-relative" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(99, 102, 241, 0.12) 100%); border-color: rgba(255, 255, 255, 0.08) !important;">
+                <div class="card border-0 rounded-4 p-3 position-relative overflow-hidden shadow-sm" 
+                     style="background: #1e1b4b; border: 1px solid rgba(234, 179, 8, 0.35) !important;">
+                    
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge rounded-pill px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1" 
+                              style="background: rgba(234, 179, 8, 0.2); color: #facc15; font-size: 0.72rem; border: 1px solid rgba(234, 179, 8, 0.4);">
+                            <i class="bi bi-mortarboard-fill"></i>
+                            <span>BÀI THI TỐT NGHIỆP</span>
+                        </span>
+                        <span id="finalTestLockBadge" class="badge bg-secondary rounded-pill small" style="font-size: 0.68rem;">
+                            <i class="bi bi-lock-fill me-1"></i>Đang khóa
+                        </span>
+                    </div>
+
+                    <h6 class="fw-bold text-white mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.92rem;">
+                        <i class="bi bi-patch-check-fill text-warning"></i>
+                        <span>Đề Thi Tốt Nghiệp (Final Test)</span>
+                    </h6>
+                    
+                    <p class="small text-slate-300 mb-2.5" id="finalTestConditionText" style="color: #cbd5e1; font-size: 0.75rem; line-height: 1.45;">
+                        Điều kiện cấp Chứng chỉ: Hoàn thành &ge; 95% bài học (<strong id="finalProgressStatusText" class="text-warning">0%</strong>) & Đạt &ge; 95 điểm bài thi.
+                    </p>
+
+                    <!-- Final Test Action Button -->
+                    <div id="finalTestActionWrapper">
+                        <button type="button" id="btnOpenFinalTest" class="btn btn-outline-secondary w-100 rounded-pill btn-sm fw-bold disabled" 
+                                data-bs-toggle="modal" data-bs-target="#finalTestModal" style="font-size: 0.82rem; pointer-events: none; opacity: 0.65;">
+                            <i class="bi bi-lock-fill me-1"></i>
+                            <span id="finalBtnLabel">Chưa đủ điều kiện dự thi</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Curriculum Accordion List -->
             <div class="accordion accordion-flush" id="curriculumAccordion">
                 @for (int sIdx = 0; sIdx < Model.Sections.Count; sIdx++)
@@ -614,6 +644,190 @@
 
 </div>
 
+<!-- ================= MODAL BÀI THI TỐT NGHIỆP (FINAL TEST) ================= -->
+<div class="modal fade" id="finalTestModal" tabindex="-1" aria-labelledby="finalTestModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 rounded-4 overflow-hidden shadow-lg" style="background: #0f172a; color: #f8fafc; border: 1px solid rgba(234, 179, 8, 0.3) !important;">
+            
+            <!-- Modal Header -->
+            <div class="modal-header border-bottom p-4" style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border-color: rgba(255, 255, 255, 0.1) !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" 
+                         style="width: 52px; height: 52px; background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: #0f172a;">
+                        <i class="bi bi-mortarboard-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="d-inline-flex align-items-center gap-2 px-2.5 py-0.5 rounded-pill mb-1" 
+                             style="background: rgba(234, 179, 8, 0.15); color: #facc15; font-size: 0.75rem; border: 1px solid rgba(234, 179, 8, 0.3);">
+                            <i class="bi bi-award-fill"></i>
+                            <span>KỲ THI TỐT NGHIỆP CHÍNH THỨC</span>
+                        </div>
+                        <h4 class="modal-title fw-bold text-white mb-0" id="finalTestModalLabel">
+                            Bài Thi Tốt Nghiệp (Final Test) - @Model.Course.Title
+                        </h4>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body p-4 p-md-5">
+                
+                <!-- STATE 1: BỊ KHÓA KHI CHƯA HOÀN THÀNH >= 95% BÀI HỌC -->
+                <div id="finalTestLockedState" class="text-center py-5">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow" 
+                         style="width: 90px; height: 90px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 2px solid rgba(239, 68, 68, 0.3);">
+                        <i class="bi bi-lock-fill" style="font-size: 3rem;"></i>
+                    </div>
+                    <h3 class="fw-bold text-white mb-2">Bài Thi Tốt Nghiệp Đang Bị Khóa</h3>
+                    <p class="text-slate-300 mx-auto mb-4" style="max-width: 600px; color: #cbd5e1; font-size: 1.05rem; line-height: 1.6;">
+                        Để đảm bảo chuẩn chất lượng đào tạo, bạn cần <strong>học và bấm "Đánh dấu đã hoàn thành" tối thiểu 95% số bài học</strong> của khóa học trước khi được phép dự thi tốt nghiệp.
+                    </p>
+                    
+                    <div class="p-3.5 rounded-4 mx-auto mb-4" style="max-width: 450px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div class="d-flex justify-content-between small mb-2">
+                            <span class="text-slate-400" style="color: #94a3b8;">Tiến độ bài học hiện tại:</span>
+                            <strong id="modalLockProgressText" class="text-warning">0%</strong>
+                        </div>
+                        <div class="progress" style="height: 10px; background: rgba(255, 255, 255, 0.1);">
+                            <div id="modalLockProgressBar" class="progress-bar bg-warning" role="progressbar" style="width: 0%;"></div>
+                        </div>
+                        <div class="small mt-2 text-slate-400" style="color: #94a3b8; font-size: 0.8rem;">
+                            Cần đạt: <span class="text-success fw-bold">&ge; 95%</span> để mở khóa bài thi
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold" data-bs-dismiss="modal">
+                        <i class="bi bi-play-circle me-1"></i>Tiếp tục học để hoàn thành bài giảng
+                    </button>
+                </div>
+
+                <!-- STATE 2: ĐÃ ĐỦ ĐIỀU KIỆN DỰ THI FINAL TEST -->
+                <div id="finalTestUnlockedState" style="display: none;">
+                    
+                    @if (Model.CourseQuiz != null && Model.CourseQuiz.QuizQuestions.Any())
+                    {
+                        var finalQuestions = Model.CourseQuiz.QuizQuestions
+                            .OrderBy(qq => qq.Order)
+                            .Select(qq => qq.Question)
+                            .Where(q => q != null)
+                            .ToList();
+
+                        <!-- Final Test Banner & Conditions -->
+                        <div class="alert border-0 rounded-4 p-4 mb-4" style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(99, 102, 241, 0.2) 100%); border-left: 5px solid #eab308 !important;">
+                            <div class="d-flex align-items-center gap-3">
+                                <i class="bi bi-patch-check-fill fs-2 text-warning"></i>
+                                <div>
+                                    <h5 class="fw-bold text-white mb-1">Bạn Đã Đủ Điều Kiện Dự Thi Tốt Nghiệp!</h5>
+                                    <p class="mb-0 small text-slate-200" style="color: #e2e8f0;">
+                                        Quy chế tốt nghiệp EduFlyUp: Làm bài thi trắc nghiệm tổng hợp và đạt <strong>từ 95 điểm trở lên (95%)</strong> để được công nhận hoàn thành khóa học và cấp Chứng chỉ tốt nghiệp chuẩn quốc tế.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Final Test Result Banner -->
+                        <div id="finalTestResultBanner" class="p-4 rounded-4 mb-4 shadow" style="display: none;">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div id="finalResultIconWrapper" class="rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 60px; height: 60px;">
+                                        <i id="finalResultIcon" class="fs-2"></i>
+                                    </div>
+                                    <div>
+                                        <h5 id="finalResultTitle" class="fw-bold mb-1"></h5>
+                                        <p id="finalResultSubtitle" class="mb-0 small"></p>
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-wrap align-items-center gap-3">
+                                    <div class="text-end">
+                                        <span class="small d-block opacity-75">Điểm số Final Test</span>
+                                        <h2 id="finalScoreText" class="fw-extrabold mb-0"></h2>
+                                    </div>
+                                    <div id="finalCertActions" class="d-none d-flex flex-wrap gap-2">
+                                        <a id="btnViewFinalCert" href="#" target="_blank" class="btn btn-warning rounded-pill px-4 py-2.5 fw-bold shadow text-dark d-inline-flex align-items-center gap-2 animate__animated animate__pulse animate__infinite">
+                                            <i class="bi bi-award-fill"></i>
+                                            <span>XEM CHỨNG CHỈ CỦA BẠN</span>
+                                        </a>
+                                        <a asp-controller="Courses" asp-action="MyCourses" class="btn btn-outline-light rounded-pill px-3 py-2.5 fw-semibold small">
+                                            <span>Mục Chứng chỉ của tôi</span>
+                                        </a>
+                                    </div>
+                                    <button type="button" id="retryFinalTestBtn" class="btn btn-light rounded-pill px-4 py-2.5 fw-semibold btn-sm shadow-sm">
+                                        <i class="bi bi-arrow-repeat me-1"></i>Làm lại bài thi
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Final Questions Form -->
+                        <form id="finalTestForm">
+                            <div class="d-flex flex-column gap-4 mb-4">
+                                @for (int i = 0; i < finalQuestions.Count; i++)
+                                {
+                                    var q = finalQuestions[i];
+                                    var qIndex = i + 1;
+                                    var options = q.Options.OrderBy(o => o.Id).ToList();
+
+                                    <div class="final-question-block p-4 rounded-4" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);" data-question-id="@q.Id">
+                                        <div class="d-flex align-items-start gap-3 mb-3">
+                                            <span class="badge rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" 
+                                                  style="width: 32px; height: 32px; background: #6366f1; color: #ffffff; font-size: 0.9rem;">
+                                                @qIndex
+                                            </span>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fw-bold text-white mb-0" style="line-height: 1.5;">@q.Content</h5>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex flex-column gap-2 ms-md-4 ps-md-2">
+                                            @foreach (var opt in options)
+                                            {
+                                                var optText = opt.Text;
+                                                <label class="final-option-label p-3 rounded-3 d-flex align-items-center gap-3 cursor-pointer transition-all" 
+                                                       style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); cursor: pointer;">
+                                                    <input type="radio" name="final_question_@q.Id" value="@opt.Id" 
+                                                           data-is-correct="@opt.IsCorrect.ToString().ToLower()" 
+                                                           class="form-check-input flex-shrink-0 m-0" style="width: 1.25rem; height: 1.25rem;" />
+                                                    <span class="text-slate-200" style="color: #e2e8f0;">@optText</span>
+                                                </label>
+                                            }
+                                        </div>
+
+                                        <div class="final-explanation-box mt-3 ms-md-4 ps-md-2 p-3 rounded-3" style="display: none; background: rgba(99, 102, 241, 0.1); border-left: 3px solid #6366f1;">
+                                            <span class="small fw-bold text-primary d-block mb-1">
+                                                <i class="bi bi-lightbulb-fill me-1"></i>Giải thích đáp án:
+                                            </span>
+                                            <p class="small text-slate-300 mb-0" style="color: #cbd5e1;">@(string.IsNullOrWhiteSpace(q.Explanation) ? "Đáp án chính xác đã được hệ thống ghi nhận." : q.Explanation)</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="d-flex justify-content-end pt-3 border-top" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+                                <button type="button" id="submitFinalTestBtn" class="btn btn-warning rounded-pill px-5 py-3 fw-bold text-dark d-inline-flex align-items-center gap-2 shadow-lg">
+                                    <i class="bi bi-mortarboard-fill fs-5"></i>
+                                    <span>Nộp bài thi tốt nghiệp & Chấm điểm</span>
+                                </button>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-exclamation-circle text-warning fs-1 d-block mb-3"></i>
+                            <h5 class="text-white fw-bold mb-1">Khóa học chưa thiết lập đề thi tốt nghiệp</h5>
+                            <p class="small text-slate-400 mb-0" style="color: #94a3b8;">Hội đồng khảo thí đang cập nhật đề thi tốt nghiệp cho khóa học này.</p>
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -661,6 +875,87 @@
                 const progressText = document.getElementById("courseProgressText");
                 if (progressBar) progressBar.style.width = `${progressPct}%`;
                 if (progressText) progressText.textContent = `${progressPct}% (${completedLessons.length}/${totalLessons} bài)`;
+
+                // Cập nhật trạng thái Final Test trên Sidebar & trong Modal
+                const certStorageKey = `edu_cert_issued_${courseId}`;
+                const savedCertUrl = localStorage.getItem(certStorageKey);
+
+                const finalLockBadge = document.getElementById("finalTestLockBadge");
+                const finalProgressStatusText = document.getElementById("finalProgressStatusText");
+                const finalBtn = document.getElementById("btnOpenFinalTest");
+                const finalBtnLabel = document.getElementById("finalBtnLabel");
+                const finalConditionText = document.getElementById("finalTestConditionText");
+
+                const modalLockedState = document.getElementById("finalTestLockedState");
+                const modalUnlockedState = document.getElementById("finalTestUnlockedState");
+                const modalLockProgressText = document.getElementById("modalLockProgressText");
+                const modalLockProgressBar = document.getElementById("modalLockProgressBar");
+
+                if (finalProgressStatusText) finalProgressStatusText.textContent = `${progressPct}%`;
+                if (modalLockProgressText) modalLockProgressText.textContent = `${progressPct}% (${completedLessons.length}/${totalLessons} bài)`;
+                if (modalLockProgressBar) modalLockProgressBar.style.width = `${progressPct}%`;
+
+                const isEligible = (progressPct >= 95);
+
+                if (savedCertUrl) {
+                    // Đã thi đỗ và có chứng chỉ
+                    if (finalLockBadge) {
+                        finalLockBadge.className = "badge bg-warning text-dark rounded-pill";
+                        finalLockBadge.innerHTML = '<i class="bi bi-award-fill me-1"></i>ĐÃ CẤP CHỨNG CHỈ';
+                    }
+                    if (finalBtn) {
+                        finalBtn.className = "btn btn-warning w-100 rounded-pill btn-sm fw-bold text-dark shadow-sm";
+                        finalBtn.style.pointerEvents = "auto";
+                        finalBtn.style.opacity = "1";
+                        finalBtn.removeAttribute("disabled");
+                        finalBtn.onclick = function () { window.open(savedCertUrl, "_blank"); };
+                    }
+                    if (finalBtnLabel) finalBtnLabel.textContent = "XEM CHỨNG CHỈ TỐT NGHIỆP";
+                    if (finalConditionText) finalConditionText.innerHTML = '<span class="text-warning fw-semibold"><i class="bi bi-patch-check-fill me-1"></i>Chúc mừng bạn đã hoàn thành xuất sắc khóa học!</span>';
+
+                    if (modalLockedState) modalLockedState.style.display = "none";
+                    if (modalUnlockedState) modalUnlockedState.style.display = "block";
+
+                } else if (isEligible) {
+                    // Đã học >= 95% bài học -> Mở khóa bài thi
+                    if (finalLockBadge) {
+                        finalLockBadge.className = "badge bg-success rounded-pill animate__animated animate__pulse animate__infinite";
+                        finalLockBadge.innerHTML = '<i class="bi bi-unlock-fill me-1"></i>SẴN SÀNG THI';
+                    }
+                    if (finalBtn) {
+                        finalBtn.className = "btn btn-warning w-100 rounded-pill btn-sm fw-bold text-dark shadow animate__animated animate__heartBeat";
+                        finalBtn.style.pointerEvents = "auto";
+                        finalBtn.style.opacity = "1";
+                        finalBtn.removeAttribute("disabled");
+                        finalBtn.setAttribute("data-bs-toggle", "modal");
+                        finalBtn.setAttribute("data-bs-target", "#finalTestModal");
+                        finalBtn.onclick = null;
+                    }
+                    if (finalBtnLabel) finalBtnLabel.textContent = "LÀM BÀI FINAL TEST NGAY";
+                    if (finalConditionText) finalConditionText.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Đủ điều kiện dự thi!</span> Hãy làm bài test đạt &ge; 95 điểm để nhận Chứng chỉ.';
+
+                    if (modalLockedState) modalLockedState.style.display = "none";
+                    if (modalUnlockedState) modalUnlockedState.style.display = "block";
+
+                } else {
+                    // Chưa đủ điều kiện -> Khóa bài thi
+                    if (finalLockBadge) {
+                        finalLockBadge.className = "badge bg-secondary rounded-pill small";
+                        finalLockBadge.innerHTML = '<i class="bi bi-lock-fill me-1"></i>Đang khóa';
+                    }
+                    if (finalBtn) {
+                        finalBtn.className = "btn btn-outline-secondary w-100 rounded-pill btn-sm fw-bold disabled";
+                        finalBtn.style.pointerEvents = "none";
+                        finalBtn.style.opacity = "0.65";
+                        finalBtn.setAttribute("disabled", "true");
+                        finalBtn.onclick = null;
+                    }
+                    if (finalBtnLabel) finalBtnLabel.textContent = "Chưa đủ điều kiện dự thi";
+                    if (finalConditionText) finalConditionText.innerHTML = `Điều kiện cấp Chứng chỉ: Hoàn thành &ge; 95% bài học (<strong class="text-warning">${progressPct}%</strong>) & Đạt &ge; 95 điểm bài thi.`;
+
+                    if (modalLockedState) modalLockedState.style.display = "block";
+                    if (modalUnlockedState) modalUnlockedState.style.display = "none";
+                }
             }
 
             markBtn.addEventListener("click", function () {
@@ -733,37 +1028,29 @@
             if (toggleBtn) toggleBtn.addEventListener("click", toggleSidebar);
             if (closeMobileBtn) closeMobileBtn.addEventListener("click", toggleSidebar);
 
-            // 4. Xử lý làm bài Quiz & Chấm điểm trắc nghiệm Final Test
+            // 4. Xử lý Trắc nghiệm Luyện tập Bài học (Practice Quiz trong Tab 5)
             const submitQuizBtn = document.getElementById("submitQuizBtn");
             const quizForm = document.getElementById("quizForm");
             const resultBanner = document.getElementById("quizResultBanner");
             const retryQuizBtn = document.getElementById("retryQuizBtn");
-            const certArea = document.getElementById("certificateActionArea");
-            const certBtn = document.getElementById("viewCertificateBtn");
 
             if (submitQuizBtn && quizForm) {
-                // Tiêu chuẩn tốt nghiệp & cấp chứng chỉ EduFlyUp là từ 95% trở lên
-                const passingScore = 95;
-
                 submitQuizBtn.addEventListener("click", function () {
                     const questionBlocks = document.querySelectorAll(".question-block");
                     let totalQuestions = questionBlocks.length;
                     let correctCount = 0;
-                    let answeredCount = 0;
 
                     questionBlocks.forEach(block => {
                         const checkedRadio = block.querySelector("input[type='radio']:checked");
                         const allLabels = block.querySelectorAll(".option-label");
                         const explanationBox = block.querySelector(".explanation-box");
 
-                        // Reset style cũ
                         allLabels.forEach(lbl => {
                             lbl.style.background = "rgba(255, 255, 255, 0.02)";
                             lbl.style.borderColor = "rgba(255, 255, 255, 0.08)";
                         });
 
                         if (checkedRadio) {
-                            answeredCount++;
                             const isCorrect = checkedRadio.getAttribute("data-is-correct") === "true";
                             const chosenLabel = checkedRadio.closest(".option-label");
 
@@ -778,7 +1065,6 @@
                                     chosenLabel.style.background = "rgba(239, 68, 68, 0.2)";
                                     chosenLabel.style.borderColor = "#ef4444";
                                 }
-                                // Highlight đáp án đúng
                                 const correctRadio = block.querySelector("input[data-is-correct='true']");
                                 if (correctRadio) {
                                     const correctLabel = correctRadio.closest(".option-label");
@@ -789,7 +1075,6 @@
                                 }
                             }
                         } else {
-                            // Chưa chọn cũng highlight đáp án đúng để người học đối chiếu
                             const correctRadio = block.querySelector("input[data-is-correct='true']");
                             if (correctRadio) {
                                 const correctLabel = correctRadio.closest(".option-label");
@@ -800,15 +1085,11 @@
                             }
                         }
 
-                        // Hiện giải thích
                         if (explanationBox) explanationBox.style.display = "block";
                     });
 
-                    // Tính điểm %
                     const scorePct = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
-                    const isPassed = scorePct >= passingScore;
 
-                    // Hiển thị Banner kết quả
                     if (resultBanner) {
                         resultBanner.style.display = "block";
                         const iconWrapper = document.getElementById("quizResultIconWrapper");
@@ -819,51 +1100,15 @@
 
                         scoreText.textContent = `${correctCount}/${totalQuestions} câu (${scorePct}%)`;
 
-                        if (isPassed) {
-                            resultBanner.style.background = "linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)";
-                            resultBanner.style.border = "1px solid #10b981";
-                            iconWrapper.style.background = "#10b981";
-                            iconWrapper.style.color = "#ffffff";
-                            icon.className = "bi bi-patch-check-fill";
-                            title.className = "fw-bold mb-1 text-success";
-                            title.textContent = "CHÚC MỪNG! BẠN ĐÃ TỐT NGHIỆP XUẤT SẮC";
-                            subtitle.className = "mb-0 small text-slate-200";
-                            subtitle.textContent = `Bạn đã đạt ${scorePct}% (tiêu chuẩn >= ${passingScore}%). Chứng chỉ hoàn thành khóa học đã được khởi tạo và lưu vào mục 'Chứng chỉ của tôi'!`;
-
-                            // Gửi yêu cầu cấp chứng chỉ tự động lên máy chủ
-                            fetch('/Certificate/CompleteFinalTest', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    courseId: @Model.Course.Id,
-                                    score: scorePct
-                                })
-                            })
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data && data.success) {
-                                    if (certArea && certBtn) {
-                                        certBtn.href = data.viewUrl;
-                                        certArea.classList.remove("d-none");
-                                    }
-                                }
-                            })
-                            .catch(err => console.error("Lỗi tự động cấp chứng chỉ:", err));
-
-                        } else {
-                            resultBanner.style.background = "linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.25) 100%)";
-                            resultBanner.style.border = "1px solid #ef4444";
-                            iconWrapper.style.background = "#ef4444";
-                            iconWrapper.style.color = "#ffffff";
-                            icon.className = "bi bi-exclamation-triangle-fill";
-                            title.className = "fw-bold mb-1 text-danger";
-                            title.textContent = `CHƯA ĐẠT CHUẨN CẤP CHỨNG CHỈ (CẦN TỐI THIỂU ${passingScore}%)`;
-                            subtitle.className = "mb-0 small text-slate-300";
-                            subtitle.textContent = `Bạn đạt ${scorePct}%. Để được công nhận tốt nghiệp và nhận chứng chỉ chính thức từ EduFlyUp, bạn cần đạt tối thiểu ${passingScore}%. Hãy ôn lại bài và thử lại nhé!`;
-                            if (certArea) certArea.classList.add("d-none");
-                        }
+                        resultBanner.style.background = "linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(79, 70, 229, 0.3) 100%)";
+                        resultBanner.style.border = "1px solid #6366f1";
+                        iconWrapper.style.background = "#6366f1";
+                        iconWrapper.style.color = "#ffffff";
+                        icon.className = "bi bi-journal-check";
+                        title.className = "fw-bold mb-1 text-primary";
+                        title.textContent = "KẾT QUẢ ÔN TẬP BÀI HỌC";
+                        subtitle.className = "mb-0 small text-slate-300";
+                        subtitle.innerHTML = `Bạn đã hoàn thành bài tập rèn luyện với ${correctCount}/${totalQuestions} câu chính xác. <em>Lưu ý: Để nhận Chứng chỉ tốt nghiệp, hãy hoàn thành &ge; 95% bài học và bấm nút 'Làm bài Final Test' ở góc trên Sidebar bên phải.</em>`;
 
                         resultBanner.scrollIntoView({ behavior: "smooth", block: "nearest" });
                     }
@@ -879,8 +1124,158 @@
                         document.querySelectorAll(".explanation-box").forEach(box => {
                             box.style.display = "none";
                         });
-                        if (certArea) certArea.classList.add("d-none");
                         if (resultBanner) resultBanner.style.display = "none";
+                    });
+                }
+            }
+
+            // 5. Xử lý BÀI THI TỐT NGHIỆP FINAL TEST TRONG MODAL (GÓC TRÊN SIDEBAR)
+            const submitFinalBtn = document.getElementById("submitFinalTestBtn");
+            const finalForm = document.getElementById("finalTestForm");
+            const finalBanner = document.getElementById("finalTestResultBanner");
+            const retryFinalBtn = document.getElementById("retryFinalTestBtn");
+            const certStorageKey = `edu_cert_issued_${courseId}`;
+
+            if (submitFinalBtn && finalForm) {
+                const passingScore = 95;
+
+                submitFinalBtn.addEventListener("click", function () {
+                    // Kiểm tra lại tiến độ bài học trước khi chấm
+                    const currentProgressPct = totalLessons > 0 ? Math.round((completedLessons.length / totalLessons) * 100) : 0;
+                    if (currentProgressPct < 95) {
+                        alert(`Bạn mới hoàn thành ${currentProgressPct}% số bài học. Cần đạt tối thiểu 95% bài học mới đủ điều kiện xét tốt nghiệp.`);
+                        return;
+                    }
+
+                    const blocks = document.querySelectorAll(".final-question-block");
+                    let totalQ = blocks.length;
+                    let correctCount = 0;
+
+                    blocks.forEach(block => {
+                        const checkedRadio = block.querySelector("input[type='radio']:checked");
+                        const allLabels = block.querySelectorAll(".final-option-label");
+                        const explanationBox = block.querySelector(".final-explanation-box");
+
+                        allLabels.forEach(lbl => {
+                            lbl.style.background = "rgba(255, 255, 255, 0.02)";
+                            lbl.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                        });
+
+                        if (checkedRadio) {
+                            const isCorrect = checkedRadio.getAttribute("data-is-correct") === "true";
+                            const chosenLabel = checkedRadio.closest(".final-option-label");
+
+                            if (isCorrect) {
+                                correctCount++;
+                                if (chosenLabel) {
+                                    chosenLabel.style.background = "rgba(16, 185, 129, 0.25)";
+                                    chosenLabel.style.borderColor = "#10b981";
+                                }
+                            } else {
+                                if (chosenLabel) {
+                                    chosenLabel.style.background = "rgba(239, 68, 68, 0.25)";
+                                    chosenLabel.style.borderColor = "#ef4444";
+                                }
+                                const correctRadio = block.querySelector("input[data-is-correct='true']");
+                                if (correctRadio) {
+                                    const correctLabel = correctRadio.closest(".final-option-label");
+                                    if (correctLabel) {
+                                        correctLabel.style.background = "rgba(16, 185, 129, 0.25)";
+                                        correctLabel.style.borderColor = "#10b981";
+                                    }
+                                }
+                            }
+                        } else {
+                            const correctRadio = block.querySelector("input[data-is-correct='true']");
+                            if (correctRadio) {
+                                const correctLabel = correctRadio.closest(".final-option-label");
+                                if (correctLabel) {
+                                    correctLabel.style.background = "rgba(16, 185, 129, 0.15)";
+                                    correctLabel.style.borderColor = "#10b981";
+                                }
+                            }
+                        }
+
+                        if (explanationBox) explanationBox.style.display = "block";
+                    });
+
+                    const scorePct = totalQ > 0 ? Math.round((correctCount / totalQ) * 100) : 0;
+                    const isPassed = (scorePct >= passingScore);
+
+                    if (finalBanner) {
+                        finalBanner.style.display = "block";
+                        const iconWrapper = document.getElementById("finalResultIconWrapper");
+                        const icon = document.getElementById("finalResultIcon");
+                        const title = document.getElementById("finalResultTitle");
+                        const subtitle = document.getElementById("finalResultSubtitle");
+                        const scoreText = document.getElementById("finalScoreText");
+                        const certActions = document.getElementById("finalCertActions");
+                        const viewCertBtn = document.getElementById("btnViewFinalCert");
+
+                        scoreText.textContent = `${correctCount}/${totalQ} câu (${scorePct}%)`;
+
+                        if (isPassed) {
+                            finalBanner.style.background = "linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.4) 100%)";
+                            finalBanner.style.border = "1px solid #10b981";
+                            iconWrapper.style.background = "#10b981";
+                            iconWrapper.style.color = "#ffffff";
+                            icon.className = "bi bi-award-fill";
+                            title.className = "fw-bold mb-1 text-success";
+                            title.textContent = "CHÚC MỪNG! BẠN ĐÃ TỐT NGHIỆP XUẤT SẮC";
+                            subtitle.className = "mb-0 small text-slate-200";
+                            subtitle.textContent = `Bạn đã hoàn thành xuất sắc ${scorePct}% bài thi (chuẩn >= ${passingScore}%) và 100% bài học. Chứng chỉ tốt nghiệp EduFlyUp đã được cấp và lưu vào mục 'Chứng chỉ của tôi'!`;
+
+                            // Gọi API cấp chứng chỉ
+                            fetch('/Certificate/CompleteFinalTest', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    courseId: courseId,
+                                    score: scorePct
+                                })
+                            })
+                            .then(r => r.json())
+                            .then(res => {
+                                if (res && res.success) {
+                                    localStorage.setItem(certStorageKey, res.viewUrl);
+                                    if (certActions && viewCertBtn) {
+                                        viewCertBtn.href = res.viewUrl;
+                                        certActions.classList.remove("d-none");
+                                    }
+                                    // Cập nhật lại UI Sidebar
+                                    updateCompletionUI();
+                                }
+                            })
+                            .catch(err => console.error("Lỗi cấp chứng chỉ:", err));
+
+                        } else {
+                            finalBanner.style.background = "linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.25) 100%)";
+                            finalBanner.style.border = "1px solid #ef4444";
+                            iconWrapper.style.background = "#ef4444";
+                            iconWrapper.style.color = "#ffffff";
+                            icon.className = "bi bi-exclamation-triangle-fill";
+                            title.className = "fw-bold mb-1 text-danger";
+                            title.textContent = `CHƯA ĐẠT CHUẨN TỐT NGHIỆP (CẦN TỐI THIỂU ${passingScore} ĐIỂM)`;
+                            subtitle.className = "mb-0 small text-slate-300";
+                            subtitle.textContent = `Bạn đạt ${scorePct}%. Để được cấp Chứng chỉ tốt nghiệp chính thức, bạn cần đạt tối thiểu ${passingScore} điểm. Hãy kiểm tra giải thích và làm lại bài thi.`;
+                            if (certActions) certActions.classList.add("d-none");
+                        }
+
+                        finalBanner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    }
+                });
+
+                if (retryFinalBtn) {
+                    retryFinalBtn.addEventListener("click", function () {
+                        finalForm.reset();
+                        document.querySelectorAll(".final-option-label").forEach(lbl => {
+                            lbl.style.background = "rgba(255, 255, 255, 0.02)";
+                            lbl.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                        });
+                        document.querySelectorAll(".final-explanation-box").forEach(box => {
+                            box.style.display = "none";
+                        });
+                        if (finalBanner) finalBanner.style.display = "none";
                     });
                 }
             }
