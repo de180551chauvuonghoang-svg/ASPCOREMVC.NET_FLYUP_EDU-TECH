@@ -13,7 +13,12 @@ public record CheckoutViewModel(
     string BankName,
     string BankAccountNumber,
     string AccountHolderName,
-    string TransferContent
+    string TransferContent,
+    decimal OriginalAmount = 0,
+    decimal DiscountAmount = 0,
+    string? AppliedCouponCode = null,
+    string? CouponMessage = null,
+    bool CouponSuccess = false
 );
 
 public class SePayWebhookPayload
@@ -34,7 +39,7 @@ public class SePayWebhookPayload
 
 public interface IPaymentService
 {
-    Task<CheckoutViewModel> GenerateCheckoutAsync(string userId, int courseId);
+    Task<CheckoutViewModel> GenerateCheckoutAsync(string userId, int courseId, string? couponCode = null);
     Task<bool> ProcessSePayWebhookAsync(string? authHeader, SePayWebhookPayload payload);
     Task<Order?> GetOrderByCodeAsync(string orderCode);
     Task<bool> IsCourseEnrolledAsync(string userId, int courseId);

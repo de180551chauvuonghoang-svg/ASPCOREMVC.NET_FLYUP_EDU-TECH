@@ -3,7 +3,9 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using EduFlyUp.BusinessObjects;
+using EduFlyUp.DataAccess;
 using EduFlyUp.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -31,20 +33,66 @@ public class PaymentService : IPaymentService
         _logger = logger;
     }
 
-    public async Task<CheckoutViewModel> GenerateCheckoutAsync(string userId, int courseId)
+    public async Task<CheckoutViewModel> GenerateCheckoutAsync(string userId, int courseId, string? couponCode = null)
     {
         var course = await _courseRepo.GetByIdAsync(courseId)
             ?? throw new InvalidOperationException($"Không tìm thấy khóa học với ID {courseId}.");
 
+        decimal originalAmount = course.Price;
+        decimal amount = originalAmount;
+        decimal discountAmount = 0;
+        string? appliedCoupon = null;
+        string? couponMessage = null;
+        bool couponSuccess = false;
+
+        // Xử lý kiểm tra và áp dụng mã giảm giá nếu người dùng nhập
+        if (!string.IsNullOrWhiteSpace(couponCode))
+        {
+            var normCode = couponCode.Trim().ToUpperInvariant();
+            using var db = new AppDbContext();
+            var coupon = await db.Coupons.FirstOrDefaultAsync(c => c.Code == normCode);
+            if (coupon == null || !coupon.IsActive)
+            {
+                couponMessage = "Mã giảm giá không tồn tại hoặc đã bị vô hiệu hóa.";
+            }
+            else if (coupon.EndDate < DateTime.UtcNow)
+            {
+                couponMessage = "Mã giảm giá này đã hết hạn sử dụng.";
+            }
+            else if (coupon.MaxUsage > 0 && coupon.UsedCount >= coupon.MaxUsage)
+            {
+                couponMessage = "Mã giảm giá đã hết lượt sử dụng.";
+            }
+            else if (coupon.CourseId.HasValue && coupon.CourseId != courseId)
+            {
+                couponMessage = "Mã giảm giá này không áp dụng cho khóa học hiện tại.";
+            }
+            else if (!string.IsNullOrEmpty(coupon.InstructorId) &&
+                     !string.Equals(coupon.InstructorId, course.InstructorId, StringComparison.OrdinalIgnoreCase))
+            {
+                couponMessage = "Mã giảm giá không thuộc giảng viên của khóa học này.";
+            }
+            else
+            {
+                discountAmount = Math.Round(originalAmount * coupon.DiscountPercent / 100m, 0);
+                amount = Math.Max(0, originalAmount - discountAmount);
+                appliedCoupon = coupon.Code;
+                couponSuccess = true;
+                couponMessage = $"Áp dụng mã {coupon.Code} thành công! Giảm {coupon.DiscountPercent}% (-{discountAmount:N0} đ)";
+            }
+        }
+
         // Kiểm tra xem học viên có đơn hàng Pending chưa
         var existingOrder = await _orderRepo.GetUserPendingOrderAsync(userId, courseId);
         string orderCode;
-        decimal amount = course.Price;
 
         if (existingOrder != null)
         {
             orderCode = existingOrder.OrderCode;
-            amount = existingOrder.Amount;
+            if (existingOrder.Amount != amount)
+            {
+                await _orderRepo.UpdateAmountAsync(existingOrder.Id, amount);
+            }
         }
         else
         {
@@ -80,7 +128,12 @@ public class PaymentService : IPaymentService
             BankName: bankName,
             BankAccountNumber: bankAcc,
             AccountHolderName: accountName,
-            TransferContent: orderCode
+            TransferContent: orderCode,
+            OriginalAmount: originalAmount,
+            DiscountAmount: discountAmount,
+            AppliedCouponCode: appliedCoupon,
+            CouponMessage: couponMessage,
+            CouponSuccess: couponSuccess
         );
     }
 

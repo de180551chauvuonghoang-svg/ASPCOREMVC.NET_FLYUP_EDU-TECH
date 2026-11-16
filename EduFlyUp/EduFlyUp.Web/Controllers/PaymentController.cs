@@ -15,15 +15,16 @@ public class PaymentController : Controller
         _paymentService = paymentService;
     }
 
-    // GET: /Payment/Checkout/5
+    // GET: /Payment/Checkout/5?coupon=NODEJS50
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> Checkout(int id)
+    public async Task<IActionResult> Checkout(int id, [FromQuery] string? coupon = null)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
         {
-            return RedirectToAction("Login", "Account", new { returnUrl = $"/Payment/Checkout/{id}" });
+            var returnUrl = $"/Payment/Checkout/{id}" + (!string.IsNullOrEmpty(coupon) ? $"?coupon={coupon}" : "");
+            return RedirectToAction("Login", "Account", new { returnUrl });
         }
 
         // Kiểm tra xem học viên đã sở hữu khóa học này chưa (chặn không cho mua 2 lần)
@@ -35,7 +36,7 @@ public class PaymentController : Controller
 
         try
         {
-            var model = await _paymentService.GenerateCheckoutAsync(userId, id);
+            var model = await _paymentService.GenerateCheckoutAsync(userId, id, coupon);
             return View(model);
         }
         catch (Exception ex)

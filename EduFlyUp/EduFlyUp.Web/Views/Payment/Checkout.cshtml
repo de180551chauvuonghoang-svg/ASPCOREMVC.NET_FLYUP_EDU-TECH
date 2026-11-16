@@ -58,6 +58,38 @@
                                 </div>
                             </div>
 
+                            <!-- Khung áp dụng Coupon / Mã giảm giá -->
+                            <div class="card border border-primary-subtle rounded-3 p-3 mb-3 bg-light-subtle shadow-sm">
+                                <form method="get" asp-controller="Payment" asp-action="Checkout" asp-route-id="@Model.CourseId">
+                                    <label class="form-label fw-bold text-dark small mb-1 d-flex align-items-center gap-1">
+                                        <i class="bi bi-ticket-perforated-fill text-primary"></i>
+                                        <span>Mã giảm giá / Khuyến mãi (Coupon):</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" name="coupon" class="form-control text-uppercase font-monospace fw-bold" 
+                                               placeholder="Nhập mã (VD: NODEJS50)" value="@Model.AppliedCouponCode" />
+                                        <button type="submit" class="btn btn-primary px-3 fw-semibold">
+                                            <i class="bi bi-tag-fill me-1"></i>Áp dụng
+                                        </button>
+                                        @if (!string.IsNullOrEmpty(Model.AppliedCouponCode))
+                                        {
+                                            <a asp-controller="Payment" asp-action="Checkout" asp-route-id="@Model.CourseId" 
+                                               class="btn btn-outline-secondary px-2" title="Hủy áp dụng mã">
+                                                <i class="bi bi-x-lg"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </form>
+
+                                @if (!string.IsNullOrEmpty(Model.CouponMessage))
+                                {
+                                    <div class="mt-2 small fw-semibold @(Model.CouponSuccess ? "text-success" : "text-danger") d-flex align-items-center gap-1">
+                                        <i class="bi @(Model.CouponSuccess ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill")"></i>
+                                        <span>@Model.CouponMessage</span>
+                                    </div>
+                                }
+                            </div>
+
                             <!-- Danh sách thông tin nhận tiền -->
                             <ul class="list-group list-group-flush mb-4">
                                 <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
@@ -79,11 +111,20 @@
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
                                     <span class="text-muted small">Số tiền cần chuyển</span>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="fw-extrabold text-danger fs-4">@Model.Amount.ToString("N0") <span class="fs-6 text-muted fw-normal">đ</span></span>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-0 rounded-pill copy-btn" onclick="copyText('@((long)Model.Amount)', this)" title="Sao chép số tiền">
-                                            <i class="bi bi-copy"></i>
-                                        </button>
+                                    <div class="text-end">
+                                        @if (Model.DiscountAmount > 0)
+                                        {
+                                            <div class="small text-muted text-decoration-line-through mb-1">
+                                                @Model.OriginalAmount.ToString("N0") đ
+                                                <span class="badge bg-danger-subtle text-danger ms-1">-@Model.DiscountAmount.ToString("N0") đ</span>
+                                            </div>
+                                        }
+                                        <div class="d-flex align-items-center gap-2 justify-content-end">
+                                            <span class="fw-extrabold text-danger fs-4">@Model.Amount.ToString("N0") <span class="fs-6 text-muted fw-normal">đ</span></span>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-0 rounded-pill copy-btn" onclick="copyText('@((long)Model.Amount)', this)" title="Sao chép số tiền">
+                                                <i class="bi bi-copy"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </li>
                                 <li class="list-group-item px-0 py-3">

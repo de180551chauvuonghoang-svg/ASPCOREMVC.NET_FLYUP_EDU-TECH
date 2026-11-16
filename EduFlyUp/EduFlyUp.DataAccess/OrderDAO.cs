@@ -37,6 +37,17 @@ public class OrderDAO : SingletonBase<OrderDAO>
             .FirstOrDefaultAsync(o => o.UserId == userId && o.CourseId == courseId && o.Status == OrderStatus.Pending);
     }
 
+    public async Task UpdateAmountAsync(int orderId, decimal newAmount)
+    {
+        using var context = new AppDbContext();
+        var order = await context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+        if (order != null)
+        {
+            order.Amount = newAmount;
+            await context.SaveChangesAsync();
+        }
+    }
+
     public async Task<bool> MarkAsPaidAsync(AppDbContext context, string orderCode, long transactionId, decimal amount, string? transactionRef)
     {
         if (transactionId <= 0 || amount <= 0 || decimal.Truncate(amount) != amount)
