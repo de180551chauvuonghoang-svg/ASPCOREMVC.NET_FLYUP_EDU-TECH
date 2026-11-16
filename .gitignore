@@ -50,7 +50,8 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Tài liệu nội bộ — không đẩy lên repo
-docs/
+docs/*
+!docs/database/
 
 # Cloudflare Tunnel binary
 cloudflared.exe
