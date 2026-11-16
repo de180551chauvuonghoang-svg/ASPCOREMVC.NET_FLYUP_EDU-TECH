@@ -8,6 +8,6 @@ public interface IOrderRepository
     Task<Order?> GetByCodeAsync(string orderCode);
     Task<Order?> GetByIdAsync(int id);
     Task<Order?> GetUserPendingOrderAsync(string userId, int courseId);
-    Task<bool> MarkAsPaidAsync(string orderCode, string? transactionRef);
+    Task<bool> MarkAsPaidAsync(string orderCode, long transactionId, decimal amount, string? transactionRef);
     Task<IEnumerable<Order>> GetOrdersByUserIdAsync(string userId);
 }

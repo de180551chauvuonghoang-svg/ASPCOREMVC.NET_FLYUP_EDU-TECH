@@ -37,39 +37,58 @@ public class OrderDAO : SingletonBase<OrderDAO>
             .FirstOrDefaultAsync(o => o.UserId == userId && o.CourseId == courseId && o.Status == OrderStatus.Pending);
     }
 
-    public async Task<bool> MarkAsPaidAsync(string orderCode, string? transactionRef)
+    public async Task<bool> MarkAsPaidAsync(AppDbContext context, string orderCode, long transactionId, decimal amount, string? transactionRef)
     {
-        using var context = new AppDbContext();
-        var order = await context.Orders.FirstOrDefaultAsync(o => o.OrderCode == orderCode);
-        if (order == null || order.Status == OrderStatus.Paid) return false;
+        if (transactionId <= 0 || amount <= 0 || decimal.Truncate(amount) != amount)
+            return false;
 
+        await using var transaction = await context.Database.BeginTransactionAsync();
+        await PayoutWriteLock.AcquireAsync(context);
+        var order = await context.Orders.Include(o => o.Course).SingleOrDefaultAsync(o => o.OrderCode == orderCode);
+        if (order is null || order.PaymentMethod != "VietQR_SePay" || order.Amount != amount)
+            return false;
+
+        var previous = await context.SePayReceipts.FindAsync(transactionId);
+        if (previous is not null)
+            return previous.OrderId == order.Id && previous.Amount == amount && order.Status == OrderStatus.Paid;
+
+        if (order.Status != OrderStatus.Pending || string.IsNullOrWhiteSpace(order.Course.InstructorId) ||
+            order.Course.InstructorId.Length > 450 || string.IsNullOrWhiteSpace(order.Course.Title))
+            return false;
+
+        var now = DateTime.UtcNow;
         order.Status = OrderStatus.Paid;
-        order.TransactionReference = transactionRef;
-        order.PaidAt = DateTime.UtcNow;
-
-        // Tự động kích hoạt ghi danh khóa học cho học viên nếu chưa ghi danh
-        var alreadyEnrolled = await context.Enrollments.AnyAsync(e => e.UserId == order.UserId && e.CourseId == order.CourseId);
-        if (!alreadyEnrolled)
+        order.TransactionReference = !string.IsNullOrWhiteSpace(transactionRef) && transactionRef.Length <= 100
+            ? transactionRef : transactionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        order.PaidAt = now;
+        context.SePayReceipts.Add(new SePayReceipt
+        {
+            TransactionId = transactionId,
+            OrderId = order.Id,
+            CourseId = order.CourseId,
+            CourseTitle = order.Course.Title,
+            InstructorId = order.Course.InstructorId,
+            Amount = amount,
+            VerifiedAtUtc = now
+        });
+        var enrollment = await context.Enrollments.FirstOrDefaultAsync(e => e.UserId == order.UserId && e.CourseId == order.CourseId);
+        if (enrollment is null)
         {
             await context.Enrollments.AddAsync(new Enrollment
             {
                 UserId = order.UserId,
                 CourseId = order.CourseId,
-                EnrolledAt = DateTime.UtcNow,
+                EnrolledAt = now,
                 Status = EnrollmentStatus.Active
             });
         }
-        else
+        else if (enrollment.Status == EnrollmentStatus.Cancelled)
         {
-            // Nếu đã từng có bản ghi nhưng chưa active thì kích hoạt lại
-            var existing = await context.Enrollments.FirstOrDefaultAsync(e => e.UserId == order.UserId && e.CourseId == order.CourseId);
-            if (existing != null && existing.Status != EnrollmentStatus.Active)
-            {
-                existing.Status = EnrollmentStatus.Active;
-            }
+            enrollment.Status = EnrollmentStatus.Active;
         }
 
         await context.SaveChangesAsync();
+        await transaction.CommitAsync();
         return true;
     }
 
