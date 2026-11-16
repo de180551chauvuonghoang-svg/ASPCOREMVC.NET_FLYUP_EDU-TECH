@@ -1,0 +1,214 @@
+@model List<EduFlyUp.BusinessObjects.Order>
+
+@{
+    ViewData["Title"] = "Lịch sử giao dịch & Hóa đơn - EduFlyUp";
+    var paidOrders = Model.Where(o => o.Status == EduFlyUp.BusinessObjects.OrderStatus.Paid).ToList();
+    var pendingOrders = Model.Where(o => o.Status == EduFlyUp.BusinessObjects.OrderStatus.Pending).ToList();
+    var totalSpent = paidOrders.Sum(o => o.Amount);
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted text-decoration-none"><i class="bi bi-house me-1"></i>Trang chủ</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Account" asp-action="Profile" class="text-muted text-decoration-none">Hồ sơ cá nhân</a></li>
+            <li class="breadcrumb-item active fw-semibold text-primary" aria-current="page">Lịch sử giao dịch</li>
+        </ol>
+    </nav>
+
+    <!-- Hero Banner -->
+    <div class="rounded-4 p-4 p-md-5 mb-5 position-relative overflow-hidden shadow-lg" 
+         style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%); border: 1px solid rgba(255, 255, 255, 0.1);">
+        
+        <!-- Ambient Glow -->
+        <div class="position-absolute top-0 end-0 rounded-circle" style="width: 320px; height: 320px; background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, rgba(99, 102, 241, 0) 70%); filter: blur(40px); pointer-events: none;"></div>
+        
+        <!-- Watermark -->
+        <div class="position-absolute end-0 top-50 translate-middle-y pe-4 pe-lg-5 d-none d-md-block" style="opacity: 0.1; color: #ffffff; pointer-events: none;">
+            <i class="bi bi-receipt-cutoff" style="font-size: 11rem; line-height: 1;"></i>
+        </div>
+
+        <div class="row align-items-center position-relative" style="z-index: 2;">
+            <div class="col-lg-8">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill mb-3 shadow-sm" 
+                     style="background: rgba(255, 255, 255, 0.12); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.25); font-size: 0.85rem;">
+                    <i class="bi bi-shield-check text-success"></i>
+                    <span>Cổng thanh toán tự động VietQR / SePay 24/7</span>
+                </div>
+
+                <h1 class="display-6 fw-extrabold mb-2 text-white" style="letter-spacing: -0.02em;">
+                    Lịch Sử Giao Dịch & Hóa Đơn
+                </h1>
+                
+                <p class="mb-0 fs-6 text-slate-300" style="color: #cbd5e1; max-width: 620px; line-height: 1.6;">
+                    Theo dõi chi tiết các đơn hàng mua khóa học công nghệ, tra cứu hóa đơn điện tử và kiểm tra mã giao dịch ngân hàng của bạn.
+                </p>
+            </div>
+
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                <div class="d-inline-flex flex-column align-items-lg-end gap-2">
+                    <div class="d-inline-flex align-items-center gap-2 px-3.5 py-2.5 rounded-3 shadow-sm" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);">
+                        <i class="bi bi-wallet2 text-success fs-5"></i>
+                        <span class="small fw-semibold text-white">Tổng chi tiêu: <strong class="text-success fs-6">@totalSpent.ToString("N0") đ</strong></span>
+                    </div>
+                    <span class="small" style="color: #94a3b8;">
+                        <strong class="text-white">@paidOrders.Count</strong> đơn thành công • <strong class="text-warning">@pendingOrders.Count</strong> đơn chờ xử lý
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white mb-5">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-list-check text-primary"></i>
+                <span>Tất cả đơn giao dịch (@Model.Count)</span>
+            </h5>
+            <div class="d-flex align-items-center gap-2">
+                <a asp-controller="Account" asp-action="Profile" class="btn btn-outline-secondary rounded-pill btn-sm px-3 py-1.5 fw-semibold">
+                    <i class="bi bi-person me-1"></i>Về hồ sơ cá nhân
+                </a>
+                <a asp-controller="Courses" asp-action="MyCourses" class="btn btn-brand rounded-pill btn-sm px-3 py-1.5 fw-semibold shadow-sm">
+                    <i class="bi bi-mortarboard me-1"></i>Khóa học của tôi
+                </a>
+            </div>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: #f1f5f9; color: #64748b;">
+                    <i class="bi bi-receipt fs-1"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-2">Chưa phát sinh giao dịch nào</h4>
+                <p class="text-muted mx-auto mb-4" style="max-width: 500px;">
+                    Bạn chưa thực hiện đơn đặt mua khóa học nào trên hệ thống EduFlyUp. Khám phá các khóa học công nghệ để nâng cao kỹ năng ngay hôm nay!
+                </p>
+                <a asp-controller="Courses" asp-action="Index" class="btn btn-brand rounded-pill px-4 py-2.5 fw-semibold shadow-glow">
+                    <i class="bi bi-compass me-1"></i>Khám phá danh sách khóa học
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                    <thead class="table-light">
+                        <tr style="font-size: 0.85rem; text-transform: uppercase; color: #475569;">
+                            <th scope="col" class="py-3 ps-3">Mã Đơn</th>
+                            <th scope="col" class="py-3">Khóa học</th>
+                            <th scope="col" class="py-3">Số tiền</th>
+                            <th scope="col" class="py-3">Phương thức</th>
+                            <th scope="col" class="py-3">Mã tham chiếu ngân hàng</th>
+                            <th scope="col" class="py-3">Thời gian</th>
+                            <th scope="col" class="py-3 text-center">Trạng thái</th>
+                            <th scope="col" class="py-3 text-end pe-3">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            <tr>
+                                <!-- Order Code -->
+                                <td class="ps-3">
+                                    <span class="font-monospace fw-bold text-dark" style="font-size: 0.95rem;">
+                                        @order.OrderCode
+                                    </span>
+                                </td>
+
+                                <!-- Course -->
+                                <td>
+                                    <div class="d-flex align-items-center gap-2.5">
+                                        <img src="@(string.IsNullOrEmpty(order.Course?.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=120" : order.Course.ThumbnailUrl)" 
+                                             alt="Course" class="rounded-3 shadow-sm flex-shrink-0" style="width: 52px; height: 38px; object-fit: cover;" />
+                                        <div>
+                                            <a asp-controller="Courses" asp-action="Details" asp-route-id="@order.CourseId" class="text-dark fw-bold text-decoration-none small d-block" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                @(order.Course?.Title ?? $"Khóa học #{order.CourseId}")
+                                            </a>
+                                            <span class="text-muted" style="font-size: 0.72rem;">ID: #@order.CourseId</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Amount -->
+                                <td>
+                                    <span class="fw-bold text-dark fs-6">
+                                        @order.Amount.ToString("N0") đ
+                                    </span>
+                                </td>
+
+                                <!-- Payment Method -->
+                                <td>
+                                    <span class="badge rounded-pill px-2.5 py-1 fw-semibold" style="background: #e0e7ff; color: #4338ca; font-size: 0.75rem;">
+                                        <i class="bi bi-qr-code-scan me-1"></i>VietQR / SePay
+                                    </span>
+                                </td>
+
+                                <!-- Ref -->
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(order.TransactionReference))
+                                    {
+                                        <span class="font-monospace small text-muted">@order.TransactionReference</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">--</span>
+                                    }
+                                </td>
+
+                                <!-- Date -->
+                                <td>
+                                    <div class="small fw-semibold text-dark">@((order.PaidAt ?? order.CreatedAt).ToString("dd/MM/yyyy"))</div>
+                                    <div class="text-muted" style="font-size: 0.72rem;">@((order.PaidAt ?? order.CreatedAt).ToString("HH:mm:ss"))</div>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="text-center">
+                                    @if (order.Status == EduFlyUp.BusinessObjects.OrderStatus.Paid)
+                                    {
+                                        <span class="badge rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 0.8rem;">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                            <span>Thành công</span>
+                                        </span>
+                                    }
+                                    else if (order.Status == EduFlyUp.BusinessObjects.OrderStatus.Pending)
+                                    {
+                                        <span class="badge rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-size: 0.8rem;">
+                                            <i class="bi bi-hourglass-split"></i>
+                                            <span>Chờ thanh toán</span>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge rounded-pill px-3 py-1.5 fw-semibold" style="background: #f1f5f9; color: #64748b; font-size: 0.8rem;">
+                                            @order.Status
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="text-end pe-3">
+                                    @if (order.Status == EduFlyUp.BusinessObjects.OrderStatus.Paid)
+                                    {
+                                        <a asp-controller="Lessons" asp-action="Course" asp-route-id="@order.CourseId" class="btn btn-sm btn-brand rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 0.8rem;">
+                                            <i class="bi bi-play-circle me-1"></i>Vào học
+                                        </a>
+                                    }
+                                    else if (order.Status == EduFlyUp.BusinessObjects.OrderStatus.Pending)
+                                    {
+                                        <a asp-controller="Payment" asp-action="Checkout" asp-route-id="@order.CourseId" class="btn btn-sm btn-warning rounded-pill px-3 py-1.5 fw-bold text-dark shadow-sm" style="font-size: 0.8rem;">
+                                            <i class="bi bi-credit-card me-1"></i>Thanh toán
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

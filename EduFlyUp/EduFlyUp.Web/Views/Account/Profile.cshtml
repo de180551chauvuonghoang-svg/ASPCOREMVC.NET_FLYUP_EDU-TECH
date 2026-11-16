@@ -1,0 +1,460 @@
+@model EduFlyUp.Web.Models.Account.ProfileViewModel
+
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân - EduFlyUp";
+    var activeTab = Model.ActiveTab?.ToLower() ?? "info";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted text-decoration-none"><i class="bi bi-house me-1"></i>Trang chủ</a></li>
+            <li class="breadcrumb-item active fw-semibold text-primary" aria-current="page">Hồ sơ cá nhân</li>
+        </ol>
+    </nav>
+
+    <!-- Success & Error Alert Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success border-0 shadow-sm rounded-4 p-3 mb-4 d-flex align-items-center gap-3 animate__animated animate__fadeIn" style="background: #ecfdf5; border-left: 5px solid #10b981 !important;">
+            <i class="bi bi-check-circle-fill text-success fs-4"></i>
+            <div class="fw-semibold text-success">@TempData["SuccessMessage"]</div>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger border-0 shadow-sm rounded-4 p-3 mb-4 d-flex align-items-center gap-3 animate__animated animate__fadeIn" style="background: #fef2f2; border-left: 5px solid #ef4444 !important;">
+            <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
+            <div class="fw-semibold text-danger">@TempData["ErrorMessage"]</div>
+        </div>
+    }
+
+    <!-- Hero Profile Header Banner -->
+    <div class="rounded-4 p-4 p-md-5 mb-5 position-relative overflow-hidden shadow-lg" 
+         style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%); border: 1px solid rgba(255, 255, 255, 0.1);">
+        
+        <!-- Ambient Glow Background -->
+        <div class="position-absolute top-0 end-0 rounded-circle" style="width: 320px; height: 320px; background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, rgba(99, 102, 241, 0) 70%); filter: blur(40px); pointer-events: none;"></div>
+        
+        <div class="row align-items-center position-relative" style="z-index: 2;">
+            <div class="col-lg-7">
+                <div class="d-flex align-items-center gap-4 flex-wrap">
+                    <!-- Big Avatar Circle -->
+                    <div class="position-relative">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-lg" 
+                             style="width: 96px; height: 96px; font-size: 2.4rem; background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: 3px solid rgba(255, 255, 255, 0.25);">
+                            @(string.IsNullOrWhiteSpace(Model.FullName) ? Model.Email.Substring(0, 1).ToUpper() : Model.FullName.Substring(0, 1).ToUpper())
+                        </div>
+                        <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-white rounded-circle" title="Tài khoản đang hoạt động" style="width: 18px; height: 18px;"></span>
+                    </div>
+
+                    <div>
+                        <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill mb-2 shadow-sm" 
+                             style="background: rgba(255, 255, 255, 0.12); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.25); font-size: 0.8rem;">
+                            <i class="bi bi-shield-check text-warning"></i>
+                            <span class="fw-semibold">@(Model.Role == "Admin" ? "Quản trị viên" : Model.Role == "Instructor" ? "Giảng viên" : "Học viên EduFlyUp")</span>
+                        </div>
+                        <h2 class="fw-extrabold text-white mb-1" style="letter-spacing: -0.02em;">
+                            @(string.IsNullOrWhiteSpace(Model.FullName) ? "Học viên EduFlyUp" : Model.FullName)
+                        </h2>
+                        <div class="d-flex align-items-center gap-3 text-slate-300 small" style="color: #cbd5e1;">
+                            <span><i class="bi bi-envelope me-1.5 text-primary"></i>@Model.Email</span>
+                            <span>•</span>
+                            <span><i class="bi bi-calendar3 me-1.5 text-info"></i>Gia nhập: @Model.CreatedAt.ToString("dd/MM/yyyy")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Column -->
+            <div class="col-lg-5 mt-4 mt-lg-0">
+                <div class="row g-2 text-center">
+                    <div class="col-6 col-sm-3 col-lg-6">
+                        <div class="p-3 rounded-4 shadow-sm" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);">
+                            <div class="fs-4 fw-extrabold text-white mb-0">@Model.TotalCoursesCount</div>
+                            <span class="small" style="color: #94a3b8; font-size: 0.78rem;">Khóa học sở hữu</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3 col-lg-6">
+                        <div class="p-3 rounded-4 shadow-sm" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);">
+                            <div class="fs-4 fw-extrabold text-warning mb-0">@Model.TotalCertificatesCount</div>
+                            <span class="small" style="color: #94a3b8; font-size: 0.78rem;">Chứng chỉ đạt được</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3 col-lg-6 mt-sm-0 mt-lg-2">
+                        <div class="p-3 rounded-4 shadow-sm" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);">
+                            <div class="fs-4 fw-extrabold text-info mb-0">@Model.TotalOrdersCount</div>
+                            <span class="small" style="color: #94a3b8; font-size: 0.78rem;">Đơn giao dịch</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3 col-lg-6 mt-sm-0 mt-lg-2">
+                        <div class="p-3 rounded-4 shadow-sm" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);">
+                            <div class="fs-5 fw-extrabold text-success mb-0">@Model.TotalSpent.ToString("N0") đ</div>
+                            <span class="small" style="color: #94a3b8; font-size: 0.78rem;">Đầu tư học tập</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Tabs Navigation -->
+    <ul class="nav nav-pills gap-2 p-1.5 mb-4 rounded-4 shadow-sm" id="profileTabs" role="tablist" style="background: #ffffff; border: 1px solid #e2e8f0; max-width: 620px;">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(activeTab == "info" ? "active" : "") rounded-pill fw-bold py-2.5 px-4 d-flex align-items-center gap-2" 
+                    id="tab-info" data-bs-toggle="pill" data-bs-target="#pane-info" type="button" role="tab">
+                <i class="bi bi-person-lines-fill"></i>
+                <span>Thông tin cá nhân</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(activeTab == "password" ? "active" : "") rounded-pill fw-bold py-2.5 px-4 d-flex align-items-center gap-2" 
+                    id="tab-password" data-bs-toggle="pill" data-bs-target="#pane-password" type="button" role="tab">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span>Bảo mật & Mật khẩu</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(activeTab == "transactions" ? "active" : "") rounded-pill fw-bold py-2.5 px-4 d-flex align-items-center gap-2" 
+                    id="tab-transactions" data-bs-toggle="pill" data-bs-target="#pane-transactions" type="button" role="tab">
+                <i class="bi bi-receipt-cutoff text-success"></i>
+                <span>Lịch sử giao dịch</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="profileTabContent">
+
+        <!-- ================= TAB 1: THÔNG TIN CÁ NHÂN ================= -->
+        <div class="tab-pane fade @(activeTab == "info" ? "show active" : "")" id="pane-info" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+                        <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom">
+                            <div>
+                                <h4 class="fw-bold text-dark mb-1">Cập Nhật Thông Tin Cá Nhân</h4>
+                                <p class="text-muted small mb-0">Quản lý tên hiển thị và thông tin liên hệ của bạn trên hệ thống</p>
+                            </div>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill small">
+                                <i class="bi bi-check-circle-fill me-1"></i>Hồ sơ công khai
+                            </span>
+                        </div>
+
+                        <form asp-action="UpdateProfile" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark">Địa chỉ Email (Định danh đăng nhập)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
+                                        <input type="text" class="form-control bg-light border-start-0" value="@Model.Email" disabled readonly />
+                                    </div>
+                                    <span class="form-text small text-muted">Email là định danh cố định không thể thay đổi</span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="EditProfile.FullName" class="form-label small fw-bold text-dark"></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0 text-primary"><i class="bi bi-person"></i></span>
+                                        <input asp-for="EditProfile.FullName" class="form-control border-start-0" placeholder="Nhập họ và tên đầy đủ..." />
+                                    </div>
+                                    <span asp-validation-for="EditProfile.FullName" class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="EditProfile.PhoneNumber" class="form-label small fw-bold text-dark"></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0 text-success"><i class="bi bi-telephone"></i></span>
+                                        <input asp-for="EditProfile.PhoneNumber" class="form-control border-start-0" placeholder="Ví dụ: 0912345678" />
+                                    </div>
+                                    <span asp-validation-for="EditProfile.PhoneNumber" class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark">Vai trò trong hệ thống</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-patch-check"></i></span>
+                                        <input type="text" class="form-control bg-light border-start-0" value="@Model.Role" disabled readonly />
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <label asp-for="EditProfile.Bio" class="form-label small fw-bold text-dark"></label>
+                                    <textarea asp-for="EditProfile.Bio" rows="4" class="form-control" placeholder="Viết vài dòng giới thiệu về bản thân, định hướng lập trình, mục tiêu học tập..."></textarea>
+                                    <span asp-validation-for="EditProfile.Bio" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                                <button type="submit" class="btn btn-brand rounded-pill px-4 py-2.5 fw-bold shadow-glow d-inline-flex align-items-center gap-2">
+                                    <i class="bi bi-save2"></i>
+                                    <span>Lưu thay đổi hồ sơ</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right Quick Links Card -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                        <h6 class="fw-bold text-dark mb-3">Lối tắt nhanh của bạn</h6>
+                        <div class="d-flex flex-column gap-2">
+                            <a asp-controller="Courses" asp-action="MyCourses" class="p-3 rounded-3 text-decoration-none d-flex align-items-center justify-content-between transition-all" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #1e293b;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-journal-bookmark-fill text-primary fs-5"></i>
+                                    <div>
+                                        <div class="fw-bold small">Khóa học của tôi</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">@Model.TotalCoursesCount khóa học đang sở hữu</div>
+                                    </div>
+                                </div>
+                                <i class="bi bi-chevron-right text-muted small"></i>
+                            </a>
+
+                            <a asp-controller="Courses" asp-action="MyCourses" class="p-3 rounded-3 text-decoration-none d-flex align-items-center justify-content-between transition-all" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #1e293b;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-award-fill text-warning fs-5"></i>
+                                    <div>
+                                        <div class="fw-bold small">Chứng chỉ tốt nghiệp</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">@Model.TotalCertificatesCount chứng chỉ đạt được</div>
+                                    </div>
+                                </div>
+                                <i class="bi bi-chevron-right text-muted small"></i>
+                            </a>
+
+                            <a asp-controller="Courses" asp-action="Index" class="p-3 rounded-3 text-decoration-none d-flex align-items-center justify-content-between transition-all" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #1e293b;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-compass text-info fs-5"></i>
+                                    <div>
+                                        <div class="fw-bold small">Khám phá khóa học mới</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Nâng cao kỹ năng lập trình</div>
+                                    </div>
+                                </div>
+                                <i class="bi bi-chevron-right text-muted small"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Security tip -->
+                    <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-shield-lock-fill text-warning fs-5"></i>
+                            <h6 class="fw-bold mb-0">Bảo mật tài khoản</h6>
+                        </div>
+                        <p class="small text-slate-300 mb-0" style="color: #cbd5e1; font-size: 0.8rem; line-height: 1.5;">
+                            Không chia sẻ tài khoản cho người khác. EduFlyUp hỗ trợ xác thực 2 lớp và lưu trữ chứng chỉ mã hóa an toàn trên hệ thống đám mây.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: ĐỔI MẬT KHẨU ================= -->
+        <div class="tab-pane fade @(activeTab == "password" ? "show active" : "")" id="pane-password" role="tabpanel">
+            <div class="row justify-content-center">
+                <div class="col-lg-7">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+                        <div class="text-center mb-4 pb-3 border-bottom">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 shadow-sm" 
+                                 style="width: 64px; height: 64px; background: #e0e7ff; color: #4f46e5;">
+                                <i class="bi bi-key-fill fs-2"></i>
+                            </div>
+                            <h4 class="fw-bold text-dark mb-1">Đổi Mật Khẩu Đăng Nhập</h4>
+                            <p class="text-muted small mb-0">Định kỳ cập nhật mật khẩu mạnh để bảo vệ tài khoản và khóa học của bạn</p>
+                        </div>
+
+                        <form asp-action="ChangePassword" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <div class="d-flex flex-column gap-3 mb-4">
+                                <div>
+                                    <label asp-for="ChangePassword.CurrentPassword" class="form-label small fw-bold text-dark"></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-lock"></i></span>
+                                        <input asp-for="ChangePassword.CurrentPassword" class="form-control border-start-0" placeholder="Nhập mật khẩu đang sử dụng..." />
+                                    </div>
+                                    <span asp-validation-for="ChangePassword.CurrentPassword" class="text-danger small"></span>
+                                </div>
+
+                                <div>
+                                    <label asp-for="ChangePassword.NewPassword" class="form-label small fw-bold text-dark"></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0 text-primary"><i class="bi bi-shield-plus"></i></span>
+                                        <input asp-for="ChangePassword.NewPassword" class="form-control border-start-0" placeholder="Mật khẩu mới (tối thiểu 6 ký tự)..." />
+                                    </div>
+                                    <span asp-validation-for="ChangePassword.NewPassword" class="text-danger small"></span>
+                                </div>
+
+                                <div>
+                                    <label asp-for="ChangePassword.ConfirmPassword" class="form-label small fw-bold text-dark"></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0 text-success"><i class="bi bi-shield-check"></i></span>
+                                        <input asp-for="ChangePassword.ConfirmPassword" class="form-control border-start-0" placeholder="Nhập lại mật khẩu mới chính xác..." />
+                                    </div>
+                                    <span asp-validation-for="ChangePassword.ConfirmPassword" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="d-grid pt-2">
+                                <button type="submit" class="btn btn-brand rounded-pill py-2.5 fw-bold shadow-glow">
+                                    <i class="bi bi-shield-lock-fill me-1"></i>
+                                    <span>Xác nhận đổi mật khẩu</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: LỊCH SỬ GIAO DỊCH ================= -->
+        <div class="tab-pane fade @(activeTab == "transactions" ? "show active" : "")" id="pane-transactions" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+                    <div>
+                        <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                            <i class="bi bi-receipt-cutoff text-success"></i>
+                            <span>Lịch Sử Giao Dịch & Hóa Đơn Thanh Toán</span>
+                        </h4>
+                        <p class="text-muted small mb-0">Theo dõi toàn bộ các đơn đặt mua khóa học qua cổng thanh toán tự động VietQR / SePay</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge px-3 py-2 rounded-pill fw-bold" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
+                            Tổng chi: @Model.TotalSpent.ToString("N0") đ
+                        </span>
+                        <a asp-action="Transactions" class="btn btn-outline-brand rounded-pill btn-sm px-3 py-2 fw-semibold">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Mở rộng toàn màn hình
+                        </a>
+                    </div>
+                </div>
+
+                @if (!Model.Orders.Any())
+                {
+                    <div class="text-center py-5">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px; background: #f1f5f9; color: #64748b;">
+                            <i class="bi bi-receipt fs-2"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Chưa có giao dịch thanh toán nào</h5>
+                        <p class="text-muted small mb-4">Các đơn hàng mua khóa học công nghệ tại EduFlyUp sẽ được tự động lưu trữ tại đây.</p>
+                        <a asp-controller="Courses" asp-action="Index" class="btn btn-brand rounded-pill px-4 py-2.5 fw-semibold shadow-glow">
+                            <i class="bi bi-compass me-1"></i>Khám phá danh sách khóa học
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle table-hover mb-0">
+                            <thead class="table-light">
+                                <tr style="font-size: 0.84rem; text-transform: uppercase; color: #475569;">
+                                    <th scope="col" class="py-3 ps-3">Mã Đơn Hàng</th>
+                                    <th scope="col" class="py-3">Khóa học đăng ký</th>
+                                    <th scope="col" class="py-3">Số tiền</th>
+                                    <th scope="col" class="py-3">Phương thức</th>
+                                    <th scope="col" class="py-3">Thời gian</th>
+                                    <th scope="col" class="py-3 text-center">Trạng thái</th>
+                                    <th scope="col" class="py-3 text-end pe-3">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in Model.Orders)
+                                {
+                                    <tr>
+                                        <!-- Order Code -->
+                                        <td class="ps-3">
+                                            <span class="font-monospace fw-bold text-dark" style="font-size: 0.9rem;">
+                                                @order.OrderCode
+                                            </span>
+                                        </td>
+
+                                        <!-- Course -->
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2.5">
+                                                <img src="@(string.IsNullOrEmpty(order.Course?.ThumbnailUrl) ? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=120" : order.Course.ThumbnailUrl)" 
+                                                     alt="Course" class="rounded-3 shadow-sm flex-shrink-0" style="width: 48px; height: 36px; object-fit: cover;" />
+                                                <div>
+                                                    <a asp-controller="Courses" asp-action="Details" asp-route-id="@order.CourseId" class="text-dark fw-bold text-decoration-none small d-block" style="max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                        @(order.Course?.Title ?? $"Khóa học #{order.CourseId}")
+                                                    </a>
+                                                    <span class="text-muted" style="font-size: 0.72rem;">ID: #@order.CourseId</span>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <!-- Amount -->
+                                        <td>
+                                            <span class="fw-bold text-dark">
+                                                @order.Amount.ToString("N0") đ
+                                            </span>
+                                        </td>
+
+                                        <!-- Payment Method -->
+                                        <td>
+                                            <span class="badge rounded-pill px-2.5 py-1 fw-semibold" style="background: #e0e7ff; color: #4338ca; font-size: 0.75rem;">
+                                                <i class="bi bi-qr-code-scan me-1"></i>VietQR / SePay
+                                            </span>
+                                        </td>
+
+                                        <!-- Date -->
+                                        <td>
+                                            <div class="small text-dark">@((order.PaidAt ?? order.CreatedAt).ToString("dd/MM/yyyy"))</div>
+                                            <div class="text-muted" style="font-size: 0.72rem;">@((order.PaidAt ?? order.CreatedAt).ToString("HH:mm:ss"))</div>
+                                        </td>
+
+                                        <!-- Status -->
+                                        <td class="text-center">
+                                            @if (order.Status == OrderStatus.Paid)
+                                            {
+                                                <span class="badge rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 0.8rem;">
+                                                    <i class="bi bi-check-circle-fill"></i>
+                                                    <span>Thành công</span>
+                                                </span>
+                                            }
+                                            else if (order.Status == OrderStatus.Pending)
+                                            {
+                                                <span class="badge rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-size: 0.8rem;">
+                                                    <i class="bi bi-hourglass-split"></i>
+                                                    <span>Chờ thanh toán</span>
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge rounded-pill px-3 py-1.5 fw-semibold" style="background: #f1f5f9; color: #64748b; font-size: 0.8rem;">
+                                                    @order.Status
+                                                </span>
+                                            }
+                                        </td>
+
+                                        <!-- Action -->
+                                        <td class="text-end pe-3">
+                                            @if (order.Status == OrderStatus.Paid)
+                                            {
+                                                <a asp-controller="Lessons" asp-action="Course" asp-route-id="@order.CourseId" class="btn btn-sm btn-outline-brand rounded-pill px-3 py-1 fw-semibold" style="font-size: 0.78rem;">
+                                                    <i class="bi bi-play-circle me-1"></i>Vào học
+                                                </a>
+                                            }
+                                            else if (order.Status == OrderStatus.Pending)
+                                            {
+                                                <a asp-controller="Payment" asp-action="Checkout" asp-route-id="@order.CourseId" class="btn btn-sm btn-warning rounded-pill px-3 py-1 fw-bold text-dark shadow-sm" style="font-size: 0.78rem;">
+                                                    <i class="bi bi-credit-card me-1"></i>Thanh toán ngay
+                                                </a>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

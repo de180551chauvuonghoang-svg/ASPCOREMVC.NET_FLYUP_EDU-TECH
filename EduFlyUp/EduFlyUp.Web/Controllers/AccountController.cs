@@ -1,4 +1,5 @@
 using EduFlyUp.BusinessObjects;
+using EduFlyUp.Repositories;
 using EduFlyUp.Web.Models.Account;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -10,16 +11,25 @@ public class AccountController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IOrderRepository _orderRepo;
+    private readonly ICertificateRepository _certRepo;
+    private readonly IEnrollmentRepository _enrollmentRepo;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        ILogger<AccountController> logger)
+        ILogger<AccountController> logger,
+        IOrderRepository? orderRepo = null,
+        ICertificateRepository? certRepo = null,
+        IEnrollmentRepository? enrollmentRepo = null)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
+        _orderRepo = orderRepo ?? new OrderRepository();
+        _certRepo = certRepo ?? new CertificateRepository();
+        _enrollmentRepo = enrollmentRepo ?? new EnrollmentRepository();
     }
 
     // GET: /Account/Register
@@ -252,5 +262,125 @@ public class AccountController : Controller
         await _signInManager.SignOutAsync();
         _logger.LogInformation("User đã đăng xuất.");
         return RedirectToAction("Index", "Home");
+    }
+
+    // GET: /Account/Profile
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> Profile(string tab = "info")
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return RedirectToAction(nameof(Login));
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? "Student";
+
+        var orders = (await _orderRepo.GetOrdersByUserIdAsync(user.Id)).ToList();
+        var enrollments = (await _enrollmentRepo.GetByUserIdAsync(user.Id)).ToList();
+        var certs = (await _certRepo.GetByUserIdAsync(user.Id)).ToList();
+
+        var totalSpent = orders.Where(o => o.Status == OrderStatus.Paid).Sum(o => o.Amount);
+
+        var model = new ProfileViewModel
+        {
+            Id = user.Id,
+            UserName = user.UserName ?? string.Empty,
+            Email = user.Email ?? string.Empty,
+            FullName = user.FullName,
+            PhoneNumber = user.PhoneNumber,
+            Bio = user.Bio,
+            AvatarUrl = user.AvatarUrl,
+            CreatedAt = user.CreatedAt,
+            Role = role,
+            TotalCoursesCount = enrollments.Count,
+            TotalCertificatesCount = certs.Count,
+            TotalOrdersCount = orders.Count,
+            TotalSpent = totalSpent,
+            ActiveTab = tab,
+            Orders = orders,
+            Certificates = certs,
+            Enrollments = enrollments,
+            EditProfile = new EditProfileInputModel
+            {
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber,
+                Bio = user.Bio
+            }
+        };
+
+        return View(model);
+    }
+
+    // POST: /Account/UpdateProfile
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateProfile(EditProfileInputModel model)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return RedirectToAction(nameof(Login));
+
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "Dữ liệu nhập vào chưa hợp lệ. Vui lòng kiểm tra lại.";
+            return RedirectToAction(nameof(Profile), new { tab = "info" });
+        }
+
+        user.FullName = model.FullName;
+        user.PhoneNumber = model.PhoneNumber;
+        user.Bio = model.Bio;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (result.Succeeded)
+        {
+            TempData["SuccessMessage"] = "Cập nhật hồ sơ thông tin cá nhân thành công!";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = string.Join("; ", result.Errors.Select(e => e.Description));
+        }
+
+        return RedirectToAction(nameof(Profile), new { tab = "info" });
+    }
+
+    // POST: /Account/ChangePassword
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(ChangePasswordInputModel model)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return RedirectToAction(nameof(Login));
+
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ các trường mật khẩu hợp lệ.";
+            return RedirectToAction(nameof(Profile), new { tab = "password" });
+        }
+
+        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+        if (result.Succeeded)
+        {
+            await _signInManager.RefreshSignInAsync(user);
+            TempData["SuccessMessage"] = "Đổi mật khẩu thành công! Mật khẩu mới đã có hiệu lực.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = string.Join("; ", result.Errors.Select(e => e.Description));
+        }
+
+        return RedirectToAction(nameof(Profile), new { tab = "password" });
+    }
+
+    // GET: /Account/Transactions
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> Transactions()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return RedirectToAction(nameof(Login));
+
+        var orders = (await _orderRepo.GetOrdersByUserIdAsync(user.Id)).ToList();
+        return View(orders);
     }
 }
